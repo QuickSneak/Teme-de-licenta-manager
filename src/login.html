@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Academic Thesis Portal - Login</title>
+  <link rel="stylesheet" href="css/auth.css" />
+</head>
+
+<body>
+  <div class="login-page">
+    <div class="background-art" aria-hidden="true">
+      <div class="orbit one"></div>
+      <div class="orbit two"></div>
+
+      <span class="spark s1">✦</span>
+      <span class="spark s2">✦</span>
+      <span class="spark s3">✦</span>
+      <span class="spark s4">✦</span>
+
+      <svg class="campus-art" viewBox="0 0 520 420" fill="none">
+        <path d="M65 360H455" stroke="currentColor" stroke-width="4" opacity="0.9"/>
+        <path d="M105 166H415" stroke="currentColor" stroke-width="4"/>
+        <path d="M130 166V336M210 166V336M290 166V336M370 166V336" stroke="currentColor" stroke-width="4"/>
+        <path d="M82 145L260 52L438 145H82Z" stroke="currentColor" stroke-width="5"/>
+        <path d="M145 336H395" stroke="currentColor" stroke-width="5"/>
+        <path d="M235 336V260C235 235 255 219 260 219C265 219 285 235 285 260V336" stroke="currentColor" stroke-width="4"/>
+        <circle cx="260" cy="132" r="25" stroke="currentColor" stroke-width="4"/>
+        <path d="M260 116V132L272 140" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        <path d="M78 190C45 208 25 246 25 293C25 334 48 367 81 378" stroke="currentColor" stroke-width="3" opacity="0.6"/>
+        <path d="M442 190C475 208 495 246 495 293C495 334 472 367 439 378" stroke="currentColor" stroke-width="3" opacity="0.6"/>
+      </svg>
+
+      <svg class="books-art" viewBox="0 0 420 420" fill="none">
+        <path d="M90 290H320C340 290 350 304 350 320C350 336 340 350 320 350H90C70 350 60 336 60 320C60 304 70 290 90 290Z" stroke="currentColor" stroke-width="5"/>
+        <path d="M82 250H300C320 250 330 264 330 280C330 296 320 310 300 310H82C62 310 52 296 52 280C52 264 62 250 82 250Z" stroke="currentColor" stroke-width="5"/>
+        <path d="M110 210H338C358 210 368 224 368 240C368 256 358 270 338 270H110C90 270 80 256 80 240C80 224 90 210 110 210Z" stroke="currentColor" stroke-width="5"/>
+        <path d="M250 110L350 150L250 190L150 150L250 110Z" stroke="currentColor" stroke-width="5"/>
+        <path d="M180 163V210C205 232 295 232 320 210V163" stroke="currentColor" stroke-width="5"/>
+        <path d="M350 150V202" stroke="currentColor" stroke-width="4"/>
+        <path d="M350 202L338 226H362L350 202Z" stroke="currentColor" stroke-width="4"/>
+        <path d="M84 320H322M92 280H302M114 240H338" stroke="currentColor" stroke-width="3" opacity="0.6"/>
+      </svg>
+    </div>
+
+    <header class="topbar">
+      <a href="login.html" class="brand">
+        <span class="brand-mark">🎓</span>
+
+        <span class="brand-text">
+          <h1>Academic Thesis Portal</h1>
+          <p>University of Excellence</p>
+        </span>
+      </a>
+
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
+        <span class="theme-option moon">☾</span>
+        <span class="theme-option sun active">☀</span>
+      </button>
+    </header>
+
+    <main class="login-shell">
+      <section class="login-card">
+        <div class="login-head">
+          <h2 class="login-title">Welcome Back</h2>
+          <p class="login-subtitle">
+            Sign in to access your thesis management portal.
+          </p>
+        </div>
+
+        <div class="role-switch" aria-label="Choose account type">
+          <button class="role-btn active" type="button" data-role="student">
+            <span class="role-icon">👤</span>
+            <span>Student</span>
+          </button>
+
+          <button class="role-btn" type="button" data-role="professor">
+            <span class="role-icon">♙</span>
+            <span>Professor</span>
+          </button>
+
+          <button class="role-btn" type="button" data-role="secretary">
+            <span class="role-icon">✎</span>
+            <span>Secretary</span>
+          </button>
+        </div>
+
+        <form class="form" id="loginForm">
+          <div class="field">
+            <label class="label" for="email">Email / Teams Account</label>
+
+            <div class="input-wrap">
+              <span class="input-icon">✉</span>
+              <input
+                class="input"
+                id="email"
+                type="email"
+                placeholder="name@university.edu or username@teams.microsoft.com"
+                autocomplete="email"
+              />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="password">Password</label>
+
+            <div class="input-wrap">
+              <span class="input-icon">🔒</span>
+              <input
+                class="input"
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+              />
+
+              <button class="show-password" id="showPasswordBtn" type="button" aria-label="Show password">
+                ◉
+              </button>
+            </div>
+          </div>
+
+          <div class="form-options">
+            <label class="checkbox-line">
+              <input type="checkbox" checked />
+              <span class="fake-checkbox">✓</span>
+              <span>Remember me</span>
+            </label>
+
+            <a class="forgot-link" href="#">Forgot password?</a>
+          </div>
+
+          <button class="primary-btn" type="submit">
+            <span>↪</span>
+            <span>Sign In</span>
+          </button>
+
+          <button class="teams-btn" type="button" id="teamsBtn">
+            <span class="teams-icon">T</span>
+            <span>Continue with Microsoft Teams</span>
+          </button>
+
+          <div class="card-divider"></div>
+
+          <p class="help-line">
+            <span>🎧</span>
+            Need help? Contact the <span>IT Bureau.</span>
+          </p>
+        </form>
+      </section>
+    </main>
+
+    <div class="mode-pill" id="modePill">
+      <span id="modeIcon">☀</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+
+    <div class="toast" id="toast">
+      <p class="toast-title">Prototype login</p>
+      <p class="toast-text" id="toastText">
+        Login action captured. Nobody was authenticated, because this is still a front-end prototype pretending to be useful.
+      </p>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+</body>
+</html>
