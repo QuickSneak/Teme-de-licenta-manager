@@ -3,9 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Verify Email</title>
 </head>
 <body>
-    
+    <h1>Verify Email</h1>
+
+    <form id="verifyEmailForm">
+        <label>
+            Email
+            <input id="verifyEmail" name="email" type="text" autocomplete="email" required>
+        </label>
+
+        <button type="submit">Resend verification email</button>
+    </form>
+
+    <p id="message"></p>
+    <p><a href="login.html">Back to login</a></p>
+
+    <script src="js/verify-email.js"></script>
 </body>
 </html>

@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const teamsBtn = document.getElementById("teamsBtn");
     const showPasswordBtn = document.getElementById("showPasswordBtn");
     const passwordInput = document.getElementById("password");
+    const rememberMeInput = document.getElementById("rememberMe");
 
     const toast = document.getElementById("toast");
     const toastText = document.getElementById("toastText");
@@ -69,45 +70,31 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault();
         const email = document.getElementById("email").value.trim();
         const password = passwordInput.value.trim();
+        const rememberMe = rememberMeInput.checked;
 
         if (!email || !password) return showToast("Enter credentials");
 
         const res = await fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role: selectedRole })
+        body: JSON.stringify({ email, password, role: selectedRole, rememberMe })
         });
 
-        if (res.ok) {
         const data = await res.json();
+
+        if (res.ok) {
         window.location.href = data.redirect;
         } else {
-        showToast("Login failed. Check credentials.");
+        if (data.redirect) {
+            window.location.href = data.redirect;
+            return;
+        }
+        showToast(data.error || "Login failed. Check credentials.");
         }
     });
 
     teamsBtn.addEventListener("click", () => {
-        let destination;
-        
-        switch(selectedRole) {
-            case "student":
-                destination = "professors.html";
-                break;
-            case "professor":
-                destination = "professor-dashboard.html";
-                break;
-            case "secretary":
-                destination = "secretary-dashboard.html";
-                break;
-            default:
-                destination = "professors.html";
-        }
-
-        showToast(`Microsoft Teams login selected for ${selectedRole}. Redirecting...`);
-
-        setTimeout(() => {
-        window.location.href = destination;
-        }, 700);
+        showToast("Microsoft Teams login is not enabled yet.");
     });
 
     const savedTheme =
@@ -118,4 +105,13 @@ document.addEventListener('DOMContentLoaded', function() {
         "light";
 
     setTheme(savedTheme);
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("verified") === "1") {
+        showToast("Email verified. You can sign in now.");
+    } else if (params.get("reset") === "1") {
+        showToast("Password changed. You can sign in now.");
+    } else if (params.get("error")) {
+        showToast("The email link is invalid or expired.");
+    }
 });

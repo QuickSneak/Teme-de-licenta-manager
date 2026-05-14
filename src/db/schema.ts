@@ -19,7 +19,7 @@ export const users = sqliteTable('users', {
   facultyId: integer('faculty_id').references(() => faculties.id),
   specializationId: integer('specialization_id').references(() => specializations.id),
   isExtended: integer('is_extended', { mode: 'boolean' }).default(false),
-  emailVerified: integer('email_verified', { mode: 'timestamp' }),
+  emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
   image: text('image'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()

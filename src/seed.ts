@@ -1,52 +1,113 @@
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from '@better-auth/drizzle-adapter';
+import { eq } from 'drizzle-orm';
 import { db } from './db';
-import { faculties, specializations, users, accounts } from './db/schema';
+import { accounts, faculties, sessions, specializations, users, verifications } from './db/schema';
+import { ensureAcademicUnit, specialtyMappings } from './uab';
+
+const seedAuth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET ?? 'dev-secret-change-before-production',
+  baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000/api/auth',
+  database: drizzleAdapter(db, {
+    provider: 'sqlite',
+    schema: {
+      user: users,
+      session: sessions,
+      account: accounts,
+      verification: verifications,
+      users,
+      sessions,
+      accounts,
+      verifications
+    }
+  }),
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: false
+  },
+  user: {
+    additionalFields: {
+      role: {
+        type: 'string',
+        required: true
+      },
+      facultyId: {
+        type: 'number',
+        required: false
+      },
+      specializationId: {
+        type: 'number',
+        required: false
+      },
+      isExtended: {
+        type: 'boolean',
+        required: false,
+        defaultValue: false
+      }
+    }
+  }
+});
+
+async function createUser(input: {
+  name: string;
+  email: string;
+  password: string;
+  role: 'student' | 'professor' | 'secretary';
+  facultyId?: number;
+  specializationId?: number;
+}) {
+  await seedAuth.api.signUpEmail({
+    body: {
+      name: input.name,
+      email: input.email,
+      password: input.password,
+      role: input.role,
+      facultyId: input.facultyId,
+      specializationId: input.specializationId,
+      isExtended: false
+    }
+  });
+
+  await db.update(users).set({ emailVerified: true }).where(eq(users.email, input.email));
+}
 
 async function seed() {
-  const [fac] = await db.insert(faculties).values({ name: 'Informatica_si_Ingineri' }).returning();
-  const [spec] = await db.insert(specializations).values({ name: 'Info', facultyId: fac.id }).returning();
-  
-const [student] = await db.insert(users).values({
-  id: '1',
-  email: 'test@gmail.com',
-  name: 'Test Student',
-  role: 'student',
-  facultyId: fac.id,
-  specializationId: spec.id,
-  createdAt: new Date(),
-  updatedAt: new Date()
-}).returning();
+  await db.delete(sessions);
+  await db.delete(verifications);
+  await db.delete(accounts);
+  await db.delete(users);
+  await db.delete(specializations);
+  await db.delete(faculties);
 
-await db.insert(accounts).values({
-  id: '1',
-  accountId: '1',
-  providerId: 'local',
-  userId: student.id,
-  password: '123',
-  createdAt: new Date(),
-  updatedAt: new Date()
-});
+  const info = await ensureAcademicUnit(specialtyMappings.info);
+  await ensureAcademicUnit(specialtyMappings.infoen);
+  const marketing = await ensureAcademicUnit(specialtyMappings.mk);
 
-const [professor] = await db.insert(users).values({
-  id: '2',
-  email: 'prof@gmail.com',
-  name: 'Test Professor',
-  role: 'professor',
-  facultyId: fac.id,
-  specializationId: spec.id,
-  createdAt: new Date(),
-  updatedAt: new Date()
-}).returning();
+  await createUser({
+    name: 'Test Student',
+    email: 'student.test.info23@uab.ro',
+    password: 'password123',
+    role: 'student',
+    facultyId: info.faculty.id,
+    specializationId: info.specialization.id
+  });
 
-await db.insert(accounts).values({
-  id: '2',
-  accountId: '2',
-  providerId: 'local',
-  userId: professor.id,
-  password: '123',
-  createdAt: new Date(),
-  updatedAt: new Date()
-});
-  
-  console.log('Seeded');
+  await createUser({
+    name: 'Test Professor',
+    email: 'professor.test@uab.ro',
+    password: 'password123',
+    role: 'professor'
+  });
+
+  await createUser({
+    name: 'Test Secretary',
+    email: 'secretary.marketing@uab.ro',
+    password: 'password123',
+    role: 'secretary',
+    facultyId: marketing.faculty.id
+  });
+
+  console.log('Seeded verified Better Auth demo accounts');
 }
+
 seed();

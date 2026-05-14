@@ -48,7 +48,7 @@ CREATE TABLE `users` (
 	`faculty_id` integer,
 	`specialization_id` integer,
 	`is_extended` integer DEFAULT false,
-	`email_verified` integer,
+	`email_verified` integer DEFAULT false NOT NULL,
 	`image` text,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
