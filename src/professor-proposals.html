@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Professor Portal - Student Proposals</title>
+  <link rel="stylesheet" href="css/professor-proposals.css" />
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="portal-brand">
+        <span class="brand-icon">UAB</span>
+        <span>Professor Portal</span>
+      </div>
+
+      <nav class="main-nav" aria-label="Professor navigation">
+        <a href="professor-dashboard.html" class="nav-link">Dashboard</a>
+        <a href="professor-proposals.html" class="nav-link active">Student Proposals</a>
+        <a href="professor-profile.html" class="nav-link">Profile</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn" aria-label="Notifications">
+          N
+          <span class="badge">0</span>
+        </button>
+        <span class="separator"></span>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span class="theme-option moon">Dark</span>
+          <span class="theme-option sun active">Light</span>
+        </button>
+        <button class="auth-btn" id="authAction" type="button">Login</button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-head">
+        <h1 class="page-title">Student Proposals</h1>
+        <p class="page-subtitle">Review topic claims, custom proposals, and title/detail change requests.</p>
+      </section>
+
+      <section class="summary-strip">
+        <div class="summary-left">
+          <span class="summary-icon">P</span>
+          <span class="summary-label">Pending Requests</span>
+          <span class="summary-number">0</span>
+        </div>
+        <div class="summary-right">
+          <span id="proposalLastUpdated">Loading</span>
+          <button class="refresh-btn" type="button" aria-label="Refresh proposals">Refresh</button>
+        </div>
+      </section>
+
+      <h2 class="section-title">Active Requests</h2>
+
+      <section class="faculty-proposals">
+        <button class="faculty-head collapsible-trigger" type="button">
+          <span class="head-left">
+            <span>Requests</span>
+          </span>
+          <span class="collapse-arrow">Open</span>
+        </button>
+        <div class="collapsible-content">
+          <section class="specialisation-group">
+            <button class="specialisation-head collapsible-trigger" type="button">
+              <span class="head-left">
+                <span>Pending</span>
+              </span>
+              <span class="collapse-arrow">Open</span>
+            </button>
+            <div class="proposal-list collapsible-content">
+              <p class="proposal-desc">Loading requests.</p>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <h2 class="section-title">History</h2>
+
+      <section class="history-grid">
+        <article class="history-card">
+          <div class="history-head approved">
+            <span>Handled</span>
+          </div>
+          <div class="history-list">
+            <p class="proposal-desc">Loading handled requests.</p>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">Light</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="proposalModal">
+    <article class="proposal-modal">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title" id="modalTitle">Proposal title</h2>
+          <p class="modal-subtitle" id="modalSubtitle">Student / Faculty / Specialisation</p>
+        </div>
+        <button class="modal-close" type="button" id="modalClose" aria-label="Close modal">Close</button>
+      </div>
+
+      <div class="modal-body">
+        <section class="modal-section">
+          <h3>Request Type</h3>
+          <p id="modalType">Request</p>
+        </section>
+        <section class="modal-section">
+          <h3>Details</h3>
+          <p id="modalDescription">Request description appears here.</p>
+        </section>
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-btn reject" type="button">Reject</button>
+        <button class="modal-btn approve" type="button">Approve</button>
+      </div>
+    </article>
+  </div>
+
+  <script src="js/auth-nav.js"></script>
+  <script src="js/professor-proposals.js"></script>
+</body>
+</html>

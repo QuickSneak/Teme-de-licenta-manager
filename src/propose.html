@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Interface - Propose Thesis</title>
+
+  <link rel="stylesheet" href="css/propose.css" />
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-left">Student Portal</div>
+
+      <nav class="main-nav" aria-label="Student navigation">
+        <a href="professors.html" class="nav-link">Professors</a>
+        <a href="propose.html" class="nav-link active">Propose</a>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="profile.html" class="nav-link">Profile</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn" aria-label="Notifications">
+          🔔
+          <span class="badge">3</span>
+        </button>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span class="theme-option moon">☾</span>
+          <span class="theme-option sun active">☀</span>
+        </button>
+        <button class="auth-btn" id="authAction" type="button">Login</button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-head">
+        <h1 class="page-title">Propose Your Thesis</h1>
+        <p class="page-subtitle">
+          Submit a custom thesis proposal for professor review
+        </p>
+      </section>
+
+      <section class="info-strip" aria-label="Proposal rules">
+        <article class="info-item">
+          <div class="info-icon">👤</div>
+          <p class="info-text">Only 1 active<br />custom proposal at a time</p>
+        </article>
+
+        <article class="info-item">
+          <div class="info-icon">♢</div>
+          <p class="info-text">Proposals can be<br />approved or rejected</p>
+        </article>
+
+        <article class="info-item">
+          <div class="info-icon">◷</div>
+          <p class="info-text">Response may take<br />several days</p>
+        </article>
+      </section>
+
+      <section class="proposal-card">
+        <form id="proposalForm" novalidate>
+          <div class="form-grid">
+            <div class="field" data-field="title">
+              <label class="label" for="title">Title</label>
+              <input
+                class="control"
+                id="title"
+                name="title"
+                type="text"
+                placeholder="Enter thesis title"
+              />
+              <p class="error-text">Please enter a thesis title.</p>
+            </div>
+
+            <div class="field" data-field="specialisation">
+              <label class="label">Specialisation</label>
+              <div class="select-like" data-select="specialisation" tabindex="0">
+                <span class="select-value">Select specialisation</span>
+                <span class="select-arrow">⌄</span>
+
+                <div class="dropdown">
+                  <button type="button" data-value="Computer Science">Computer Science</button>
+                  <button type="button" data-value="Cybersecurity">Cybersecurity</button>
+                  <button type="button" data-value="Data Science">Data Science</button>
+                  <button type="button" data-value="Artificial Intelligence">Artificial Intelligence</button>
+                  <button type="button" data-value="Software Engineering">Software Engineering</button>
+                </div>
+              </div>
+              <p class="error-text">Please select a specialisation.</p>
+            </div>
+
+            <div class="field" data-field="professor">
+              <label class="label">Coordinator / Professor</label>
+              <div class="select-like" data-select="professor" tabindex="0">
+                <span class="select-value">Search or select professor</span>
+                <span class="select-arrow">⌄</span>
+
+                <div class="dropdown">
+                  <button type="button" data-value="Prof. Andrei Ionescu">Prof. Andrei Ionescu</button>
+                  <button type="button" data-value="Prof. Elena Popescu">Prof. Elena Popescu</button>
+                  <button type="button" data-value="Prof. Radu Mihai">Prof. Radu Mihai</button>
+                  <button type="button" data-value="Prof. Ioana Marin">Prof. Ioana Marin</button>
+                  <button type="button" data-value="Prof. Victor Stan">Prof. Victor Stan</button>
+                  <button type="button" data-value="Prof. Ana Dumitru">Prof. Ana Dumitru</button>
+                </div>
+              </div>
+              <p class="error-text">Please select a professor.</p>
+            </div>
+
+            <div class="field">
+              <label class="label">Keywords</label>
+              <div class="keywords-box" tabindex="0">
+                <div class="keyword-tags" id="keywordTags">
+                  <span class="tag">AI <button type="button" class="tag-remove" aria-label="Remove AI">×</button></span>
+                  <span class="tag">Web <button type="button" class="tag-remove" aria-label="Remove Web">×</button></span>
+                  <span class="tag">Security <button type="button" class="tag-remove" aria-label="Remove Security">×</button></span>
+                </div>
+                <span class="select-arrow">⌄</span>
+              </div>
+            </div>
+
+            <div class="field full" data-field="brief">
+              <label class="label" for="brief">Brief description</label>
+              <textarea
+                class="textarea"
+                id="brief"
+                name="brief"
+                placeholder="Provide a short summary of your proposed thesis..."
+              ></textarea>
+              <p class="error-text">Please add a brief description.</p>
+            </div>
+
+            <div class="field full" data-field="fullProposal">
+              <label class="label" for="fullProposal">Full proposal</label>
+              <textarea
+                class="textarea large"
+                id="fullProposal"
+                name="fullProposal"
+                placeholder="Describe your proposed thesis in detail..."
+              ></textarea>
+              <p class="error-text">Please describe your full proposal.</p>
+            </div>
+
+            <div class="field full">
+              <label class="label" for="notes">Notes (optional)</label>
+              <textarea
+                class="textarea"
+                id="notes"
+                name="notes"
+                placeholder="Any additional information (optional)..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="form-footer">
+            <p class="submit-note">
+              <span class="note-icon">i</span>
+              <span>After submission, your proposal will appear in <strong>My Proposals</strong>.</span>
+            </p>
+
+            <div class="form-actions">
+              <button class="btn btn-secondary" type="button" id="cancelBtn">
+                Cancel
+              </button>
+
+              <button class="btn btn-primary" type="submit">
+                Submit Proposal
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">☀</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+
+    <div class="toast" id="toast">
+      <p class="toast-title">Proposal submitted</p>
+      <p class="toast-text">
+        Your custom thesis proposal was saved for professor review. Civilization advances by one form submission.
+      </p>
+    </div>
+  </div>
+
+  <script src="js/auth-nav.js"></script>
+  <script src="js/propose.js"></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Professor Portal - Profile</title>
+  <link rel="stylesheet" href="css/professor-profile.css" />
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="portal-brand">
+        <span class="brand-icon">UAB</span>
+        <span>Professor Portal</span>
+      </div>
+      <nav class="main-nav" aria-label="Professor navigation">
+        <a href="professor-dashboard.html" class="nav-link">Dashboard</a>
+        <a href="professor-proposals.html" class="nav-link">Student Proposals</a>
+        <a href="professor-profile.html" class="nav-link active">Profile</a>
+      </nav>
+      <div class="top-actions">
+        <button class="icon-btn" aria-label="Notifications">N <span class="badge">0</span></button>
+        <span class="separator"></span>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span class="theme-option moon">Dark</span>
+          <span class="theme-option sun active">Light</span>
+        </button>
+        <button class="auth-btn" id="authAction" type="button">Login</button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-head">
+        <h1 class="page-title">Professor Profile</h1>
+        <p class="page-subtitle">Account, faculty, and specialisation assignments.</p>
+      </section>
+
+      <section class="profile-card" id="profileCard">
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">1</span>
+              <h2 class="section-title">Basic Info</h2>
+            </div>
+          </div>
+          <div class="field-grid">
+            <div class="field full">
+              <label class="label" for="fullName">Full Name</label>
+              <input class="control locked" id="fullName" type="text" value="Loading account" disabled />
+            </div>
+            <div class="field full">
+              <label class="label" for="bio">Account Note</label>
+              <textarea class="textarea locked" id="bio" disabled>Loading account note</textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">2</span>
+              <h2 class="section-title">Academic Info</h2>
+            </div>
+          </div>
+          <div class="academic-grid">
+            <div class="field">
+              <label class="label" for="department">Faculties</label>
+              <input class="control locked" id="department" type="text" value="Loading faculties" disabled />
+            </div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">3</span>
+              <h2 class="section-title">Specialisations</h2>
+              <span class="day-pill">Loading</span>
+            </div>
+          </div>
+          <div class="specialisation-row">
+            <p class="section-text">Loading specialisations.</p>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">4</span>
+              <h2 class="section-title">Microsoft Teams Account</h2>
+            </div>
+          </div>
+          <div class="teams-grid">
+            <div class="field">
+              <label class="label" for="teams">Teams Account</label>
+              <input class="control locked" id="teams" type="email" value="Loading email" disabled />
+            </div>
+            <div class="teams-logo">T</div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">5</span>
+              <h2 class="section-title">Theme Preferences</h2>
+            </div>
+          </div>
+          <div class="theme-preferences" aria-label="Theme preferences">
+            <button class="theme-choice" type="button" id="darkChoice">Dark Mode</button>
+            <button class="theme-choice" type="button" id="lightChoice">Light Mode</button>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">Light</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+  </div>
+
+  <script src="js/auth-nav.js"></script>
+  <script src="js/professor-profile.js"></script>
+</body>
+</html>

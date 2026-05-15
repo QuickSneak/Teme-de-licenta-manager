@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Interface - Profile</title>
+  <link rel="stylesheet" href="css/profile.css" />
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-left">Student Portal</div>
+      <nav class="main-nav" aria-label="Student navigation">
+        <a href="professors.html" class="nav-link">Professors</a>
+        <a href="propose.html" class="nav-link">Propose</a>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="profile.html" class="nav-link active">Profile</a>
+      </nav>
+      <div class="top-actions">
+        <button class="icon-btn" aria-label="Notifications">N <span class="badge">0</span></button>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span class="theme-option moon">Dark</span>
+          <span class="theme-option sun active">Light</span>
+        </button>
+        <button class="auth-btn" id="authAction" type="button">Login</button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-head">
+        <h1 class="page-title">Student Profile</h1>
+        <p class="page-subtitle">Account and academic information from your logged-in user.</p>
+      </section>
+
+      <section class="profile-card" id="profileCard">
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">1</span>
+              <h2 class="section-title">Basic Info</h2>
+            </div>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label class="label" for="fullName">Full Name</label>
+              <input class="control locked" id="fullName" type="text" value="Loading account" disabled />
+            </div>
+            <div class="field">
+              <label class="label" for="email">Email / Teams Account</label>
+              <input class="control locked" id="email" type="email" value="Loading email" disabled />
+            </div>
+            <div class="field full">
+              <label class="label" for="bio">Account Note</label>
+              <textarea class="textarea locked" id="bio" disabled>Loading account note</textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">2</span>
+              <h2 class="section-title">Academic Info</h2>
+            </div>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label class="label" for="faculty">Faculty</label>
+              <input class="control locked" id="faculty" type="text" value="Loading faculty" disabled />
+            </div>
+            <div class="field">
+              <label class="label" for="specialisation">Specialisation</label>
+              <input class="control locked" id="specialisation" type="text" value="Loading specialisation" disabled />
+            </div>
+            <div class="field">
+              <label class="label" for="year">Cohort</label>
+              <input class="control locked" id="year" type="text" value="Loading cohort" disabled />
+            </div>
+            <div class="field">
+              <label class="label" for="groupNumber">Group Number</label>
+              <input class="control locked" id="groupNumber" type="text" value="Managed by secretary" disabled />
+            </div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">3</span>
+              <h2 class="section-title">Microsoft Teams Account</h2>
+            </div>
+          </div>
+          <div class="field-grid">
+            <div class="field full">
+              <label class="label" for="teams">Teams Account / Email</label>
+              <input class="control locked" id="teams" type="email" value="Loading Teams account" disabled />
+            </div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">4</span>
+              <h2 class="section-title">Theme Preferences</h2>
+            </div>
+          </div>
+          <div class="theme-preferences" aria-label="Theme preferences">
+            <button class="theme-choice" type="button" id="darkChoice">Dark Mode</button>
+            <button class="theme-choice" type="button" id="lightChoice">Light Mode</button>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">Light</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+  </div>
+
+  <script src="js/auth-nav.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+</html>

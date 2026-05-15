@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Interface - Browse by Professor</title>
+  <link rel="stylesheet" href="css/professors.css" />
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" aria-label="Open professors menu">Menu</button>
+      <div class="brand-space">Student Portal</div>
+      <nav class="main-nav" aria-label="Student navigation">
+        <a href="professors.html" class="nav-link active">Professors</a>
+        <a href="propose.html" class="nav-link">Propose</a>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="profile.html" class="nav-link">Profile</a>
+      </nav>
+      <div class="top-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span class="theme-option moon">Dark</span>
+          <span class="theme-option sun active">Light</span>
+        </button>
+        <button class="auth-btn" id="authAction" type="button">Login</button>
+      </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-inner">
+        <div>
+          <div class="sidebar-head">
+            <h2 class="sidebar-title">Professors</h2>
+            <button class="collapse-btn" id="collapseBtn" aria-label="Collapse sidebar">Back</button>
+          </div>
+          <nav class="prof-list" aria-label="Professor list">
+            <span class="prof-link active">Loading professors</span>
+          </nav>
+        </div>
+        <div class="tip-card">Open a professor to view available thesis topics.</div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section class="page-intro">
+        <h1 class="page-title">Browse by Professor</h1>
+        <p class="page-subtitle">Open a professor to view available thesis topics in your specialization.</p>
+      </section>
+      <section class="professors-stack">
+        <p class="page-subtitle">Loading topics.</p>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">Light</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+  </div>
+
+  <script src="js/auth-nav.js"></script>
+  <script src="js/professors.js"></script>
+</body>
+</html>

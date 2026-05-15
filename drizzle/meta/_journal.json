@@ -8,6 +8,20 @@
       "when": 1778621147302,
       "tag": "0000_famous_blob",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1778857746538,
+      "tag": "0001_handy_unus",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1778874455844,
+      "tag": "0002_loud_omega_sentinel",
+      "breakpoints": true
     }
   ]
 }
