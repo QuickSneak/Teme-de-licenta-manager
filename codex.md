@@ -6,6 +6,7 @@
 * **Auth:** better-auth
 * **Email:** Nodemailer (SMTP for verification and password reset links)
 * **Frontend:** Plain HTML + Vanilla JS (no frontend frameworks)
+* **Styling:** Tailwind CSS v3, compiled locally
 
 ## Current Auth Focus
 Building functional email/password authentication featuring:
@@ -39,5 +40,9 @@ Email verification and password reset use SMTP email links. OTP-based flows are 
 
 ## Development Guidelines
 * Do not use React, Vue, or other frontend frameworks. Return standard HTML/JS.
+* Use Tailwind utility classes for styling new or updated frontend screens.
+* Tailwind source CSS lives in `src/css/*.input.css`; generated browser CSS lives beside it, e.g. `src/css/auth.css`.
+* Do not hand-edit generated CSS unless intentionally debugging output. Regenerate with `bun run build:css`; use `bun run dev:css` while actively editing styles.
+* Avoid Tailwind CDN in production pages.
 * Rely on `better-auth` for session management and standard auth flows, extending it only where the custom UAB email parsing requires it.
 * Do not use Romanian special characters in code, configuration, hardcoded mappings, database seed data, or documentation unless explicitly needed for visible UI/design text.
