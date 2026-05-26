@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Interface - Profile Demo</title>
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+
+<body class="transition-colors duration-200">
+  <div class="demo-banner">Demo template - example/test data only</div>
+
+  <div class="app-shell">
+    <header class="demo-topbar">
+      <div class="topbar-brand">Student Portal Demo</div>
+
+      <nav class="main-nav" aria-label="Student navigation">
+        <a href="professors_demo.html" class="nav-link">Professors</a>
+        <a href="propose_demo.html" class="nav-link">Propose</a>
+        <a href="dashboard_demo.html" class="nav-link">Dashboard</a>
+        <a href="profile_demo.html" class="nav-link active" aria-current="page">Profile</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn" aria-label="Notifications">
+          🔔
+          <span class="badge">3</span>
+        </button>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span class="theme-option moon">☾</span>
+          <span class="theme-option sun active">☀</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-shell narrow">
+      <section class="page-head">
+        <h1 class="page-title">Student Profile</h1>
+        <p class="page-subtitle">Manage your academic information and account preferences.</p>
+      </section>
+
+      <section class="profile-card" id="profileCard">
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-icon">1</span>
+              <span class="section-number">1</span>
+              <h2 class="section-title">Basic Info</h2>
+            </div>
+
+            <button class="edit-btn" type="button" data-edit-section>Edit</button>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label class="label" for="fullName">Full Name</label>
+              <input class="control" id="fullName" type="text" value="Test Student Alexandra" disabled />
+            </div>
+
+            <div class="field">
+              <label class="label" for="email">Email / Teams Account</label>
+              <input class="control locked" id="email" type="email" value="test.student.example@uab.ro" disabled />
+            </div>
+
+            <div class="field full">
+              <label class="label" for="bio">Bio / Short Description</label>
+              <textarea class="textarea" id="bio" disabled>Example Informatica student with a strong interest in IoT systems, data security, and embedded solutions.</textarea>
+            </div>
+          </div>
+
+          <p class="profile-note">
+            <span class="note-icon">i</span>
+            Phone number is shared only after approval.
+          </p>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-icon">2</span>
+              <span class="section-number">2</span>
+              <h2 class="section-title">Academic Info</h2>
+            </div>
+
+            <button class="edit-btn" type="button" data-edit-section>Edit</button>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label class="label" for="faculty">Faculty</label>
+              <input class="control" id="faculty" type="text" value="Example Faculty of Informatica si Inginerie" disabled />
+            </div>
+
+            <div class="field">
+              <label class="label" for="specialisation">Specialisation</label>
+              <input class="control" id="specialisation" type="text" value="Example Informatica" disabled />
+            </div>
+
+            <div class="field">
+              <label class="label" for="year">Year of Study</label>
+              <input class="control" id="year" type="text" value="3" disabled />
+            </div>
+
+            <div class="field">
+              <label class="label" for="groupNumber">Group Number</label>
+              <input class="control" id="groupNumber" type="text" value="TEST-331" disabled />
+            </div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-icon">3</span>
+              <span class="section-number">3</span>
+              <h2 class="section-title">Microsoft Teams Account</h2>
+            </div>
+
+            <button class="edit-btn" type="button" data-edit-section>Edit</button>
+          </div>
+
+          <div class="field">
+            <label class="label" for="teams">Teams Account / Email</label>
+            <input class="control" id="teams" type="email" value="test.student.example@uab.ro" disabled />
+          </div>
+
+          <p class="profile-text mt-3">Used for thesis communication and academic coordination.</p>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-icon">4</span>
+              <span class="section-number">4</span>
+              <h2 class="section-title">Account Settings</h2>
+            </div>
+
+            <button class="edit-btn" type="button" data-edit-section>Edit</button>
+          </div>
+
+          <p class="profile-text">
+            <strong>Your account visibility is managed by the academic system.</strong><br />
+            Only approved professors and administrators can view your full information.
+          </p>
+        </section>
+
+        <section class="profile-section">
+          <div class="mb-4 flex items-center gap-3">
+            <span class="section-icon">5</span>
+            <span class="section-number">5</span>
+            <h2 class="section-title">Theme Preferences</h2>
+          </div>
+
+          <div class="grid gap-3 sm:grid-cols-2" aria-label="Theme preferences">
+            <button class="theme-choice" type="button" id="darkChoice">Dark Mode</button>
+            <button class="theme-choice" type="button" id="lightChoice">Light Mode</button>
+          </div>
+
+          <p class="profile-note">
+            <span class="note-icon">i</span>
+            Theme preference is saved on this device.
+          </p>
+        </section>
+
+        <div class="profile-footer">
+          <p class="helper-note">
+            <span class="note-icon">OK</span>
+            Changes are stored locally in this prototype.
+          </p>
+
+          <div class="form-actions">
+            <button class="btn btn-secondary" type="button" id="cancelBtn">Cancel</button>
+            <button class="btn btn-primary" type="button" id="saveBtn">Save Changes</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">S</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+
+    <div class="toast" id="toast">
+      <p class="toast-title">Example profile saved</p>
+      <p class="toast-text">Your profile changes were saved locally. This is demo feedback for testing only.</p>
+    </div>
+  </div>
+
+  <script>
+    const body = document.body;
+
+    const themeToggle = document.getElementById("themeToggle");
+    const moonOption = document.querySelector(".theme-option.moon");
+    const sunOption = document.querySelector(".theme-option.sun");
+    const modeIcon = document.getElementById("modeIcon");
+    const modeText = document.getElementById("modeText");
+
+    const darkChoice = document.getElementById("darkChoice");
+    const lightChoice = document.getElementById("lightChoice");
+
+    const editButtons = document.querySelectorAll("[data-edit-section]");
+    const editableControls = document.querySelectorAll(".control:not(.locked), .textarea:not(.locked)");
+
+    const cancelBtn = document.getElementById("cancelBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const toast = document.getElementById("toast");
+
+    const originalValues = {};
+
+    editableControls.forEach((control) => {
+      originalValues[control.id] = control.value;
+    });
+
+    function setTheme(theme) {
+      const isDark = theme === "dark";
+
+      body.classList.toggle("dark", isDark);
+      moonOption.classList.toggle("active", isDark);
+      sunOption.classList.toggle("active", !isDark);
+      darkChoice.classList.toggle("active", isDark);
+      lightChoice.classList.toggle("active", !isDark);
+      modeIcon.textContent = isDark ? "M" : "S";
+      modeText.textContent = isDark ? "DARK MODE" : "LIGHT MODE";
+
+      localStorage.setItem("studentInterfaceTheme", theme);
+    }
+
+    function enableEditing(section) {
+      const controls = section.querySelectorAll(".control:not(.locked), .textarea:not(.locked)");
+
+      controls.forEach((control) => {
+        control.disabled = false;
+      });
+
+      controls[0]?.focus();
+    }
+
+    function disableEditing() {
+      editableControls.forEach((control) => {
+        control.disabled = true;
+      });
+    }
+
+    function showToast() {
+      toast.classList.add("show");
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 3200);
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const nextTheme = body.classList.contains("dark") ? "light" : "dark";
+      setTheme(nextTheme);
+    });
+
+    darkChoice.addEventListener("click", () => setTheme("dark"));
+    lightChoice.addEventListener("click", () => setTheme("light"));
+
+    editButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        enableEditing(button.closest("section"));
+      });
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      Object.entries(originalValues).forEach(([id, value]) => {
+        const control = document.getElementById(id);
+
+        if (control) {
+          control.value = value;
+        }
+      });
+
+      disableEditing();
+    });
+
+    saveBtn.addEventListener("click", () => {
+      editableControls.forEach((control) => {
+        originalValues[control.id] = control.value;
+      });
+
+      disableEditing();
+      showToast();
+
+      console.log({
+        fullName: document.getElementById("fullName").value,
+        email: document.getElementById("email").value,
+        bio: document.getElementById("bio").value,
+        faculty: document.getElementById("faculty").value,
+        specialisation: document.getElementById("specialisation").value,
+        year: document.getElementById("year").value,
+        groupNumber: document.getElementById("groupNumber").value,
+        teams: document.getElementById("teams").value,
+        theme: body.classList.contains("dark") ? "dark" : "light"
+      });
+    });
+
+    const savedTheme = localStorage.getItem("studentInterfaceTheme") || "light";
+    setTheme(savedTheme);
+  </script>
+</body>
+</html>

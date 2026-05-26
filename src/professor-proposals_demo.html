@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Professor Portal Demo - Student Proposals</title>
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+  <div class="demo-banner">Demo template - example/test data only</div>
+
+  <div class="app-shell">
+    <header class="demo-topbar">
+      <div class="portal-brand">
+        <span class="brand-icon">P</span>
+        <span>Professor Portal</span>
+      </div>
+
+      <nav class="main-nav" aria-label="Professor navigation">
+        <a href="professor-dashboard_demo.html" class="nav-link">Dashboard</a>
+        <a href="professor-proposals_demo.html" class="nav-link active">Student Proposals</a>
+        <a href="professor-profile_demo.html" class="nav-link">Profile</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn" type="button" aria-label="Notifications">
+          🔔
+          <span class="badge">3</span>
+        </button>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
+          <span class="theme-option moon">☾</span>
+          <span class="theme-option sun active">☀</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-shell proposals-shell">
+      <section class="page-head">
+        <h1 class="page-title">Student Proposals</h1>
+        <p class="page-subtitle">Review example/test thesis requests submitted by students.</p>
+      </section>
+
+      <section class="summary-strip">
+        <div class="summary-left">
+          <span class="summary-icon">12</span>
+          <span class="summary-label">Pending Example Proposals</span>
+          <span class="summary-number">3 shown</span>
+        </div>
+        <div class="summary-right">
+          <span>Last demo refresh: 10 minutes ago</span>
+          <button class="refresh-btn" type="button" aria-label="Refresh proposals">R</button>
+        </div>
+      </section>
+
+      <div class="section-toolbar">
+        <h2 class="section-title-main">Active Proposals</h2>
+      </div>
+
+      <section class="review-group faculty-proposals">
+        <button class="review-group-head collapsible-trigger" type="button">
+          <span class="review-head-left">
+            <span class="section-icon">FI</span>
+            <span>Example Faculty of Informatics and Engineering</span>
+          </span>
+          <span class="collapse-arrow">^</span>
+        </button>
+
+        <div class="collapsible-content">
+          <section class="review-specialisation specialisation-group">
+            <button class="review-specialisation-head collapsible-trigger" type="button">
+              <span class="review-head-left">
+                <span class="section-icon">I</span>
+                <span>Example Informatics</span>
+              </span>
+              <span class="collapse-arrow">^</span>
+            </button>
+
+            <div class="proposal-review-list collapsible-content">
+              <article class="proposal-review-card"
+                data-title="Example Proposal: AI Code Review Assistant for Academic Projects"
+                data-student="Test Student Ayesha"
+                data-faculty="Example Faculty of Informatics and Engineering"
+                data-specialisation="Example Informatics"
+                data-type="Solo"
+                data-description="Example proposal text: build an assistant that analyzes student code, highlights likely bugs, and suggests improvements for academic programming projects.">
+                <div class="student-side">
+                  <span class="avatar">AS</span>
+                  <div>
+                    <h3 class="student-name">Test Student Ayesha</h3>
+                    <span class="student-type">Solo example</span>
+                  </div>
+                </div>
+                <div class="proposal-main">
+                  <h3 class="proposal-title">Example Proposal: AI Code Review Assistant for Academic Projects</h3>
+                  <p class="proposal-meta">Example Faculty of Informatics and Engineering - Example Informatics</p>
+                  <p class="proposal-desc">Example/test idea focused on automated feedback for student programming assignments.</p>
+                </div>
+                <div class="proposal-actions">
+                  <span class="proposal-time">12 minutes ago</span>
+                  <span class="new-pill">New</span>
+                  <button class="small-btn view-proposal-btn" type="button">View</button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="review-specialisation specialisation-group">
+            <button class="review-specialisation-head collapsible-trigger" type="button">
+              <span class="review-head-left">
+                <span class="section-icon">CS</span>
+                <span>Example Cybersecurity Track</span>
+              </span>
+              <span class="collapse-arrow">^</span>
+            </button>
+
+            <div class="proposal-review-list collapsible-content">
+              <article class="proposal-review-card"
+                data-title="Example Proposal: Behavioral Biometrics Authentication"
+                data-student="Test Student Talha and Test Student Noor"
+                data-faculty="Example Faculty of Informatics and Engineering"
+                data-specialisation="Example Cybersecurity Track"
+                data-type="Collaborative"
+                data-description="Example proposal text: investigate typing rhythm and interaction patterns as a second signal for authentication risk scoring.">
+                <div class="student-side">
+                  <span class="avatar">TN</span>
+                  <div>
+                    <h3 class="student-name">Test Student Talha and Test Student Noor</h3>
+                    <span class="student-type">Collaborative example</span>
+                  </div>
+                </div>
+                <div class="proposal-main">
+                  <h3 class="proposal-title">Example Proposal: Behavioral Biometrics Authentication</h3>
+                  <p class="proposal-meta">Example Faculty of Informatics and Engineering - Example Cybersecurity Track</p>
+                  <p class="proposal-desc">Example/test idea about anomaly detection for digital identity verification.</p>
+                </div>
+                <div class="proposal-actions">
+                  <span class="proposal-time">1 hour ago</span>
+                  <span class="new-pill">New</span>
+                  <button class="small-btn view-proposal-btn" type="button">View</button>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="review-group faculty-proposals">
+        <button class="review-group-head collapsible-trigger" type="button">
+          <span class="review-head-left">
+            <span class="section-icon">FE</span>
+            <span>Example Faculty of Economics</span>
+          </span>
+          <span class="collapse-arrow">^</span>
+        </button>
+
+        <div class="collapsible-content">
+          <section class="review-specialisation specialisation-group">
+            <button class="review-specialisation-head collapsible-trigger" type="button">
+              <span class="review-head-left">
+                <span class="section-icon">M</span>
+                <span>Example Management</span>
+              </span>
+              <span class="collapse-arrow">^</span>
+            </button>
+
+            <div class="proposal-review-list collapsible-content">
+              <article class="proposal-review-card"
+                data-title="Example Proposal: Sustainable Supply Chain Practices in SMEs"
+                data-student="Test Student Noor"
+                data-faculty="Example Faculty of Economics"
+                data-specialisation="Example Management"
+                data-type="Solo"
+                data-description="Example proposal text: compare how sustainability practices affect cost pressure, supplier reliability, and long-term competitiveness for small businesses.">
+                <div class="student-side">
+                  <span class="avatar">NR</span>
+                  <div>
+                    <h3 class="student-name">Test Student Noor</h3>
+                    <span class="student-type">Solo example</span>
+                  </div>
+                </div>
+                <div class="proposal-main">
+                  <h3 class="proposal-title">Example Proposal: Sustainable Supply Chain Practices in SMEs</h3>
+                  <p class="proposal-meta">Example Faculty of Economics - Example Management</p>
+                  <p class="proposal-desc">Example/test idea about operational performance in small and medium enterprises.</p>
+                </div>
+                <div class="proposal-actions">
+                  <span class="proposal-time">2 hours ago</span>
+                  <span class="new-pill">New</span>
+                  <button class="small-btn view-proposal-btn" type="button">View</button>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <div class="section-toolbar">
+        <h2 class="section-title-main">History</h2>
+      </div>
+
+      <section class="history-grid">
+        <article class="history-card">
+          <div class="history-head approved">
+            <span>+</span>
+            <span>Approved Examples</span>
+          </div>
+          <div class="history-list">
+            <article class="history-row">
+              <span class="history-avatar approved">ZK</span>
+              <div>
+                <p class="history-name">Test Student Zainab</p>
+                <p class="history-title">Example Topic: Explainable AI for Student Performance</p>
+                <p class="history-meta">Example Informatics - 3 days ago</p>
+              </div>
+              <span class="status-pill approved">Approved</span>
+            </article>
+            <article class="history-row">
+              <span class="history-avatar approved">AH</span>
+              <div>
+                <p class="history-name">Test Student Ali</p>
+                <p class="history-title">Example Topic: Academic Credential Verification</p>
+                <p class="history-meta">Example Cybersecurity - 5 days ago</p>
+              </div>
+              <span class="status-pill approved">Approved</span>
+            </article>
+            <article class="history-row">
+              <span class="history-avatar approved">SM</span>
+              <div>
+                <p class="history-name">Test Student Sara</p>
+                <p class="history-title">Example Topic: Digital Banking Adoption</p>
+                <p class="history-meta">Example Management - 8 days ago</p>
+              </div>
+              <span class="status-pill approved">Approved</span>
+            </article>
+          </div>
+          <div class="history-footer">
+            <a href="#" class="history-link">View all approved examples</a>
+          </div>
+        </article>
+
+        <article class="history-card">
+          <div class="history-head rejected">
+            <span>x</span>
+            <span>Rejected Examples</span>
+          </div>
+          <div class="history-list">
+            <article class="history-row">
+              <span class="history-avatar rejected">US</span>
+              <div>
+                <p class="history-name">Test Student Usman</p>
+                <p class="history-title">Example Topic: Smart Attendance Prototype</p>
+                <p class="history-meta">Example Informatics - 4 days ago</p>
+              </div>
+              <span class="status-pill rejected">Rejected</span>
+            </article>
+            <article class="history-row">
+              <span class="history-avatar rejected">MA</span>
+              <div>
+                <p class="history-name">Test Student Maham</p>
+                <p class="history-title">Example Topic: Intrusion Detection Model</p>
+                <p class="history-meta">Example Cybersecurity - 6 days ago</p>
+              </div>
+              <span class="status-pill rejected">Rejected</span>
+            </article>
+            <article class="history-row">
+              <span class="history-avatar rejected">FA</span>
+              <div>
+                <p class="history-name">Test Student Fatima</p>
+                <p class="history-title">Example Topic: Social Media Marketing Impact</p>
+                <p class="history-meta">Example Management - 9 days ago</p>
+              </div>
+              <span class="status-pill rejected">Rejected</span>
+            </article>
+          </div>
+          <div class="history-footer">
+            <a href="#" class="history-link">View all rejected examples</a>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">S</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="proposalModal">
+    <article class="proposal-modal">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title" id="modalTitle">Proposal title</h2>
+          <p class="modal-subtitle" id="modalSubtitle">Student - Faculty - Specialisation</p>
+        </div>
+        <button class="modal-close" type="button" id="modalClose" aria-label="Close modal">x</button>
+      </div>
+
+      <div class="modal-body">
+        <section class="modal-section">
+          <h3>Proposal Type</h3>
+          <p id="modalType">Solo</p>
+        </section>
+        <section class="modal-section">
+          <h3>Full Proposal</h3>
+          <p id="modalDescription">Proposal description appears here.</p>
+        </section>
+        <section class="modal-section">
+          <h3>Review Note</h3>
+          <p>This is a demo-only review panel. Replace this test guidance with real professor decision rules later.</p>
+        </section>
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-btn reject" type="button">Reject Proposal</button>
+        <button class="modal-btn approve" type="button">Approve Proposal</button>
+      </div>
+    </article>
+  </div>
+
+  <script>
+    const body = document.body;
+    const themeToggle = document.getElementById("themeToggle");
+    const moonOption = document.querySelector(".theme-option.moon");
+    const sunOption = document.querySelector(".theme-option.sun");
+    const modeIcon = document.getElementById("modeIcon");
+    const modeText = document.getElementById("modeText");
+
+    const proposalModal = document.getElementById("proposalModal");
+    const modalClose = document.getElementById("modalClose");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSubtitle = document.getElementById("modalSubtitle");
+    const modalType = document.getElementById("modalType");
+    const modalDescription = document.getElementById("modalDescription");
+
+    function setTheme(theme) {
+      const isDark = theme === "dark";
+      body.classList.toggle("dark", isDark);
+      moonOption.classList.toggle("active", isDark);
+      sunOption.classList.toggle("active", !isDark);
+      modeIcon.textContent = isDark ? "M" : "S";
+      modeText.textContent = isDark ? "DARK MODE" : "LIGHT MODE";
+      localStorage.setItem("professorInterfaceTheme", theme);
+    }
+
+    themeToggle.addEventListener("click", () => {
+      setTheme(body.classList.contains("dark") ? "light" : "dark");
+    });
+
+    document.querySelectorAll(".faculty-proposals > .collapsible-trigger").forEach((trigger) => {
+      trigger.addEventListener("click", () => {
+        trigger.closest(".faculty-proposals")?.classList.toggle("closed");
+      });
+    });
+
+    document.querySelectorAll(".specialisation-group > .collapsible-trigger").forEach((trigger) => {
+      trigger.addEventListener("click", () => {
+        trigger.closest(".specialisation-group")?.classList.toggle("closed");
+      });
+    });
+
+    document.querySelectorAll(".view-proposal-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const card = button.closest(".proposal-review-card");
+
+        modalTitle.textContent = card.dataset.title;
+        modalSubtitle.textContent = `${card.dataset.student} - ${card.dataset.faculty} - ${card.dataset.specialisation}`;
+        modalType.textContent = card.dataset.type;
+        modalDescription.textContent = card.dataset.description;
+        proposalModal.classList.add("open");
+      });
+    });
+
+    function closeModal() {
+      proposalModal.classList.remove("open");
+    }
+
+    modalClose.addEventListener("click", closeModal);
+
+    proposalModal.addEventListener("click", (event) => {
+      if (event.target === proposalModal) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeModal();
+      }
+    });
+
+    document.querySelector(".refresh-btn").addEventListener("click", () => {
+      console.log("Refreshing demo student proposals");
+    });
+
+    document.querySelectorAll(".modal-btn.approve, .modal-btn.reject").forEach((button) => {
+      button.addEventListener("click", () => {
+        console.log("Demo decision:", button.textContent.trim());
+        closeModal();
+      });
+    });
+
+    setTheme(localStorage.getItem("professorInterfaceTheme") || "light");
+  </script>
+</body>
+</html>

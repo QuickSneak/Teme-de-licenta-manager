@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Professor Portal Demo - Profile</title>
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+  <div class="demo-banner">Demo template - example/test data only</div>
+
+  <div class="app-shell">
+    <header class="demo-topbar">
+      <div class="portal-brand">
+        <span class="brand-icon">P</span>
+        <span>Professor Portal</span>
+      </div>
+
+      <nav class="main-nav" aria-label="Professor navigation">
+        <a href="professor-dashboard_demo.html" class="nav-link">Dashboard</a>
+        <a href="professor-proposals_demo.html" class="nav-link">Student Proposals</a>
+        <a href="professor-profile_demo.html" class="nav-link active">Profile</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn" type="button" aria-label="Notifications">
+          🔔
+          <span class="badge">3</span>
+        </button>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
+          <span class="theme-option moon">☾</span>
+          <span class="theme-option sun active">☀</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-head">
+        <h1 class="page-title">Professor Profile</h1>
+        <p class="page-subtitle">Example professor data for testing the profile screen.</p>
+      </section>
+
+      <section class="profile-card" id="profileCard">
+        <section class="profile-section">
+          <div class="profile-top">
+            <div class="picture-panel">
+              <div class="section-head">
+                <div class="section-title-wrap">
+                  <span class="section-number">1</span>
+                  <h2 class="section-title">Profile Picture</h2>
+                </div>
+              </div>
+
+              <div class="photo-area">
+                <div class="profile-photo">
+                  EA
+                  <button class="camera-btn" type="button" aria-label="Change profile photo">C</button>
+                </div>
+                <button class="change-photo-btn" type="button">Change demo photo</button>
+                <p class="photo-note">Example placeholder image. JPG or PNG later.</p>
+              </div>
+            </div>
+
+            <div>
+              <div class="section-head">
+                <div class="section-title-wrap">
+                  <span class="section-number">2</span>
+                  <h2 class="section-title">Basic Info</h2>
+                </div>
+                <button class="edit-btn" type="button" data-edit-section>Edit</button>
+              </div>
+
+              <div class="field-grid">
+                <div class="field full">
+                  <label class="label" for="fullName">Full Name</label>
+                  <input class="control" id="fullName" type="text" value="Prof. Dr. Example Alexandru" disabled />
+                </div>
+                <div class="field full">
+                  <label class="label" for="bio">Short Bio</label>
+                  <textarea class="textarea large" id="bio" disabled>Example professor profile used for testing. Research interests include secure systems, artificial intelligence, software engineering, and academic supervision workflows.</textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">3</span>
+              <h2 class="section-title">Academic Info</h2>
+            </div>
+            <button class="edit-btn" type="button" data-edit-section>Edit</button>
+          </div>
+
+          <div class="academic-grid">
+            <div class="field">
+              <label class="label" for="department">Department / Faculty</label>
+              <input class="control" id="department" type="text" value="Example Informatics / Example Faculty of Informatics and Engineering" disabled />
+            </div>
+
+            <div class="field">
+              <label class="label">Office Hours</label>
+              <div class="office-table">
+                <div class="office-row">
+                  <span class="day-pill">Monday</span>
+                  <span class="office-time">Example slot: 10:00 - 12:00</span>
+                  <button class="office-edit" type="button" aria-label="Edit Monday office hours">E</button>
+                </div>
+                <div class="office-row">
+                  <span class="day-pill">Wednesday</span>
+                  <span class="office-time">Example slot: 14:00 - 16:00</span>
+                  <button class="office-edit" type="button" aria-label="Edit Wednesday office hours">E</button>
+                </div>
+                <div class="office-row">
+                  <span class="day-pill">Friday</span>
+                  <span class="office-time">Example slot: 09:00 - 11:00</span>
+                  <button class="office-edit" type="button" aria-label="Edit Friday office hours">E</button>
+                </div>
+                <div class="office-row">
+                  <span class="day-pill">By appointment</span>
+                  <span class="office-time">Example fallback meeting option</span>
+                  <button class="office-edit" type="button" aria-label="Edit appointment option">E</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">4</span>
+              <h2 class="section-title">Specialisations</h2>
+              <span class="day-pill">3 examples</span>
+            </div>
+            <button class="edit-btn" type="button">Edit</button>
+          </div>
+
+          <div class="specialisation-row">
+            <article class="specialisation-card active">
+              <span class="specialisation-icon">I</span>
+              <div>
+                <h3 class="specialisation-title">Example Informatics</h3>
+                <p class="specialisation-desc">Algorithms, data structures, and computational theory.</p>
+              </div>
+            </article>
+            <article class="specialisation-card">
+              <span class="specialisation-icon">S</span>
+              <div>
+                <h3 class="specialisation-title">Example Cybersecurity</h3>
+                <p class="specialisation-desc">Network security, cryptography, and risk management.</p>
+              </div>
+            </article>
+            <article class="specialisation-card">
+              <span class="specialisation-icon">SE</span>
+              <div>
+                <h3 class="specialisation-title">Example Software Engineering</h3>
+                <p class="specialisation-desc">Architecture, testing, DevOps, and maintainable systems.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">5</span>
+              <h2 class="section-title">Microsoft Teams Account</h2>
+            </div>
+            <button class="edit-btn" type="button" data-edit-section>Edit</button>
+          </div>
+
+          <div class="teams-grid">
+            <div class="field">
+              <label class="label" for="teams">Teams Account</label>
+              <input class="control" id="teams" type="email" value="example.professor.profile@test.local" disabled />
+            </div>
+            <div class="teams-logo">T</div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">6</span>
+              <h2 class="section-title">Theme Preferences</h2>
+            </div>
+          </div>
+
+          <div class="theme-preferences" aria-label="Theme preferences">
+            <button class="theme-choice" type="button" id="darkChoice">Dark Mode</button>
+            <button class="theme-choice" type="button" id="lightChoice">Light Mode</button>
+          </div>
+
+          <p class="helper-note">
+            <span class="note-icon">i</span>
+            Demo preference stored locally for testing only.
+          </p>
+        </section>
+
+        <div class="profile-footer">
+          <button class="btn btn-secondary" type="button" id="cancelBtn">Cancel</button>
+          <button class="btn btn-primary" type="button" id="saveBtn">Save Changes</button>
+        </div>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">S</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+
+    <div class="toast" id="toast">
+      <p class="toast-title">Example profile saved</p>
+      <p class="toast-text">Professor demo changes were saved locally for this static template.</p>
+    </div>
+  </div>
+
+  <script>
+    const body = document.body;
+    const themeToggle = document.getElementById("themeToggle");
+    const moonOption = document.querySelector(".theme-option.moon");
+    const sunOption = document.querySelector(".theme-option.sun");
+    const modeIcon = document.getElementById("modeIcon");
+    const modeText = document.getElementById("modeText");
+    const darkChoice = document.getElementById("darkChoice");
+    const lightChoice = document.getElementById("lightChoice");
+    const profileCard = document.getElementById("profileCard");
+    const editButtons = document.querySelectorAll("[data-edit-section]");
+    const editableControls = document.querySelectorAll(".control:not(.locked), .textarea:not(.locked)");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const toast = document.getElementById("toast");
+    const originalValues = {};
+
+    editableControls.forEach((control) => {
+      originalValues[control.id] = control.value;
+    });
+
+    function setTheme(theme) {
+      const isDark = theme === "dark";
+      body.classList.toggle("dark", isDark);
+      moonOption.classList.toggle("active", isDark);
+      sunOption.classList.toggle("active", !isDark);
+      darkChoice.classList.toggle("active", isDark);
+      lightChoice.classList.toggle("active", !isDark);
+      modeIcon.textContent = isDark ? "M" : "S";
+      modeText.textContent = isDark ? "DARK MODE" : "LIGHT MODE";
+      localStorage.setItem("professorInterfaceTheme", theme);
+    }
+
+    function enableEditing(section) {
+      profileCard.classList.add("editing");
+      const controls = section.querySelectorAll(".control:not(.locked), .textarea:not(.locked)");
+
+      controls.forEach((control) => {
+        control.disabled = false;
+      });
+
+      controls[0]?.focus();
+    }
+
+    function disableEditing() {
+      profileCard.classList.remove("editing");
+
+      editableControls.forEach((control) => {
+        control.disabled = true;
+      });
+    }
+
+    function showToast() {
+      toast.classList.add("show");
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 3200);
+    }
+
+    themeToggle.addEventListener("click", () => {
+      setTheme(body.classList.contains("dark") ? "light" : "dark");
+    });
+
+    darkChoice.addEventListener("click", () => setTheme("dark"));
+    lightChoice.addEventListener("click", () => setTheme("light"));
+
+    editButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        enableEditing(button.closest(".profile-section"));
+      });
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      Object.entries(originalValues).forEach(([id, value]) => {
+        const control = document.getElementById(id);
+        if (control) {
+          control.value = value;
+        }
+      });
+
+      disableEditing();
+    });
+
+    saveBtn.addEventListener("click", () => {
+      editableControls.forEach((control) => {
+        originalValues[control.id] = control.value;
+      });
+
+      disableEditing();
+      showToast();
+
+      console.log({
+        fullName: document.getElementById("fullName").value,
+        bio: document.getElementById("bio").value,
+        department: document.getElementById("department").value,
+        teams: document.getElementById("teams").value,
+        theme: body.classList.contains("dark") ? "dark" : "light"
+      });
+    });
+
+    document.querySelectorAll(".office-edit").forEach((button) => {
+      button.addEventListener("click", () => {
+        console.log("Demo office hour edit clicked");
+      });
+    });
+
+    document.querySelectorAll(".specialisation-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        card.classList.toggle("active");
+      });
+    });
+
+    setTheme(localStorage.getItem("professorInterfaceTheme") || "light");
+  </script>
+</body>
+</html>

@@ -2,8 +2,10 @@
   "name": "TEMA_LICENTA-2",
   "version": "1.0.50",
   "scripts": {
-    "build:css": "tailwindcss -i src/css/auth.input.css -o src/css/auth.css",
-    "dev:css": "tailwindcss -i src/css/auth.input.css -o src/css/auth.css --watch",
+    "build:css": "tailwindcss -c tailwind.auth.config.js -i src/css/auth.input.css -o src/css/auth.css && tailwindcss -c tailwind.config.js -i src/css/site.input.css -o src/css/site.css",
+    "build:css:auth": "tailwindcss -c tailwind.auth.config.js -i src/css/auth.input.css -o src/css/auth.css",
+    "build:css:site": "tailwindcss -c tailwind.config.js -i src/css/site.input.css -o src/css/site.css",
+    "dev:css": "tailwindcss -c tailwind.config.js -i src/css/site.input.css -o src/css/site.css --watch",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts"
   },
