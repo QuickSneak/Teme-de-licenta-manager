@@ -40,18 +40,9 @@
         <button class="collapse-sidebar-btn" id="collapseSidebarBtn" type="button" aria-label="Collapse sidebar">&lt;</button>
       </div>
 
-      <section class="faculty-group">
-        <h2 class="faculty-title">Example Faculty of Informatica si Inginerie</h2>
-        <a href="#computer-science" class="sidebar-link"><span class="sidebar-link-icon">I</span><span class="sidebar-link-text">Example Informatica</span></a>
-        <a href="#cybersecurity" class="sidebar-link"><span class="sidebar-link-icon">C</span><span class="sidebar-link-text">Example Cybersecurity Track</span></a>
-        <a href="#software-engineering" class="sidebar-link"><span class="sidebar-link-icon">S</span><span class="sidebar-link-text">Example Software Engineering</span></a>
-      </section>
-
-      <section class="faculty-group">
-        <h2 class="faculty-title">Example Faculty of Economics</h2>
-        <a href="#management" class="sidebar-link"><span class="sidebar-link-icon">M</span><span class="sidebar-link-text">Example Management</span></a>
-        <a href="#finance" class="sidebar-link"><span class="sidebar-link-icon">F</span><span class="sidebar-link-text">Example Finance</span></a>
-      </section>
+      <div id="facultySidebar">
+        <p class="profile-text">Loading academic assignments...</p>
+      </div>
     </aside>
 
     <main class="browser-content">
@@ -71,56 +62,36 @@
 
         <div class="list-body">
           <article class="data-row">
-            <span class="mini-icon accent">N1</span>
+            <span class="mini-icon accent">0</span>
             <div class="row-main">
-              <p class="row-title">New claim submitted for Example Thesis: Web App for Thesis Management</p>
+              <p class="row-title">No recent notifications yet.</p>
             </div>
-            <p class="row-time">12 minutes ago</p>
-            <a href="#" class="small-btn">View</a>
-          </article>
-
-          <article class="data-row">
-            <span class="mini-icon accent">N2</span>
-            <div class="row-main">
-              <p class="row-title">Student proposal waiting for review</p>
-            </div>
-            <p class="row-time">1 hour ago</p>
-            <a href="#" class="small-btn">View</a>
-          </article>
-
-          <article class="data-row">
-            <span class="mini-icon accent">N3</span>
-            <div class="row-main">
-              <p class="row-title">Example Thesis: AI-Based Scheduling Assistant has reached full capacity</p>
-            </div>
-            <p class="row-time">3 hours ago</p>
-            <a href="#" class="small-btn">View</a>
           </article>
         </div>
       </section>
 
       <section class="stats-grid" aria-label="Professor dashboard summary">
         <article class="stat-card">
-          <span class="stat-icon accent">7</span>
+          <span class="stat-icon accent">0</span>
           <div>
             <p class="stat-label">Pending Claims</p>
-            <p class="stat-number">7</p>
+            <p class="stat-number">0</p>
           </div>
         </article>
 
         <article class="stat-card">
-          <span class="stat-icon blue">24</span>
+          <span class="stat-icon blue">0</span>
           <div>
             <p class="stat-label">Approved Students</p>
-            <p class="stat-number">24</p>
+            <p class="stat-number">0</p>
           </div>
         </article>
 
         <article class="stat-card">
-          <span class="stat-icon orange">5</span>
+          <span class="stat-icon orange">0</span>
           <div>
             <p class="stat-label">Unread Messages</p>
-            <p class="stat-number">5</p>
+            <p class="stat-number">0</p>
           </div>
         </article>
       </section>
@@ -130,206 +101,18 @@
         <a class="btn btn-primary" href="professor_add_thesis.html">+ Add Thesis</a>
       </section>
 
-      <section class="faculty-block">
-        <button class="faculty-block-head collapsible-trigger" type="button">
-          <span class="faculty-title-left"><span>F1</span><span>Example Faculty of Informatica si Inginerie</span></span>
-          <span class="collapse-arrow">^</span>
-        </button>
-
-        <div class="collapsible-content">
-          <section class="specialisation-block open" id="computer-science">
-            <button class="specialisation-head collapsible-trigger" type="button">
-              <span class="specialisation-name"><span>I</span><span>Example Informatica</span></span>
-              <span class="collapse-arrow">^</span>
-            </button>
-            <div class="thesis-list collapsible-content">
-              <article class="thesis-row">
-                <div>
-                  <h3 class="thesis-title">Example Thesis: Web App for Thesis Management</h3>
-                  <p class="thesis-desc"><strong>Specialisation:</strong> Example Informatica<br />A comprehensive web application to manage thesis proposals, claims, and evaluations.</p>
-                </div>
-                <span class="status-pill available">Available</span>
-                <div class="row-actions"><a href="#" class="small-btn">View</a><a href="#" class="small-btn">Edit</a><a href="#" class="small-btn danger">Delete</a></div>
-              </article>
-
-              <article class="thesis-row">
-                <div>
-                  <h3 class="thesis-title">Example Thesis: AI-Based Scheduling Assistant</h3>
-                  <p class="thesis-desc"><strong>Specialisation:</strong> Example Informatica<br />An intelligent assistant to optimize academic scheduling using AI techniques.</p>
-                </div>
-                <span class="status-pill full">Full</span>
-                <div class="row-actions"><a href="#" class="small-btn">View</a><a href="#" class="small-btn">Edit</a><a href="#" class="small-btn danger">Delete</a></div>
-              </article>
-            </div>
-          </section>
-
-          <section class="specialisation-block open" id="cybersecurity">
-            <button class="specialisation-head collapsible-trigger" type="button">
-              <span class="specialisation-name"><span>C</span><span>Example Cybersecurity Track</span></span>
-              <span class="collapse-arrow">^</span>
-            </button>
-            <div class="thesis-list collapsible-content">
-              <article class="thesis-row">
-                <div>
-                  <h3 class="thesis-title">Example Thesis: Secure Authentication Framework</h3>
-                  <p class="thesis-desc"><strong>Specialisation:</strong> Example Cybersecurity Track<br />Design and implementation of a secure multi-factor authentication framework.</p>
-                </div>
-                <span class="status-pill available">Available</span>
-                <div class="row-actions"><a href="#" class="small-btn">View</a><a href="#" class="small-btn">Edit</a><a href="#" class="small-btn danger">Delete</a></div>
-              </article>
-
-              <article class="thesis-row">
-                <div>
-                  <h3 class="thesis-title">Example Thesis: Cyber Threat Intelligence Platform</h3>
-                  <p class="thesis-desc"><strong>Specialisation:</strong> Example Cybersecurity Track<br />A platform for real-time collection, analysis, and visualization of cyber threats.</p>
-                </div>
-                <span class="status-pill full">Full</span>
-                <div class="row-actions"><a href="#" class="small-btn">View</a><a href="#" class="small-btn">Edit</a><a href="#" class="small-btn danger">Delete</a></div>
-              </article>
-            </div>
-          </section>
-
-          <section class="specialisation-block open" id="software-engineering">
-            <button class="specialisation-head collapsible-trigger" type="button">
-              <span class="specialisation-name"><span>S</span><span>Example Software Engineering</span></span>
-              <span class="collapse-arrow">^</span>
-            </button>
-            <div class="thesis-list collapsible-content">
-              <article class="thesis-row">
-                <div>
-                  <h3 class="thesis-title">Example Thesis: Agile Project Management Platform</h3>
-                  <p class="thesis-desc"><strong>Specialisation:</strong> Example Software Engineering<br />A platform for planning, tracking, and evaluating software development projects.</p>
-                </div>
-                <span class="status-pill available">Available</span>
-                <div class="row-actions"><a href="#" class="small-btn">View</a><a href="#" class="small-btn">Edit</a><a href="#" class="small-btn danger">Delete</a></div>
-              </article>
-
-              <article class="thesis-row">
-                <div>
-                  <h3 class="thesis-title">Example Thesis: Automated Testing Dashboard</h3>
-                  <p class="thesis-desc"><strong>Specialisation:</strong> Example Software Engineering<br />A dashboard for monitoring automated tests, code coverage, and software quality.</p>
-                </div>
-                <span class="status-pill available">Available</span>
-                <div class="row-actions"><a href="#" class="small-btn">View</a><a href="#" class="small-btn">Edit</a><a href="#" class="small-btn danger">Delete</a></div>
-              </article>
-            </div>
-          </section>
-        </div>
-      </section>
-
-      <section class="faculty-block">
-        <button class="faculty-block-head collapsible-trigger" type="button">
-          <span class="faculty-title-left"><span>F2</span><span>Example Faculty of Economics</span></span>
-          <span class="collapse-arrow">^</span>
-        </button>
-
-        <div class="collapsible-content">
-          <section class="specialisation-block open" id="management">
-            <button class="specialisation-head collapsible-trigger" type="button">
-              <span class="specialisation-name"><span>M</span><span>Example Management</span></span>
-              <span class="collapse-arrow">^</span>
-            </button>
-            <div class="thesis-list collapsible-content">
-              <article class="thesis-row">
-                <div>
-                  <h3 class="thesis-title">Example Thesis: Digital Transformation in Small Businesses</h3>
-                  <p class="thesis-desc"><strong>Specialisation:</strong> Example Management<br />A study of how small businesses adopt digital tools to improve internal processes.</p>
-                </div>
-                <span class="status-pill available">Available</span>
-                <div class="row-actions"><a href="#" class="small-btn">View</a><a href="#" class="small-btn">Edit</a><a href="#" class="small-btn danger">Delete</a></div>
-              </article>
-
-              <article class="thesis-row">
-                <div>
-                  <h3 class="thesis-title">Example Thesis: Employee Motivation and Remote Work</h3>
-                  <p class="thesis-desc"><strong>Specialisation:</strong> Example Management<br />An analysis of motivation, productivity, and team communication in remote work settings.</p>
-                </div>
-                <span class="status-pill full">Full</span>
-                <div class="row-actions"><a href="#" class="small-btn">View</a><a href="#" class="small-btn">Edit</a><a href="#" class="small-btn danger">Delete</a></div>
-              </article>
-            </div>
-          </section>
-
-          <section class="specialisation-block open" id="finance">
-            <button class="specialisation-head collapsible-trigger" type="button">
-              <span class="specialisation-name"><span>F</span><span>Example Finance</span></span>
-              <span class="collapse-arrow">^</span>
-            </button>
-            <div class="thesis-list collapsible-content">
-              <article class="thesis-row">
-                <div>
-                  <h3 class="thesis-title">Example Thesis: Financial Risk Analysis for Startups</h3>
-                  <p class="thesis-desc"><strong>Specialisation:</strong> Example Finance<br />A framework for identifying and evaluating financial risks in early-stage companies.</p>
-                </div>
-                <span class="status-pill available">Available</span>
-                <div class="row-actions"><a href="#" class="small-btn">View</a><a href="#" class="small-btn">Edit</a><a href="#" class="small-btn danger">Delete</a></div>
-              </article>
-
-              <article class="thesis-row">
-                <div>
-                  <h3 class="thesis-title">Example Thesis: Budget Forecasting Using Historical Data</h3>
-                  <p class="thesis-desc"><strong>Specialisation:</strong> Example Finance<br />A data-based approach for predicting future budget needs and financial planning.</p>
-                </div>
-                <span class="status-pill available">Available</span>
-                <div class="row-actions"><a href="#" class="small-btn">View</a><a href="#" class="small-btn">Edit</a><a href="#" class="small-btn danger">Delete</a></div>
-              </article>
-            </div>
-          </section>
-        </div>
-      </section>
+      <div id="facultyBlocks">
+        <section class="panel">
+          <p class="profile-text">Loading faculty and specialisation assignments...</p>
+        </section>
+      </div>
 
       <section class="section-toolbar">
         <h2 class="section-title-main">My Students</h2>
       </section>
 
-      <section class="students-grid">
-        <article class="student-card">
-          <div class="student-head">
-            <span class="avatar">AS</span>
-            <div>
-              <h3 class="student-name">Test Student Ayesha</h3>
-              <p class="student-topic">Example Thesis: Web App for Thesis Management</p>
-            </div>
-          </div>
-          <div class="student-meta">
-            <p><strong>Type:</strong> Claimed Thesis</p>
-            <p><strong>Specialisation:</strong> Example Informatica</p>
-            <p><strong>Status:</strong> <span class="text-orange-500 font-black">Pending Review</span></p>
-          </div>
-          <button class="message-btn">Message Student</button>
-        </article>
-
-        <article class="student-card">
-          <div class="student-head">
-            <span class="avatar">MT</span>
-            <div>
-              <h3 class="student-name">Test Student Talha</h3>
-              <p class="student-topic">Example Thesis: AI-Based Scheduling Assistant</p>
-            </div>
-          </div>
-          <div class="student-meta">
-            <p><strong>Type:</strong> Claimed Thesis</p>
-            <p><strong>Specialisation:</strong> Example Informatica</p>
-            <p><strong>Status:</strong> <span class="text-green-500 font-black">Approved</span></p>
-          </div>
-          <button class="message-btn">Message Student</button>
-        </article>
-
-        <article class="student-card">
-          <div class="student-head">
-            <span class="avatar">NR</span>
-            <div>
-              <h3 class="student-name">Test Student Noor</h3>
-              <p class="student-topic">Example Custom Topic: Smart Library System</p>
-            </div>
-          </div>
-          <div class="student-meta">
-            <p><strong>Type:</strong> Custom Thesis</p>
-            <p><strong>Specialisation:</strong> Example Informatica</p>
-            <p><strong>Status:</strong> <span class="text-orange-500 font-black">Pending Review</span></p>
-          </div>
-          <button class="message-btn">Message Student</button>
-        </article>
+      <section class="panel">
+        <p class="profile-text">No students are assigned yet.</p>
       </section>
     </main>
 
@@ -351,6 +134,8 @@
 
     const mobileMenuBtn = document.getElementById("mobileMenuBtn");
     const collapseSidebarBtn = document.getElementById("collapseSidebarBtn");
+    const facultySidebar = document.getElementById("facultySidebar");
+    const facultyBlocks = document.getElementById("facultyBlocks");
 
     function setTheme(theme) {
       const isDark = theme === "dark";
@@ -362,6 +147,227 @@
       modeText.textContent = isDark ? "DARK MODE" : "LIGHT MODE";
 
       localStorage.setItem("professorInterfaceTheme", theme);
+    }
+
+    function initialsFromName(name) {
+      return name
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((word) => word[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "?";
+    }
+
+    function facultyAnchorId(facultyId) {
+      return `faculty-${facultyId}`;
+    }
+
+    function specialisationAnchorId(specialisationId) {
+      return `specialisation-${specialisationId}`;
+    }
+
+    function groupSpecialisationsByFaculty(data) {
+      const facultiesById = new Map();
+
+      (data.faculties || []).forEach((faculty) => {
+        facultiesById.set(faculty.id, {
+          ...faculty,
+          specialisations: []
+        });
+      });
+
+      (data.specializations || []).forEach((specialisation) => {
+        if (!facultiesById.has(specialisation.facultyId)) {
+          facultiesById.set(specialisation.facultyId, {
+            id: specialisation.facultyId,
+            name: specialisation.faculty,
+            specialisations: []
+          });
+        }
+
+        facultiesById.get(specialisation.facultyId).specialisations.push(specialisation);
+      });
+
+      return Array.from(facultiesById.values()).filter((faculty) => faculty.specialisations.length > 0);
+    }
+
+    function createEmptyThesisList() {
+      const list = document.createElement("div");
+      list.className = "thesis-list collapsible-content";
+
+      const empty = document.createElement("p");
+      empty.className = "profile-text py-4";
+      empty.textContent = "No theses have been added for this specialisation yet.";
+
+      list.append(empty);
+      return list;
+    }
+
+    function renderProfessorSidebar(faculties) {
+      facultySidebar.innerHTML = "";
+
+      if (!faculties.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No faculty assignments yet.";
+        facultySidebar.append(empty);
+        return;
+      }
+
+      faculties.forEach((faculty) => {
+        const group = document.createElement("section");
+        group.className = "faculty-group";
+
+        const title = document.createElement("h2");
+        title.className = "faculty-title";
+        title.textContent = faculty.name;
+        group.append(title);
+
+        faculty.specialisations.forEach((specialisation) => {
+          const link = document.createElement("a");
+          link.className = "sidebar-link";
+          link.href = `#${specialisationAnchorId(specialisation.id)}`;
+
+          const icon = document.createElement("span");
+          icon.className = "sidebar-link-icon";
+          icon.textContent = initialsFromName(specialisation.name);
+
+          const text = document.createElement("span");
+          text.className = "sidebar-link-text";
+          text.textContent = specialisation.name;
+
+          link.append(icon, text);
+          group.append(link);
+        });
+
+        facultySidebar.append(group);
+      });
+    }
+
+    function renderProfessorFacultyBlocks(faculties) {
+      facultyBlocks.innerHTML = "";
+
+      if (!faculties.length) {
+        const emptyPanel = document.createElement("section");
+        emptyPanel.className = "panel";
+
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No faculty or specialisation assignments are connected to this professor account yet.";
+
+        emptyPanel.append(empty);
+        facultyBlocks.append(emptyPanel);
+        return;
+      }
+
+      faculties.forEach((faculty, facultyIndex) => {
+        const facultyBlock = document.createElement("section");
+        facultyBlock.className = "faculty-block";
+        facultyBlock.id = facultyAnchorId(faculty.id);
+
+        const facultyButton = document.createElement("button");
+        facultyButton.className = "faculty-block-head collapsible-trigger";
+        facultyButton.type = "button";
+
+        const facultyTitle = document.createElement("span");
+        facultyTitle.className = "faculty-title-left";
+
+        const facultyIcon = document.createElement("span");
+        facultyIcon.textContent = `F${facultyIndex + 1}`;
+
+        const facultyName = document.createElement("span");
+        facultyName.textContent = faculty.name;
+
+        const facultyArrow = document.createElement("span");
+        facultyArrow.className = "collapse-arrow";
+        facultyArrow.textContent = "^";
+
+        facultyTitle.append(facultyIcon, facultyName);
+        facultyButton.append(facultyTitle, facultyArrow);
+
+        const content = document.createElement("div");
+        content.className = "collapsible-content";
+
+        faculty.specialisations.forEach((specialisation) => {
+          const specialisationBlock = document.createElement("section");
+          specialisationBlock.className = "specialisation-block open";
+          specialisationBlock.id = specialisationAnchorId(specialisation.id);
+
+          const specialisationButton = document.createElement("button");
+          specialisationButton.className = "specialisation-head collapsible-trigger";
+          specialisationButton.type = "button";
+
+          const specialisationName = document.createElement("span");
+          specialisationName.className = "specialisation-name";
+
+          const specialisationIcon = document.createElement("span");
+          specialisationIcon.textContent = initialsFromName(specialisation.name);
+
+          const specialisationText = document.createElement("span");
+          specialisationText.textContent = specialisation.name;
+
+          const specialisationArrow = document.createElement("span");
+          specialisationArrow.className = "collapse-arrow";
+          specialisationArrow.textContent = "^";
+
+          specialisationName.append(specialisationIcon, specialisationText);
+          specialisationButton.append(specialisationName, specialisationArrow);
+          specialisationBlock.append(specialisationButton, createEmptyThesisList());
+          content.append(specialisationBlock);
+        });
+
+        facultyBlock.append(facultyButton, content);
+        facultyBlocks.append(facultyBlock);
+      });
+    }
+
+    function setupDynamicDashboardInteractions() {
+      document.querySelectorAll(".sidebar-link").forEach((link) => {
+        link.addEventListener("click", () => {
+          body.classList.remove("mobile-sidebar-open");
+        });
+      });
+
+      document.querySelectorAll(".faculty-block > .collapsible-trigger").forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+          trigger.closest(".faculty-block")?.classList.toggle("closed");
+        });
+      });
+
+      document.querySelectorAll(".specialisation-block > .collapsible-trigger").forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+          trigger.closest(".specialisation-block")?.classList.toggle("closed");
+        });
+      });
+    }
+
+    async function loadProfessorAssignments() {
+      if (window.authGuard?.ready) {
+        const guardData = await window.authGuard.ready;
+        if (!guardData || guardData.user.role !== "professor") {
+          return;
+        }
+      }
+
+      const response = await fetch("/profile");
+
+      if (!response.ok) {
+        window.location.href = "/login.html";
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.user.role !== "professor") {
+        window.location.href = "/login.html";
+        return;
+      }
+
+      const faculties = groupSpecialisationsByFaculty(data);
+      renderProfessorSidebar(faculties);
+      renderProfessorFacultyBlocks(faculties);
+      setupDynamicDashboardInteractions();
     }
 
     themeToggle.addEventListener("click", () => {
@@ -380,12 +386,6 @@
       if (!clickedInsideSidebar && !clickedMenuButton && window.innerWidth <= 900) {
         body.classList.remove("mobile-sidebar-open");
       }
-    });
-
-    document.querySelectorAll(".sidebar-link").forEach((link) => {
-      link.addEventListener("click", () => {
-        body.classList.remove("mobile-sidebar-open");
-      });
     });
 
     document.querySelectorAll(".small-btn, .message-btn, .btn-primary").forEach((button) => {
@@ -411,20 +411,9 @@
       });
     }
 
-    document.querySelectorAll(".faculty-block > .collapsible-trigger").forEach((trigger) => {
-      trigger.addEventListener("click", () => {
-        trigger.closest(".faculty-block")?.classList.toggle("closed");
-      });
-    });
-
-    document.querySelectorAll(".specialisation-block > .collapsible-trigger").forEach((trigger) => {
-      trigger.addEventListener("click", () => {
-        trigger.closest(".specialisation-block")?.classList.toggle("closed");
-      });
-    });
-
     const savedTheme = localStorage.getItem("professorInterfaceTheme") || "light";
     setTheme(savedTheme);
+    loadProfessorAssignments();
   </script>
 </body>
 </html>
