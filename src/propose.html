@@ -3,29 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Student Interface - Propose Thesis Demo</title>
+  <title>Student Interface - Propose Thesis</title>
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 
 <body class="transition-colors duration-200">
-  <div class="demo-banner">Demo template - example/test data only</div>
 
   <div class="app-shell">
     <header class="demo-topbar">
-      <div class="topbar-brand">Student Portal Demo</div>
+      <div class="topbar-brand">Student Portal</div>
 
       <nav class="main-nav" aria-label="Student navigation">
-        <a href="professors_demo.html" class="nav-link">Professors</a>
-        <a href="propose_demo.html" class="nav-link active" aria-current="page">Propose</a>
-        <a href="dashboard_demo.html" class="nav-link">Dashboard</a>
-        <a href="profile_demo.html" class="nav-link">Profile</a>
+        <a href="professors.html" class="nav-link">Professors</a>
+        <a href="propose.html" class="nav-link active" aria-current="page">Propose</a>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="profile.html" class="nav-link">Profile</a>
       </nav>
 
       <div class="top-actions">
-        <button class="icon-btn" aria-label="Notifications">
-          🔔
-          <span class="badge">3</span>
-        </button>
+        <button class="icon-btn logout-btn" type="button" aria-label="Logout" title="Logout">⎋</button>
 
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
           <span class="theme-option moon">☾</span>
@@ -158,7 +154,7 @@
       </p>
     </div>
   </div>
-
+  <script src="/js/top-actions.js"></script>
   <script>
     const body = document.body;
 

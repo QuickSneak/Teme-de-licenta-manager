@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Interface - Profile</title>
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+
+<body class="transition-colors duration-200" data-profile-role="student" data-theme-key="studentInterfaceTheme">
+
+  <div class="app-shell">
+    <header class="demo-topbar">
+      <div class="topbar-brand">Student Portal</div>
+
+      <nav class="main-nav" aria-label="Student navigation">
+        <a href="professors.html" class="nav-link">Professors</a>
+        <a href="propose.html" class="nav-link">Propose</a>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="profile.html" class="nav-link active" aria-current="page">Profile</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn logout-btn" type="button" aria-label="Logout" title="Logout">⎋</button>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span class="theme-option moon">☾</span>
+          <span class="theme-option sun active">☀</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-shell narrow">
+      <section class="page-head">
+        <h1 class="page-title">Student Profile</h1>
+        <p class="page-subtitle">Manage your academic information and account preferences.</p>
+      </section>
+
+      <section class="profile-card" id="profileCard">
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-icon">1</span>
+              <span class="section-number">1</span>
+              <h2 class="section-title">Basic Info</h2>
+            </div>
+
+            <button class="edit-btn" type="button" data-edit-section>Edit</button>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label class="label" for="fullName">Full Name</label>
+              <input class="control" id="fullName" type="text" value="" disabled />
+            </div>
+
+            <div class="field">
+              <label class="label" for="email">Email / Teams Account</label>
+              <input class="control locked" id="email" type="email" value="" disabled />
+            </div>
+
+            <div class="field full">
+              <label class="label" for="bio">Bio / Short Description</label>
+              <textarea class="textarea" id="bio" placeholder="Add a short description for professors reviewing your thesis activity." disabled></textarea>
+            </div>
+          </div>
+
+          <p class="profile-note">
+            <span class="note-icon">i</span>
+            Phone number is shared only after approval.
+          </p>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-icon">2</span>
+              <span class="section-number">2</span>
+              <h2 class="section-title">Academic Info</h2>
+            </div>
+
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label class="label" for="faculty">Faculty</label>
+              <input class="control locked" id="faculty" type="text" value="" disabled />
+            </div>
+
+            <div class="field">
+              <label class="label" for="specialisation">Specialisation</label>
+              <input class="control locked" id="specialisation" type="text" value="" disabled />
+            </div>
+
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-icon">3</span>
+              <span class="section-number">3</span>
+              <h2 class="section-title">Microsoft Teams Account</h2>
+            </div>
+
+          </div>
+
+          <div class="field">
+            <label class="label" for="teams">Teams Account / Email</label>
+            <input class="control locked" id="teams" type="email" value="" disabled />
+          </div>
+
+          <p class="profile-text mt-3">Used for thesis communication and academic coordination.</p>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-icon">4</span>
+              <span class="section-number">4</span>
+              <h2 class="section-title">Account Settings</h2>
+            </div>
+
+          </div>
+
+          <p class="profile-text">
+            <strong>Your account visibility is managed by the academic system.</strong><br />
+            Only approved professors and administrators can view your full information.
+          </p>
+        </section>
+
+        <section class="profile-section">
+          <div class="mb-4 flex items-center gap-3">
+            <span class="section-icon">5</span>
+            <span class="section-number">5</span>
+            <h2 class="section-title">Theme Preferences</h2>
+          </div>
+
+          <div class="grid gap-3 sm:grid-cols-2" aria-label="Theme preferences">
+            <button class="theme-choice" type="button" id="darkChoice">Dark Mode</button>
+            <button class="theme-choice" type="button" id="lightChoice">Light Mode</button>
+          </div>
+
+          <p class="profile-note">
+            <span class="note-icon">i</span>
+            Theme preference is saved on this device.
+          </p>
+        </section>
+
+        <div class="profile-footer">
+          <p class="helper-note">
+            <span class="note-icon">OK</span>
+            Changes are saved to your account profile.
+          </p>
+
+          <div class="form-actions">
+            <button class="btn btn-secondary" type="button" id="cancelBtn">Cancel</button>
+            <button class="btn btn-primary" type="button" id="saveBtn">Save Changes</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">S</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+
+    <div class="toast" id="toast">
+      <p class="toast-title">Profile saved</p>
+      <p class="toast-text" id="toastText">Your profile changes were saved.</p>
+    </div>
+  </div>
+  <script src="/js/top-actions.js"></script>
+  <script src="/js/profile-page.js"></script>
+</body>
+</html>

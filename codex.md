@@ -38,11 +38,27 @@ Email verification and password reset use SMTP email links. OTP-based flows are 
 * Secretary accounts do not receive individual `specializationId` values.
 * A secretary manages all specializations that are part of their assigned faculty.
 
+## Current App Structure
+* Shared demo/app styling is in `src/css/site.input.css` and generated to `src/css/site.css`; auth-only styling remains in `src/css/auth.input.css` and `src/css/auth.css`.
+* Topbar logout buttons use `src/js/top-actions.js`, which calls `POST /logout` and redirects to `login.html`.
+
+## Profile Data
+* `GET /profile` returns the logged-in user's real profile data. `PUT /profile` currently saves only `name` and `bio`.
+* `users.bio` stores profile bio text. Initial bio is empty.
+* Student profile displays `name`, `bio`, account email/Teams email, and faculty/specialization inferred from `users.facultyId` and `users.specializationId`.
+* Professor profile displays `name`, `bio`, account email/Teams email, faculty access as bullet points, and specialization cards from database assignments.
+
+## Professor Specializations
+* Professors use a many-to-many table: `professor_specializations(professor_id, specialization_id)`.
+* Faculty access for professors is inferred through each specialization's `faculty_id`.
+* Seed data includes one professor assigned only to `Informatica`, and one professor assigned to `Informatica`, `Informatica EN`, and `Marketing`.
+
 ## Development Guidelines
 * Do not use React, Vue, or other frontend frameworks. Return standard HTML/JS.
 * Use Tailwind utility classes for styling new or updated frontend screens.
 * Tailwind source CSS lives in `src/css/*.input.css`; generated browser CSS lives beside it, e.g. `src/css/auth.css`.
 * Do not hand-edit generated CSS unless intentionally debugging output. Regenerate with `bun run build:css`; use `bun run dev:css` while actively editing styles.
+* In Codex/agent sandbox sessions on Windows, Bun process launch can fail even when it works in VS Code. If CSS must be rebuilt and `bun run build:css` fails, running Tailwind through Node is an acceptable local fallback.
 * Avoid Tailwind CDN in production pages.
 * Rely on `better-auth` for session management and standard auth flows, extending it only where the custom UAB email parsing requires it.
 * Do not use Romanian special characters in code, configuration, hardcoded mappings, database seed data, or documentation unless explicitly needed for visible UI/design text.

@@ -3,7 +3,7 @@ import { staticPlugin } from '@elysiajs/static';
 import { eq } from 'drizzle-orm';
 import { auth } from './auth';
 import { db } from './db';
-import { faculties, specializations, users } from './db/schema';
+import { faculties, professorSpecializations, specializations, users } from './db/schema';
 import {
   dashboardByRole,
   ensureAcademicUnit,
@@ -60,6 +60,64 @@ async function buildMeResponse(user: AuthUser) {
       specialty: specialization?.name ?? null
     },
     redirect: isUserRole(user.role) ? dashboardByRole[user.role] : '/login.html'
+  };
+}
+
+async function getProfessorAcademicUnits(professorId: string) {
+  return db
+    .select({
+      specializationId: specializations.id,
+      specialization: specializations.name,
+      facultyId: faculties.id,
+      faculty: faculties.name
+    })
+    .from(professorSpecializations)
+    .innerJoin(specializations, eq(professorSpecializations.specializationId, specializations.id))
+    .innerJoin(faculties, eq(specializations.facultyId, faculties.id))
+    .where(eq(professorSpecializations.professorId, professorId));
+}
+
+async function buildProfileResponse(user: AuthUser) {
+  const base = {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    bio: user.bio ?? '',
+    role: user.role
+  };
+
+  if (user.role === 'professor') {
+    const units = await getProfessorAcademicUnits(user.id);
+    const facultiesById = new Map<number, string>();
+
+    units.forEach((unit) => {
+      facultiesById.set(unit.facultyId, unit.faculty);
+    });
+
+    return {
+      user: base,
+      faculties: Array.from(facultiesById, ([id, name]) => ({ id, name })),
+      specializations: units.map((unit) => ({
+        id: unit.specializationId,
+        name: unit.specialization,
+        facultyId: unit.facultyId,
+        faculty: unit.faculty
+      }))
+    };
+  }
+
+  const faculty = user.facultyId
+    ? await db.select().from(faculties).where(eq(faculties.id, user.facultyId)).get()
+    : null;
+
+  const specialization = user.specializationId
+    ? await db.select().from(specializations).where(eq(specializations.id, user.specializationId)).get()
+    : null;
+
+  return {
+    user: base,
+    faculty: faculty ? { id: faculty.id, name: faculty.name } : null,
+    specialization: specialization ? { id: specialization.id, name: specialization.name } : null
   };
 }
 
@@ -181,6 +239,7 @@ new Elysia()
             email: normalizedEmail,
             password,
             name: body.name.trim(),
+            bio: '',
             role,
             facultyId,
             specializationId,
@@ -223,4 +282,40 @@ new Elysia()
 
     return buildMeResponse(user);
   })
+  .get('/profile', async ({ request }) => {
+    const user = await getCurrentUser(request.headers);
+    if (!user) return jsonResponse({ error: 'Not authenticated.' }, { status: 401 });
+
+    return buildProfileResponse(user);
+  })
+  .put(
+    '/profile',
+    async ({ body, request }) => {
+      const user = await getCurrentUser(request.headers);
+      if (!user) return jsonResponse({ error: 'Not authenticated.' }, { status: 401 });
+
+      const name = body.name.trim();
+      const bio = body.bio.trim();
+
+      if (!name) {
+        return jsonResponse({ error: 'Full name is required.' }, { status: 400 });
+      }
+
+      await db
+        .update(users)
+        .set({ name, bio, updatedAt: new Date() })
+        .where(eq(users.id, user.id));
+
+      const updatedUser = await db.select().from(users).where(eq(users.id, user.id)).get();
+      if (!updatedUser) return jsonResponse({ error: 'Profile could not be loaded.' }, { status: 500 });
+
+      return buildProfileResponse(updatedUser);
+    },
+    {
+      body: t.Object({
+        name: t.String(),
+        bio: t.String()
+      })
+    }
+  )
   .listen(3000);

@@ -58,6 +58,11 @@ export const auth = betterAuth({
         type: 'string',
         required: true
       },
+      bio: {
+        type: 'string',
+        required: false,
+        defaultValue: ''
+      },
       facultyId: {
         type: 'number',
         required: false

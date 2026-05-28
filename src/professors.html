@@ -3,30 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Student Interface - Browse by Professor Demo</title>
+  <title>Student Interface - Browse by Professor</title>
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 
 <body class="transition-colors duration-200">
-  <div class="demo-banner">Demo template - example/test data only</div>
 
   <div class="browser-layout">
     <header class="browser-topbar">
       <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" aria-label="Open professors menu">Menu</button>
-      <div class="browser-brand">Student Portal Demo</div>
+      <div class="browser-brand">Student Portal</div>
 
       <nav class="main-nav" aria-label="Student navigation">
-        <a href="professors_demo.html" class="nav-link active" aria-current="page">Professors</a>
-        <a href="propose_demo.html" class="nav-link">Propose</a>
-        <a href="dashboard_demo.html" class="nav-link">Dashboard</a>
-        <a href="profile_demo.html" class="nav-link">Profile</a>
+        <a href="professors.html" class="nav-link active" aria-current="page">Professors</a>
+        <a href="propose.html" class="nav-link">Propose</a>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="profile.html" class="nav-link">Profile</a>
       </nav>
 
       <div class="top-actions">
-        <button class="icon-btn" aria-label="Notifications">
-          🔔
-          <span class="badge">3</span>
-        </button>
+        <button class="icon-btn logout-btn" type="button" aria-label="Logout" title="Logout">⎋</button>
 
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
           <span class="theme-option moon">☾</span>
@@ -63,39 +59,6 @@
       <section class="mb-6">
         <h1 class="page-title">Browse by Professor</h1>
         <p class="page-subtitle">Open a professor to view available thesis topics.</p>
-      </section>
-
-      <section class="notifications-card">
-        <div class="notifications-head">
-          <h2 class="notifications-title">Recent Notifications</h2>
-          <a href="#" class="view-all">View all</a>
-        </div>
-
-        <div class="notification-grid">
-          <article class="notification-item">
-            <span class="dot"></span>
-            <div>
-              <p class="notification-text">Your claim for Example Thesis: Data Security in IoT Networks is pending review.</p>
-              <p class="notification-time">15 minutes ago</p>
-            </div>
-          </article>
-
-          <article class="notification-item">
-            <span class="dot"></span>
-            <div>
-              <p class="notification-text">Custom proposal sent to Prof. Example Popescu.</p>
-              <p class="notification-time">2 hours ago</p>
-            </div>
-          </article>
-
-          <article class="notification-item">
-            <span class="dot"></span>
-            <div>
-              <p class="notification-text">Example deadline: final thesis selection closes in 5 days.</p>
-              <p class="notification-time">1 day ago</p>
-            </div>
-          </article>
-        </div>
       </section>
 
       <section class="professors-stack">
@@ -238,7 +201,7 @@
       <span id="modeText">LIGHT MODE</span>
     </div>
   </div>
-
+  <script src="/js/top-actions.js"></script>
   <script>
     const body = document.body;
 

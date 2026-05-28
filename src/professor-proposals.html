@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Professor Portal Demo - Student Proposals</title>
+  <title>Professor Portal - Student Proposals</title>
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 <body>
-  <div class="demo-banner">Demo template - example/test data only</div>
 
   <div class="app-shell">
     <header class="demo-topbar">
@@ -17,16 +16,13 @@
       </div>
 
       <nav class="main-nav" aria-label="Professor navigation">
-        <a href="professor-dashboard_demo.html" class="nav-link">Dashboard</a>
-        <a href="professor-proposals_demo.html" class="nav-link active">Student Proposals</a>
-        <a href="professor-profile_demo.html" class="nav-link">Profile</a>
+        <a href="professor-dashboard.html" class="nav-link">Dashboard</a>
+        <a href="professor-proposals.html" class="nav-link active">Student Proposals</a>
+        <a href="professor-profile.html" class="nav-link">Profile</a>
       </nav>
 
       <div class="top-actions">
-        <button class="icon-btn" type="button" aria-label="Notifications">
-          🔔
-          <span class="badge">3</span>
-        </button>
+        <button class="icon-btn logout-btn" type="button" aria-label="Logout" title="Logout">⎋</button>
         <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
           <span class="theme-option moon">☾</span>
           <span class="theme-option sun active">☀</span>
@@ -316,7 +312,7 @@
       </div>
     </article>
   </div>
-
+  <script src="/js/top-actions.js"></script>
   <script>
     const body = document.body;
     const themeToggle = document.getElementById("themeToggle");

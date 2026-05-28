@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const faculties = sqliteTable('faculties', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -15,6 +15,7 @@ export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   email: text('email').notNull().unique(),
   name: text('name').notNull(),
+  bio: text('bio').notNull().default(''),
   role: text('role').notNull(),
   facultyId: integer('faculty_id').references(() => faculties.id),
   specializationId: integer('specialization_id').references(() => specializations.id),
@@ -24,6 +25,24 @@ export const users = sqliteTable('users', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
 });
+
+export const professorSpecializations = sqliteTable(
+  'professor_specializations',
+  {
+    professorId: text('professor_id')
+      .notNull()
+      .references(() => users.id),
+    specializationId: integer('specialization_id')
+      .notNull()
+      .references(() => specializations.id)
+  },
+  (table) => ({
+    assignment: uniqueIndex('professor_specializations_assignment_unique').on(
+      table.professorId,
+      table.specializationId
+    )
+  })
+);
 
 export const sessions = sqliteTable('sessions', {
   id: text('id').primaryKey(),

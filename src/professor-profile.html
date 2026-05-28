@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Professor Portal - Profile</title>
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body data-profile-role="professor" data-theme-key="professorInterfaceTheme">
+
+  <div class="app-shell">
+    <header class="demo-topbar">
+      <div class="portal-brand">
+        <span class="brand-icon">P</span>
+        <span>Professor Portal</span>
+      </div>
+
+      <nav class="main-nav" aria-label="Professor navigation">
+        <a href="professor-dashboard.html" class="nav-link">Dashboard</a>
+        <a href="professor-proposals.html" class="nav-link">Student Proposals</a>
+        <a href="professor-profile.html" class="nav-link active">Profile</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn logout-btn" type="button" aria-label="Logout" title="Logout">⎋</button>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
+          <span class="theme-option moon">☾</span>
+          <span class="theme-option sun active">☀</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-head">
+        <h1 class="page-title">Professor Profile</h1>
+        <p class="page-subtitle">Manage your academic profile and account preferences.</p>
+      </section>
+
+      <section class="profile-card" id="profileCard">
+        <section class="profile-section">
+          <div class="profile-top">
+            <div class="picture-panel">
+              <div class="section-head">
+                <div class="section-title-wrap">
+                  <span class="section-number">1</span>
+                  <h2 class="section-title">Profile Picture</h2>
+                </div>
+              </div>
+
+              <div class="photo-area">
+                <div class="profile-photo">
+                  <span id="profileInitials">--</span>
+                  <button class="camera-btn" type="button" aria-label="Change profile photo">C</button>
+                </div>
+                <button class="change-photo-btn" type="button">Change photo</button>
+                <p class="photo-note">Photo upload is not connected yet.</p>
+              </div>
+            </div>
+
+            <div>
+              <div class="section-head">
+                <div class="section-title-wrap">
+                  <span class="section-number">2</span>
+                  <h2 class="section-title">Basic Info</h2>
+                </div>
+                <button class="edit-btn" type="button" data-edit-section>Edit</button>
+              </div>
+
+              <div class="field-grid">
+                <div class="field full">
+                  <label class="label" for="fullName">Full Name</label>
+                  <input class="control" id="fullName" type="text" value="" disabled />
+                </div>
+                <div class="field full">
+                  <label class="label" for="bio">Short Bio</label>
+                  <textarea class="textarea large" id="bio" placeholder="Add a short academic bio or supervision summary." disabled></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">3</span>
+              <h2 class="section-title">Academic Info</h2>
+            </div>
+          </div>
+
+          <div class="academic-grid">
+            <div class="field">
+              <label class="label">Faculty Access</label>
+              <ul class="faculty-list" id="facultyList">
+                <li>No faculty assignments yet.</li>
+              </ul>
+            </div>
+
+            <div class="field">
+              <label class="label">Office Hours</label>
+              <div class="office-table">
+                <div class="office-row">
+                  <span class="day-pill">Monday</span>
+                  <span class="office-time">Example slot: 10:00 - 12:00</span>
+                  <button class="office-edit" type="button" aria-label="Edit Monday office hours">E</button>
+                </div>
+                <div class="office-row">
+                  <span class="day-pill">Wednesday</span>
+                  <span class="office-time">Example slot: 14:00 - 16:00</span>
+                  <button class="office-edit" type="button" aria-label="Edit Wednesday office hours">E</button>
+                </div>
+                <div class="office-row">
+                  <span class="day-pill">Friday</span>
+                  <span class="office-time">Example slot: 09:00 - 11:00</span>
+                  <button class="office-edit" type="button" aria-label="Edit Friday office hours">E</button>
+                </div>
+                <div class="office-row">
+                  <span class="day-pill">By appointment</span>
+                  <span class="office-time">Example fallback meeting option</span>
+                  <button class="office-edit" type="button" aria-label="Edit appointment option">E</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">4</span>
+              <h2 class="section-title">Specialisations</h2>
+              <span class="day-pill" id="specialisationCount">0 specialisations</span>
+            </div>
+          </div>
+
+          <div class="specialisation-row" id="specialisationList">
+            <p class="profile-text">No specialisation assignments yet.</p>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">5</span>
+              <h2 class="section-title">Microsoft Teams Account</h2>
+            </div>
+          </div>
+
+          <div class="teams-grid">
+            <div class="field">
+              <label class="label" for="teams">Teams Account</label>
+              <input class="control locked" id="teams" type="email" value="" disabled />
+            </div>
+            <div class="teams-logo">T</div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-head">
+            <div class="section-title-wrap">
+              <span class="section-number">6</span>
+              <h2 class="section-title">Theme Preferences</h2>
+            </div>
+          </div>
+
+          <div class="theme-preferences" aria-label="Theme preferences">
+            <button class="theme-choice" type="button" id="darkChoice">Dark Mode</button>
+            <button class="theme-choice" type="button" id="lightChoice">Light Mode</button>
+          </div>
+
+          <p class="helper-note">
+            <span class="note-icon">i</span>
+            Theme preference is saved on this device.
+          </p>
+        </section>
+
+        <div class="profile-footer">
+          <button class="btn btn-secondary" type="button" id="cancelBtn">Cancel</button>
+          <button class="btn btn-primary" type="button" id="saveBtn">Save Changes</button>
+        </div>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">S</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+
+    <div class="toast" id="toast">
+      <p class="toast-title">Profile saved</p>
+      <p class="toast-text" id="toastText">Your profile changes were saved.</p>
+    </div>
+  </div>
+  <script src="/js/top-actions.js"></script>
+  <script src="/js/profile-page.js"></script>
+</body>
+</html>

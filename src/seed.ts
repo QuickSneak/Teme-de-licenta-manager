@@ -2,7 +2,15 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from '@better-auth/drizzle-adapter';
 import { eq } from 'drizzle-orm';
 import { db } from './db';
-import { accounts, faculties, sessions, specializations, users, verifications } from './db/schema';
+import {
+  accounts,
+  faculties,
+  professorSpecializations,
+  sessions,
+  specializations,
+  users,
+  verifications
+} from './db/schema';
 import { ensureAcademicUnit, specialtyMappings } from './uab';
 
 const seedAuth = betterAuth({
@@ -30,6 +38,11 @@ const seedAuth = betterAuth({
       role: {
         type: 'string',
         required: true
+      },
+      bio: {
+        type: 'string',
+        required: false,
+        defaultValue: ''
       },
       facultyId: {
         type: 'number',
@@ -61,6 +74,7 @@ async function createUser(input: {
       name: input.name,
       email: input.email,
       password: input.password,
+      bio: '',
       role: input.role,
       facultyId: input.facultyId,
       specializationId: input.specializationId,
@@ -69,9 +83,13 @@ async function createUser(input: {
   });
 
   await db.update(users).set({ emailVerified: true }).where(eq(users.email, input.email));
+  const user = await db.select().from(users).where(eq(users.email, input.email)).get();
+  if (!user) throw new Error(`Could not create seed user ${input.email}`);
+  return user;
 }
 
 async function seed() {
+  await db.delete(professorSpecializations);
   await db.delete(sessions);
   await db.delete(verifications);
   await db.delete(accounts);
@@ -80,7 +98,7 @@ async function seed() {
   await db.delete(faculties);
 
   const info = await ensureAcademicUnit(specialtyMappings.info);
-  await ensureAcademicUnit(specialtyMappings.infoen);
+  const infoEn = await ensureAcademicUnit(specialtyMappings.infoen);
   const marketing = await ensureAcademicUnit(specialtyMappings.mk);
 
   await createUser({
@@ -92,12 +110,39 @@ async function seed() {
     specializationId: info.specialization.id
   });
 
-  await createUser({
-    name: 'Test Professor',
-    email: 'professor.test@uab.ro',
+  const infoProfessor = await createUser({
+    name: 'Informatica Professor',
+    email: 'professor.info@uab.ro',
     password: 'password123',
     role: 'professor'
   });
+
+  await db.insert(professorSpecializations).values({
+    professorId: infoProfessor.id,
+    specializationId: info.specialization.id
+  });
+
+  const multiProfessor = await createUser({
+    name: 'Multi Specialization Professor',
+    email: 'professor.multi@uab.ro',
+    password: 'password123',
+    role: 'professor'
+  });
+
+  await db.insert(professorSpecializations).values([
+    {
+      professorId: multiProfessor.id,
+      specializationId: info.specialization.id
+    },
+    {
+      professorId: multiProfessor.id,
+      specializationId: infoEn.specialization.id
+    },
+    {
+      professorId: multiProfessor.id,
+      specializationId: marketing.specialization.id
+    }
+  ]);
 
   await createUser({
     name: 'Test Secretary',
