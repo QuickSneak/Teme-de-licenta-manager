@@ -55,9 +55,7 @@
                 <span class="select-arrow">v</span>
 
                 <div class="dropdown">
-                  <button type="button" data-value="Example Faculty of Informatica si Inginerie">Example Faculty of Informatica si Inginerie</button>
-                  <button type="button" data-value="Example Faculty of Economics">Example Faculty of Economics</button>
-                  <button type="button" data-value="Example Faculty of Law and Social Sciences">Example Faculty of Law and Social Sciences</button>
+                  <button type="button" disabled>Loading faculties...</button>
                 </div>
               </div>
               <p class="error-text">Please select a faculty.</p>
@@ -70,33 +68,16 @@
                 <span class="select-arrow">v</span>
 
                 <div class="dropdown">
-                  <button type="button" data-value="Example Informatica">Example Informatica</button>
-                  <button type="button" data-value="Example Cybersecurity Track">Example Cybersecurity Track</button>
-                  <button type="button" data-value="Example Data Science">Example Data Science</button>
-                  <button type="button" data-value="Example Artificial Intelligence">Example Artificial Intelligence</button>
-                  <button type="button" data-value="Example Software Engineering">Example Software Engineering</button>
-                  <button type="button" data-value="Example Management">Example Management</button>
-                  <button type="button" data-value="Example Finance">Example Finance</button>
+                  <button type="button" disabled>Select a faculty first</button>
                 </div>
               </div>
               <p class="error-text">Please select a specialisation.</p>
             </div>
 
-            <div class="field full" data-field="brief">
-              <label class="label" for="brief">Brief description</label>
-              <textarea class="textarea" id="brief" name="brief" placeholder="Example: Provide a short summary of the thesis topic..."></textarea>
-              <p class="error-text">Please add a brief description.</p>
-            </div>
-
-            <div class="field full" data-field="fullProposal">
-              <label class="label" for="fullProposal">Full proposal</label>
-              <textarea class="textarea large" id="fullProposal" name="fullProposal" placeholder="Example: Describe the thesis expectations, scope, and objectives in detail..."></textarea>
-              <p class="error-text">Please describe the full proposal.</p>
-            </div>
-
-            <div class="field full">
-              <label class="label" for="notes">Notes (optional)</label>
-              <textarea class="textarea" id="notes" name="notes" placeholder="Example: Any additional information (optional)..."></textarea>
+            <div class="field full" data-field="description">
+              <label class="label" for="description">Description</label>
+              <textarea class="textarea large" id="description" name="description" placeholder="Example: Describe the thesis expectations, scope, and objectives..."></textarea>
+              <p class="error-text">Please add a description.</p>
             </div>
           </div>
 
@@ -139,9 +120,12 @@
     const modeText = document.getElementById("modeText");
 
     const selects = document.querySelectorAll(".select-like");
+    const facultySelect = document.querySelector('[data-select="faculty"]');
+    const specialisationSelect = document.querySelector('[data-select="specialisation"]');
     const thesisForm = document.getElementById("thesisForm");
     const cancelBtn = document.getElementById("cancelBtn");
     const toast = document.getElementById("toast");
+    let assignedFaculties = [];
 
     function setTheme(theme) {
       const isDark = theme === "dark";
@@ -160,10 +144,129 @@
       setTheme(nextTheme);
     });
 
-    selects.forEach((select) => {
-      const value = select.querySelector(".select-value");
-      const options = select.querySelectorAll(".dropdown button");
+    function groupSpecialisationsByFaculty(data) {
+      const facultiesById = new Map();
 
+      (data.faculties || []).forEach((faculty) => {
+        facultiesById.set(faculty.id, {
+          ...faculty,
+          specialisations: []
+        });
+      });
+
+      (data.specializations || []).forEach((specialisation) => {
+        if (!facultiesById.has(specialisation.facultyId)) {
+          facultiesById.set(specialisation.facultyId, {
+            id: specialisation.facultyId,
+            name: specialisation.faculty,
+            specialisations: []
+          });
+        }
+
+        facultiesById.get(specialisation.facultyId).specialisations.push(specialisation);
+      });
+
+      return Array.from(facultiesById.values()).filter((faculty) => faculty.specialisations.length > 0);
+    }
+
+    function getSelectValue(select) {
+      return select.querySelector(".select-value");
+    }
+
+    function getSelectDropdown(select) {
+      return select.querySelector(".dropdown");
+    }
+
+    function resetSelect(select, placeholder) {
+      const value = getSelectValue(select);
+      value.textContent = placeholder;
+      delete value.dataset.selected;
+      delete value.dataset.selectedId;
+    }
+
+    function setEmptyDropdown(select, message) {
+      const dropdown = getSelectDropdown(select);
+      dropdown.innerHTML = "";
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.disabled = true;
+      button.textContent = message;
+      dropdown.append(button);
+    }
+
+    function createOption(option) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.value = option.name;
+      button.dataset.id = option.id;
+      button.textContent = option.name;
+      return button;
+    }
+
+    function selectOption(select, option) {
+      const value = getSelectValue(select);
+      value.textContent = option.dataset.value;
+      value.dataset.selected = option.dataset.value;
+      value.dataset.selectedId = option.dataset.id;
+      select.classList.remove("open");
+
+      const field = select.closest(".field");
+      if (field) {
+        field.classList.remove("error");
+      }
+    }
+
+    function renderFacultyOptions() {
+      const dropdown = getSelectDropdown(facultySelect);
+      dropdown.innerHTML = "";
+
+      if (!assignedFaculties.length) {
+        setEmptyDropdown(facultySelect, "No faculty assignments available");
+        setEmptyDropdown(specialisationSelect, "No specialisations available");
+        return;
+      }
+
+      assignedFaculties.forEach((faculty) => {
+        const option = createOption(faculty);
+        option.addEventListener("click", (event) => {
+          event.stopPropagation();
+          selectOption(facultySelect, option);
+          resetSelect(specialisationSelect, "Select specialisation");
+          renderSpecialisationOptions(faculty.id);
+        });
+
+        dropdown.append(option);
+      });
+    }
+
+    function renderSpecialisationOptions(facultyId) {
+      const dropdown = getSelectDropdown(specialisationSelect);
+      const faculty = assignedFaculties.find((item) => String(item.id) === String(facultyId));
+      dropdown.innerHTML = "";
+
+      if (!faculty) {
+        setEmptyDropdown(specialisationSelect, "Select a faculty first");
+        return;
+      }
+
+      if (!faculty.specialisations.length) {
+        setEmptyDropdown(specialisationSelect, "No specialisations available");
+        return;
+      }
+
+      faculty.specialisations.forEach((specialisation) => {
+        const option = createOption(specialisation);
+        option.addEventListener("click", (event) => {
+          event.stopPropagation();
+          selectOption(specialisationSelect, option);
+        });
+
+        dropdown.append(option);
+      });
+    }
+
+    selects.forEach((select) => {
       select.addEventListener("click", (event) => {
         event.stopPropagation();
 
@@ -174,21 +277,6 @@
         });
 
         select.classList.toggle("open");
-      });
-
-      options.forEach((option) => {
-        option.addEventListener("click", (event) => {
-          event.stopPropagation();
-
-          value.textContent = option.dataset.value;
-          value.dataset.selected = option.dataset.value;
-          select.classList.remove("open");
-
-          const field = select.closest(".field");
-          if (field) {
-            field.classList.remove("error");
-          }
-        });
       });
     });
 
@@ -216,35 +304,37 @@
       event.preventDefault();
 
       const title = document.getElementById("title").value.trim();
-      const brief = document.getElementById("brief").value.trim();
-      const fullProposal = document.getElementById("fullProposal").value.trim();
+      const description = document.getElementById("description").value.trim();
 
       const faculty = document
         .querySelector('[data-select="faculty"] .select-value')
         .dataset.selected;
+      const facultyId = document
+        .querySelector('[data-select="faculty"] .select-value')
+        .dataset.selectedId;
 
       const specialisation = document
         .querySelector('[data-select="specialisation"] .select-value')
         .dataset.selected;
+      const specialisationId = document
+        .querySelector('[data-select="specialisation"] .select-value')
+        .dataset.selectedId;
 
       const isTitleValid = title.length > 0;
       const isFacultyValid = Boolean(faculty);
       const isSpecialisationValid = Boolean(specialisation);
-      const isBriefValid = brief.length > 0;
-      const isFullProposalValid = fullProposal.length > 0;
+      const isDescriptionValid = description.length > 0;
 
       validateField("title", isTitleValid);
       validateField("faculty", isFacultyValid);
       validateField("specialisation", isSpecialisationValid);
-      validateField("brief", isBriefValid);
-      validateField("fullProposal", isFullProposalValid);
+      validateField("description", isDescriptionValid);
 
       const isFormValid =
         isTitleValid &&
         isFacultyValid &&
         isSpecialisationValid &&
-        isBriefValid &&
-        isFullProposalValid;
+        isDescriptionValid;
 
       if (!isFormValid) {
         return;
@@ -255,10 +345,10 @@
       console.log({
         title,
         faculty,
+        facultyId,
         specialisation,
-        brief,
-        fullProposal,
-        notes: document.getElementById("notes").value.trim()
+        specialisationId,
+        description
       });
     });
 
@@ -271,6 +361,7 @@
 
       document.querySelectorAll(".select-value").forEach((value) => {
         delete value.dataset.selected;
+        delete value.dataset.selectedId;
       });
 
       document.querySelector('[data-select="faculty"] .select-value').textContent =
@@ -278,10 +369,41 @@
 
       document.querySelector('[data-select="specialisation"] .select-value').textContent =
         "Select specialisation";
+
+      renderSpecialisationOptions(null);
     });
+
+    async function loadProfessorAssignments() {
+      if (window.authGuard?.ready) {
+        const guardData = await window.authGuard.ready;
+        if (!guardData || guardData.user.role !== "professor") {
+          return;
+        }
+      }
+
+      const response = await fetch("/profile");
+
+      if (!response.ok) {
+        window.location.href = "/login.html";
+        return;
+      }
+
+      const data = await response.json();
+      if (data.user.role !== "professor") {
+        window.location.href = "/login.html";
+        return;
+      }
+
+      assignedFaculties = groupSpecialisationsByFaculty(data);
+      resetSelect(facultySelect, "Select faculty");
+      resetSelect(specialisationSelect, "Select specialisation");
+      renderFacultyOptions();
+      renderSpecialisationOptions(null);
+    }
 
     const savedTheme = localStorage.getItem("professorInterfaceTheme") || "light";
     setTheme(savedTheme);
+    loadProfessorAssignments();
   </script>
 </body>
 </html>

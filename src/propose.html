@@ -62,22 +62,6 @@
               <p class="error-text">Please enter a thesis title.</p>
             </div>
 
-            <div class="field" data-field="specialisation">
-              <label class="label">Specialisation</label>
-              <div class="select-like" data-select="specialisation" tabindex="0">
-                <span class="select-value">Select specialisation</span>
-                <span class="select-arrow">⌄</span>
-
-                <div class="dropdown">
-                  <button type="button" data-value="Example Informatica">Example Informatica</button>
-                  <button type="button" data-value="Example Cybersecurity Track">Example Cybersecurity Track</button>
-                  <button type="button" data-value="Example Data Science">Example Data Science</button>
-                  <button type="button" data-value="Example Artificial Intelligence">Example Artificial Intelligence</button>
-                  <button type="button" data-value="Example Software Engineering">Example Software Engineering</button>
-                </div>
-              </div>
-              <p class="error-text">Please select a specialisation.</p>
-            </div>
 
             <div class="field" data-field="professor">
               <label class="label">Coordinator / Professor</label>
@@ -97,21 +81,10 @@
               <p class="error-text">Please select a professor.</p>
             </div>
 
-            <div class="field full" data-field="brief">
-              <label class="label" for="brief">Brief description</label>
-              <textarea class="textarea" id="brief" name="brief" placeholder="Example: Provide a short summary of your proposed thesis..."></textarea>
-              <p class="error-text">Please add a brief description.</p>
-            </div>
-
-            <div class="field full" data-field="fullProposal">
-              <label class="label" for="fullProposal">Full proposal</label>
-              <textarea class="textarea large" id="fullProposal" name="fullProposal" placeholder="Example: Describe your proposed thesis in detail..."></textarea>
-              <p class="error-text">Please describe your full proposal.</p>
-            </div>
-
-            <div class="field full">
-              <label class="label" for="notes">Notes (optional)</label>
-              <textarea class="textarea" id="notes" name="notes" placeholder="Example: Any additional information (optional)..."></textarea>
+            <div class="field full" data-field="description">
+              <label class="label" for="description">Description</label>
+              <textarea class="textarea large" id="description" name="description" placeholder="Example: Describe your proposed thesis..."></textarea>
+              <p class="error-text">Please add a description.</p>
             </div>
           </div>
 
@@ -239,35 +212,24 @@
       event.preventDefault();
 
       const title = document.getElementById("title").value.trim();
-      const brief = document.getElementById("brief").value.trim();
-      const fullProposal = document.getElementById("fullProposal").value.trim();
-
-      const specialisation = document
-        .querySelector('[data-select="specialisation"] .select-value')
-        .dataset.selected;
+      const description = document.getElementById("description").value.trim();
 
       const professor = document
         .querySelector('[data-select="professor"] .select-value')
         .dataset.selected;
 
       const isTitleValid = title.length > 0;
-      const isSpecialisationValid = Boolean(specialisation);
       const isProfessorValid = Boolean(professor);
-      const isBriefValid = brief.length > 0;
-      const isFullProposalValid = fullProposal.length > 0;
+      const isDescriptionValid = description.length > 0;
 
       validateField("title", isTitleValid);
-      validateField("specialisation", isSpecialisationValid);
       validateField("professor", isProfessorValid);
-      validateField("brief", isBriefValid);
-      validateField("fullProposal", isFullProposalValid);
+      validateField("description", isDescriptionValid);
 
       const isFormValid =
         isTitleValid &&
-        isSpecialisationValid &&
         isProfessorValid &&
-        isBriefValid &&
-        isFullProposalValid;
+        isDescriptionValid;
 
       if (!isFormValid) {
         return;
@@ -277,14 +239,11 @@
 
       console.log({
         title,
-        specialisation,
         professor,
         keywords: Array.from(document.querySelectorAll(".tag")).map((tag) =>
           tag.textContent.replace("×", "").trim()
         ),
-        brief,
-        fullProposal,
-        notes: document.getElementById("notes").value.trim()
+        description
       });
     });
 
@@ -298,9 +257,6 @@
       document.querySelectorAll(".select-value").forEach((value) => {
         delete value.dataset.selected;
       });
-
-      document.querySelector('[data-select="specialisation"] .select-value').textContent =
-        "Select specialisation";
 
       document.querySelector('[data-select="professor"] .select-value').textContent =
         "Search or select professor";
