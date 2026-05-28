@@ -3,58 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Student Interface - Propose Thesis</title>
+  <title>Professor Portal - Add Thesis</title>
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 
-<body class="transition-colors duration-200" data-required-role="student">
+<body class="transition-colors duration-200" data-required-role="professor">
 
   <div class="app-shell">
     <header class="demo-topbar">
-      <div class="topbar-brand">Student Portal</div>
+      <div class="portal-brand">
+        <span class="brand-icon">P</span>
+        <span>Professor Portal</span>
+      </div>
 
-      <nav class="main-nav" aria-label="Student navigation">
-        <a href="professors.html" class="nav-link">Professors</a>
-        <a href="propose.html" class="nav-link active" aria-current="page">Propose</a>
-        <a href="dashboard.html" class="nav-link">Dashboard</a>
-        <a href="profile.html" class="nav-link">Profile</a>
+      <nav class="main-nav" aria-label="Professor navigation">
+        <a href="professor-dashboard.html" class="nav-link">Dashboard</a>
+        <a href="professor_add_thesis.html" class="nav-link active" aria-current="page">Add Thesis</a>
+        <a href="professor-proposals.html" class="nav-link">Student Proposals</a>
+        <a href="professor-profile.html" class="nav-link">Profile</a>
       </nav>
 
       <div class="top-actions">
-        <button class="icon-btn logout-btn" type="button" aria-label="Logout" title="Logout">⎋</button>
+        <button class="icon-btn logout-btn" type="button" aria-label="Logout" title="Logout">Logout</button>
 
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-          <span class="theme-option moon">☾</span>
-          <span class="theme-option sun active">☀</span>
+          <span class="theme-option moon">Moon</span>
+          <span class="theme-option sun active">Sun</span>
         </button>
       </div>
     </header>
 
     <main class="page-shell">
       <section class="page-head">
-        <h1 class="page-title">Propose Your Thesis</h1>
-        <p class="page-subtitle">Submit a custom thesis proposal for professor review</p>
-      </section>
-
-      <section class="info-strip" aria-label="Proposal rules">
-        <article class="info-item">
-          <div class="info-icon">👤</div>
-          <p class="info-text">Only 1 active<br />custom proposal at a time</p>
-        </article>
-
-        <article class="info-item">
-          <div class="info-icon">♢</div>
-          <p class="info-text">Proposals can be<br />approved or rejected</p>
-        </article>
-
-        <article class="info-item">
-          <div class="info-icon">◷</div>
-          <p class="info-text">Response may take<br />several days</p>
-        </article>
+        <h1 class="page-title">Add Thesis</h1>
+        <p class="page-subtitle">Create a thesis topic for students to review and claim.</p>
       </section>
 
       <section class="proposal-card">
-        <form id="proposalForm" novalidate>
+        <form id="thesisForm" novalidate>
           <div class="form-grid">
             <div class="field" data-field="title">
               <label class="label" for="title">Title</label>
@@ -62,11 +48,26 @@
               <p class="error-text">Please enter a thesis title.</p>
             </div>
 
+            <div class="field" data-field="faculty">
+              <label class="label">Faculty</label>
+              <div class="select-like" data-select="faculty" tabindex="0">
+                <span class="select-value">Select faculty</span>
+                <span class="select-arrow">v</span>
+
+                <div class="dropdown">
+                  <button type="button" data-value="Example Faculty of Informatica si Inginerie">Example Faculty of Informatica si Inginerie</button>
+                  <button type="button" data-value="Example Faculty of Economics">Example Faculty of Economics</button>
+                  <button type="button" data-value="Example Faculty of Law and Social Sciences">Example Faculty of Law and Social Sciences</button>
+                </div>
+              </div>
+              <p class="error-text">Please select a faculty.</p>
+            </div>
+
             <div class="field" data-field="specialisation">
               <label class="label">Specialisation</label>
               <div class="select-like" data-select="specialisation" tabindex="0">
                 <span class="select-value">Select specialisation</span>
-                <span class="select-arrow">⌄</span>
+                <span class="select-arrow">v</span>
 
                 <div class="dropdown">
                   <button type="button" data-value="Example Informatica">Example Informatica</button>
@@ -74,39 +75,23 @@
                   <button type="button" data-value="Example Data Science">Example Data Science</button>
                   <button type="button" data-value="Example Artificial Intelligence">Example Artificial Intelligence</button>
                   <button type="button" data-value="Example Software Engineering">Example Software Engineering</button>
+                  <button type="button" data-value="Example Management">Example Management</button>
+                  <button type="button" data-value="Example Finance">Example Finance</button>
                 </div>
               </div>
               <p class="error-text">Please select a specialisation.</p>
             </div>
 
-            <div class="field" data-field="professor">
-              <label class="label">Coordinator / Professor</label>
-              <div class="select-like" data-select="professor" tabindex="0">
-                <span class="select-value">Search or select professor</span>
-                <span class="select-arrow">⌄</span>
-
-                <div class="dropdown">
-                  <button type="button" data-value="Prof. Example Ionescu">Prof. Example Ionescu</button>
-                  <button type="button" data-value="Prof. Example Popescu">Prof. Example Popescu</button>
-                  <button type="button" data-value="Prof. Example Mihai">Prof. Example Mihai</button>
-                  <button type="button" data-value="Prof. Example Marin">Prof. Example Marin</button>
-                  <button type="button" data-value="Prof. Example Stan">Prof. Example Stan</button>
-                  <button type="button" data-value="Prof. Example Dumitru">Prof. Example Dumitru</button>
-                </div>
-              </div>
-              <p class="error-text">Please select a professor.</p>
-            </div>
-
             <div class="field full" data-field="brief">
               <label class="label" for="brief">Brief description</label>
-              <textarea class="textarea" id="brief" name="brief" placeholder="Example: Provide a short summary of your proposed thesis..."></textarea>
+              <textarea class="textarea" id="brief" name="brief" placeholder="Example: Provide a short summary of the thesis topic..."></textarea>
               <p class="error-text">Please add a brief description.</p>
             </div>
 
             <div class="field full" data-field="fullProposal">
               <label class="label" for="fullProposal">Full proposal</label>
-              <textarea class="textarea large" id="fullProposal" name="fullProposal" placeholder="Example: Describe your proposed thesis in detail..."></textarea>
-              <p class="error-text">Please describe your full proposal.</p>
+              <textarea class="textarea large" id="fullProposal" name="fullProposal" placeholder="Example: Describe the thesis expectations, scope, and objectives in detail..."></textarea>
+              <p class="error-text">Please describe the full proposal.</p>
             </div>
 
             <div class="field full">
@@ -118,12 +103,12 @@
           <div class="form-footer">
             <p class="submit-note">
               <span class="note-icon">i</span>
-              <span>After submission, your proposal will appear in <strong>My Proposals</strong>.</span>
+              <span>After submission, this topic will appear in <strong>My Theses</strong>.</span>
             </p>
 
             <div class="form-actions">
               <button class="btn btn-secondary" type="button" id="cancelBtn">Cancel</button>
-              <button class="btn btn-primary" type="submit">Submit Proposal</button>
+              <button class="btn btn-primary" type="submit">Add Thesis</button>
             </div>
           </div>
         </form>
@@ -131,14 +116,14 @@
     </main>
 
     <div class="mode-label" id="modeLabel">
-      <span id="modeIcon">☀</span>
+      <span id="modeIcon">S</span>
       <span id="modeText">LIGHT MODE</span>
     </div>
 
     <div class="toast" id="toast">
-      <p class="toast-title">Example proposal submitted</p>
+      <p class="toast-title">Example thesis added</p>
       <p class="toast-text">
-        Your custom thesis proposal was saved for professor review. This is demo feedback for testing only.
+        Your thesis topic was saved. This is demo feedback for testing only.
       </p>
     </div>
   </div>
@@ -154,7 +139,7 @@
     const modeText = document.getElementById("modeText");
 
     const selects = document.querySelectorAll(".select-like");
-    const proposalForm = document.getElementById("proposalForm");
+    const thesisForm = document.getElementById("thesisForm");
     const cancelBtn = document.getElementById("cancelBtn");
     const toast = document.getElementById("toast");
 
@@ -162,14 +147,12 @@
       const isDark = theme === "dark";
 
       body.classList.toggle("dark", isDark);
-
       moonOption.classList.toggle("active", isDark);
       sunOption.classList.toggle("active", !isDark);
-
-      modeIcon.textContent = isDark ? "🌙" : "☀";
+      modeIcon.textContent = isDark ? "M" : "S";
       modeText.textContent = isDark ? "DARK MODE" : "LIGHT MODE";
 
-      localStorage.setItem("studentInterfaceTheme", theme);
+      localStorage.setItem("professorInterfaceTheme", theme);
     }
 
     themeToggle.addEventListener("click", () => {
@@ -213,12 +196,6 @@
       selects.forEach((select) => select.classList.remove("open"));
     });
 
-    document.querySelectorAll(".tag-remove").forEach((button) => {
-      button.addEventListener("click", () => {
-        button.closest(".tag").remove();
-      });
-    });
-
     function showToast() {
       toast.classList.add("show");
 
@@ -235,37 +212,37 @@
       field.classList.toggle("error", !isValid);
     }
 
-    proposalForm.addEventListener("submit", (event) => {
+    thesisForm.addEventListener("submit", (event) => {
       event.preventDefault();
 
       const title = document.getElementById("title").value.trim();
       const brief = document.getElementById("brief").value.trim();
       const fullProposal = document.getElementById("fullProposal").value.trim();
 
+      const faculty = document
+        .querySelector('[data-select="faculty"] .select-value')
+        .dataset.selected;
+
       const specialisation = document
         .querySelector('[data-select="specialisation"] .select-value')
         .dataset.selected;
 
-      const professor = document
-        .querySelector('[data-select="professor"] .select-value')
-        .dataset.selected;
-
       const isTitleValid = title.length > 0;
+      const isFacultyValid = Boolean(faculty);
       const isSpecialisationValid = Boolean(specialisation);
-      const isProfessorValid = Boolean(professor);
       const isBriefValid = brief.length > 0;
       const isFullProposalValid = fullProposal.length > 0;
 
       validateField("title", isTitleValid);
+      validateField("faculty", isFacultyValid);
       validateField("specialisation", isSpecialisationValid);
-      validateField("professor", isProfessorValid);
       validateField("brief", isBriefValid);
       validateField("fullProposal", isFullProposalValid);
 
       const isFormValid =
         isTitleValid &&
+        isFacultyValid &&
         isSpecialisationValid &&
-        isProfessorValid &&
         isBriefValid &&
         isFullProposalValid;
 
@@ -277,11 +254,8 @@
 
       console.log({
         title,
+        faculty,
         specialisation,
-        professor,
-        keywords: Array.from(document.querySelectorAll(".tag")).map((tag) =>
-          tag.textContent.replace("×", "").trim()
-        ),
         brief,
         fullProposal,
         notes: document.getElementById("notes").value.trim()
@@ -289,7 +263,7 @@
     });
 
     cancelBtn.addEventListener("click", () => {
-      proposalForm.reset();
+      thesisForm.reset();
 
       document.querySelectorAll(".field.error").forEach((field) => {
         field.classList.remove("error");
@@ -299,14 +273,14 @@
         delete value.dataset.selected;
       });
 
+      document.querySelector('[data-select="faculty"] .select-value').textContent =
+        "Select faculty";
+
       document.querySelector('[data-select="specialisation"] .select-value').textContent =
         "Select specialisation";
-
-      document.querySelector('[data-select="professor"] .select-value').textContent =
-        "Search or select professor";
     });
 
-    const savedTheme = localStorage.getItem("studentInterfaceTheme") || "light";
+    const savedTheme = localStorage.getItem("professorInterfaceTheme") || "light";
     setTheme(savedTheme);
   </script>
 </body>

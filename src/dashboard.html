@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 
-<body class="transition-colors duration-200">
+<body class="transition-colors duration-200" data-required-role="student">
 
   <div class="app-shell">
     <header class="demo-topbar">
@@ -149,27 +149,7 @@
         <section class="panel">
           <div class="panel-head">
             <span class="panel-icon">P</span>
-            <h2 class="panel-title">My Proposals</h2>
-          </div>
-
-          <div class="list-body">
-            <article class="data-row">
-              <span class="mini-icon orange">PM</span>
-              <div class="row-main">
-                <p class="row-title">Example Thesis: Predictive Maintenance for Industrial IoT Systems</p>
-              </div>
-              <span class="status-pill pending">Pending</span>
-              <a href="#" class="view-btn">View &rsaquo;</a>
-            </article>
-
-            <article class="data-row">
-              <span class="mini-icon red">BC</span>
-              <div class="row-main">
-                <p class="row-title">Example Thesis: Blockchain for Secure Academic Records</p>
-              </div>
-              <span class="status-pill rejected">Rejected</span>
-              <a href="#" class="view-btn">View &rsaquo;</a>
-            </article>
+            <h2 class="panel-title">My Confirmed Topic</h2>
           </div>
         </section>
 
@@ -217,6 +197,7 @@
     </div>
   </div>
   <script src="/js/top-actions.js"></script>
+  <script src="/js/page-guard.js"></script>
   <script>
     const body = document.body;
 

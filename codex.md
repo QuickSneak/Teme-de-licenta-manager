@@ -53,12 +53,24 @@ Email verification and password reset use SMTP email links. OTP-based flows are 
 * Faculty access for professors is inferred through each specialization's `faculty_id`.
 * Seed data includes one professor assigned only to `Informatica`, and one professor assigned to `Informatica`, `Informatica EN`, and `Marketing`.
 
+## Known Local Issues / Lessons
+
+* `@better-fetch/fetch` sandbox issue:
+  * Bun sometimes failed to import `@better-fetch/fetch` inside the Codex sandbox with an `EPERM`-style permission issue.
+  * The package itself was fine.
+  * Running the same Bun command with escalated permissions worked.
+  * If this appears again, retry the same Bun command outside the sandbox or with Codex approval.
+  * In Codex/agent sandbox sessions on Windows, Bun process launch can fail even when it works in VS Code. If CSS must be rebuilt and `bun run build:css` fails, running Tailwind through Node is an acceptable local fallback.
+
+* SQLite connection locks:
+  * SQLite writes can fail when DB Browser or another app holds `sqlite.db` open.
+  * Close the external connection before seed/migration/server write actions.
+
 ## Development Guidelines
 * Do not use React, Vue, or other frontend frameworks. Return standard HTML/JS.
 * Use Tailwind utility classes for styling new or updated frontend screens.
 * Tailwind source CSS lives in `src/css/*.input.css`; generated browser CSS lives beside it, e.g. `src/css/auth.css`.
 * Do not hand-edit generated CSS unless intentionally debugging output. Regenerate with `bun run build:css`; use `bun run dev:css` while actively editing styles.
-* In Codex/agent sandbox sessions on Windows, Bun process launch can fail even when it works in VS Code. If CSS must be rebuilt and `bun run build:css` fails, running Tailwind through Node is an acceptable local fallback.
 * Avoid Tailwind CDN in production pages.
 * Rely on `better-auth` for session management and standard auth flows, extending it only where the custom UAB email parsing requires it.
 * Do not use Romanian special characters in code, configuration, hardcoded mappings, database seed data, or documentation unless explicitly needed for visible UI/design text.

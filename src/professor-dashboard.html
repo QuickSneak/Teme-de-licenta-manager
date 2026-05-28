@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 
-<body class="transition-colors duration-200 sidebar-collapsed">
+<body class="transition-colors duration-200 sidebar-collapsed" data-required-role="professor">
 
   <div class="browser-layout">
     <header class="browser-topbar">
@@ -20,6 +20,7 @@
 
       <nav class="main-nav" aria-label="Professor navigation">
         <a href="professor-dashboard.html" class="nav-link active" aria-current="page">Dashboard</a>
+        <a href="professor_add_thesis.html" class="nav-link">Add Thesis</a>
         <a href="professor-proposals.html" class="nav-link">Student Proposals</a>
         <a href="professor-profile.html" class="nav-link">Profile</a>
       </nav>
@@ -126,7 +127,7 @@
 
       <section class="section-toolbar">
         <h2 class="section-title-main">My Theses</h2>
-        <button class="btn btn-primary">+ Add Thesis</button>
+        <a class="btn btn-primary" href="professor_add_thesis.html">+ Add Thesis</a>
       </section>
 
       <section class="faculty-block">
@@ -338,6 +339,7 @@
     </div>
   </div>
   <script src="/js/top-actions.js"></script>
+  <script src="/js/page-guard.js"></script>
   <script>
     const body = document.body;
 
