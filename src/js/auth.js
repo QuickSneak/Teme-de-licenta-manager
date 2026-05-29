@@ -93,9 +93,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    teamsBtn.addEventListener("click", () => {
-        showToast("Microsoft Teams login is not enabled yet.");
-    });
+    if (teamsBtn) {
+        teamsBtn.addEventListener("click", () => {
+            showToast("Microsoft Teams login is not enabled yet.");
+        });
+    }
 
     const savedTheme =
         localStorage.getItem("academicPortalTheme") ||

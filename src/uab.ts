@@ -42,6 +42,17 @@ export function isUserRole(value: string): value is UserRole {
   return value === 'student' || value === 'professor' || value === 'secretary';
 }
 
+export function canRegisterAsFinalYearStudent(startYear: number, durationYears: number, currentDate = new Date()) {
+  const finalYearStart = startYear + durationYears - 1;
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+
+  if (currentYear > finalYearStart) return true;
+  if (currentYear < finalYearStart) return false;
+
+  return currentMonth >= 10;
+}
+
 export function parseStudentEmail(email: string) {
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail.endsWith('@uab.ro')) return null;
@@ -76,9 +87,8 @@ export function validateStudentEmail(email: string) {
     return { ok: false as const, error: 'Use a valid UAB student email.' };
   }
 
-  const finalYear = parsed.startYear + parsed.mapping.durationYears - 1;
-  if (new Date().getFullYear() < finalYear) {
-    return { ok: false as const, error: 'Only final-year students can register.' };
+  if (!canRegisterAsFinalYearStudent(parsed.startYear, parsed.mapping.durationYears)) {
+    return { ok: false as const, error: 'Only final-year students can register after the academic year starts.' };
   }
 
   return { ok: true as const, parsed };

@@ -25,8 +25,11 @@ Email verification and password reset use SMTP email links. OTP-based flows are 
 
 ### 2. Student Validation Logic
 * **Eligibility:** Only students in their final year can register.
-  * Formula: `CurrentYear >= StartYear + (ProgramDuration - 1)`
+  * Final-year start formula: `FinalYearStart = StartYear + (ProgramDuration - 1)`
   * `StartYear` is extracted from the `[year]` part of the email.
+  * If `CurrentYear > FinalYearStart`, registration is allowed.
+  * If `CurrentYear < FinalYearStart`, registration is blocked.
+  * If `CurrentYear = FinalYearStart`, registration is allowed only once the academic year has started, currently from October onward. This is intended to cover the first-semester thesis selection window.
 * **Routing/Mapping:** The `[specialitycode]` from the email maps the student to their faculty and specialization.
   * This mapping must be hardcoded in the application configuration.
   * `info` -> Faculty: `Informatica si Inginerie`, Specialization: `Informatica` (3 years)
@@ -52,6 +55,78 @@ Email verification and password reset use SMTP email links. OTP-based flows are 
 * Professors use a many-to-many table: `professor_specializations(professor_id, specialization_id)`.
 * Faculty access for professors is inferred through each specialization's `faculty_id`.
 * Seed data includes one professor assigned only to `Informatica`, and one professor assigned to `Informatica`, `Informatica EN`, and `Marketing`.
+
+## Thesis Topic Lifecycle
+
+The app now includes the core student/professor thesis workflow.
+
+### Tables
+* `topics`
+  * Stores real thesis topics only.
+  * Professor-created topics are public suggestions.
+  * Accepted student custom proposals become topic rows only after professor approval.
+  * Key fields: `title`, `description`, `professor_id`, `specialization_id`, `origin`, `status`, `created_at`, `updated_at`.
+  * `origin`: `professor` or `student_proposal`.
+  * `status`: `available`, `reserved`, or `inactive`.
+* `topic_requests`
+  * Stores student requests.
+  * Supports claims on professor topics and custom student proposals.
+  * `type`: `topic_claim` or `custom_proposal`.
+  * `status`: `pending`, `accepted`, `rejected`, `expired`, or `cancelled`.
+  * Custom proposals use `custom_title` and `custom_description`; they do not create a topic until accepted.
+* `topic_assignments`
+  * Created only after professor acceptance.
+  * Stores the accepted student/professor/topic relationship.
+  * Stores assignment-level `title` and `description` snapshots.
+  * `status`: `active` or `abandoned`.
+* `topic_change_requests`
+  * Schema/API foundation for student title/details change requests after assignment acceptance.
+  * Pending change requests expire after 3 days.
+
+### Rules
+* A student can have only one `pending` topic request at a time.
+* A student can have only one `active` assignment at a time.
+* Pending topic requests expire after 72 hours.
+* Expiry is handled lazily server-side before relevant reads/writes.
+* Professor-created topics start as `available`.
+* When a student claims an available professor topic:
+  * the request becomes `pending`;
+  * the topic immediately becomes `reserved`;
+  * competing claims are blocked.
+* If the professor rejects the claim or the request expires, the professor-created topic returns to `available`.
+* If the professor accepts the claim:
+  * the request becomes `accepted`;
+  * the topic becomes `inactive`;
+  * an active assignment is created;
+  * the topic no longer appears on the student professors page.
+* If the professor accepts a custom proposal:
+  * a `topics` row is created with `origin = 'student_proposal'` and `status = 'inactive'`;
+  * an active assignment is created;
+  * the request becomes `accepted`.
+* Students can abandon their active assignment without professor confirmation.
+* Abandoning a professor-origin assignment marks the assignment `abandoned` and reopens the topic as `available`.
+* Abandoning a student-proposal assignment marks the assignment `abandoned`, but keeps the generated topic `inactive` as history.
+
+### Implemented API Surface
+Student routes:
+* `GET /api/student/professors`
+* `GET /api/student/requests`
+* `GET /api/student/assignment`
+* `POST /api/student/topic-requests`
+* `POST /api/student/custom-proposals`
+* `POST /api/student/assignments/:id/abandon`
+* `POST /api/student/assignments/:id/change-requests`
+
+Professor routes:
+* `GET /api/professor/dashboard`
+* `GET /api/professor/requests`
+* `POST /api/professor/topics`
+* `PATCH /api/professor/topics/:id`
+* `POST /api/professor/requests/:id/accept`
+* `POST /api/professor/requests/:id/reject`
+* `GET /api/professor/change-requests`
+* `POST /api/professor/change-requests/:id/accept`
+* `POST /api/professor/change-requests/:id/reject`
 
 ## Known Local Issues / Lessons
 

@@ -807,6 +807,10 @@ video {
   max-width: 520px;
 }
 
+.max-w-\[560px\] {
+  max-width: 560px;
+}
+
 .max-w-\[74vw\] {
   max-width: 74vw;
 }
@@ -832,6 +836,10 @@ video {
 
 .grid-cols-2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-cols-\[auto_1fr\] {
+  grid-template-columns: auto 1fr;
 }
 
 .grid-cols-\[auto_1fr_auto\] {
@@ -914,10 +922,6 @@ video {
   border-radius: 18px;
 }
 
-.rounded-\[9px\] {
-  border-radius: 9px;
-}
-
 .rounded-full {
   border-radius: 9999px;
 }
@@ -988,10 +992,6 @@ video {
 
 .bg-\[var\(--accent-soft\)\] {
   background-color: var(--accent-soft);
-}
-
-.bg-\[var\(--blue-soft\)\] {
-  background-color: var(--blue-soft);
 }
 
 .bg-\[var\(--border\)\] {
@@ -1086,10 +1086,6 @@ video {
   font-size: 1.35rem;
 }
 
-.text-\[1\.3rem\] {
-  font-size: 1.3rem;
-}
-
 .text-\[clamp\(2rem\2c 4vw\2c 2\.55rem\)\] {
   font-size: clamp(2rem,4vw,2.55rem);
 }
@@ -1152,10 +1148,6 @@ video {
 
 .text-\[var\(--accent\)\] {
   color: var(--accent);
-}
-
-.text-\[var\(--blue\)\] {
-  color: var(--blue);
 }
 
 .text-\[var\(--muted\)\] {
@@ -1404,27 +1396,12 @@ body:not(.dark) .primary-btn {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
-.hover\:-translate-y-px:hover {
-  --tw-translate-y: -1px;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
 .hover\:bg-\[var\(--accent-soft\)\]:hover {
   background-color: var(--accent-soft);
 }
 
-.hover\:text-\[var\(--accent\)\]:hover {
-  color: var(--accent);
-}
-
 .hover\:opacity-75:hover {
   opacity: 0.75;
-}
-
-.hover\:shadow-\[0_12px_26px_var\(--accent-glow\)\]:hover {
-  --tw-shadow: 0 12px 26px var(--accent-glow);
-  --tw-shadow-colored: 0 12px 26px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
 .hover\:brightness-105:hover {
@@ -1467,6 +1444,10 @@ body:not(.dark) .primary-btn {
 
   .sm\:min-w-\[100px\] {
     min-width: 100px;
+  }
+
+  .sm\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .sm\:flex-row {

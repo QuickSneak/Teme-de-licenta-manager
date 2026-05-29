@@ -415,7 +415,7 @@ new Elysia()
         });
 
         return withAuthHeaders(
-          { message: 'Account created. Check your email to verify your account before logging in.' },
+          { message: 'Check email to verify account.' },
           result.headers
         );
       } catch (error) {
