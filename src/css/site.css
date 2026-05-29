@@ -1900,10 +1900,10 @@ body.mobile-sidebar-open .sidebar {
   color: rgb(220 38 38 / var(--tw-text-opacity, 1));
 }
 
-.spots {
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  font-weight: 700;
+.status.reserved {
+  background-color: rgb(249 115 22 / 0.15);
+  --tw-text-opacity: 1;
+  color: rgb(234 88 12 / var(--tw-text-opacity, 1));
 }
 
 .details-btn {
@@ -2204,44 +2204,6 @@ body.mobile-sidebar-open .sidebar {
   color: var(--text);
 }
 
-.message-btn {
-  min-height: 3.5rem;
-  border-radius: 1rem;
-  padding-left: 2rem;
-  padding-right: 2rem;
-  font-weight: 900;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-backdrop-filter;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-backdrop-filter;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-.message-btn:hover {
-  --tw-translate-y: -0.125rem;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
-.message-btn {
-  border-width: 1px;
-  border-color: var(--border);
-  background-color: var(--surface);
-  color: var(--text);
-}
-
-.message-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  --tw-shadow: 0 10px 24px var(--accent-glow);
-  --tw-shadow-colored: 0 10px 24px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-}
-
-.message-btn {
-  width: 100%;
-  justify-content: center;
-}
-
 body.sidebar-collapsed {
   --sidebar-width: 86px;
 }
@@ -2463,14 +2425,6 @@ body.sidebar-collapsed {
 .dropdown button:hover {
   background-color: var(--accent-soft);
   color: var(--accent);
-}
-
-.keyword-tags {
-  display: flex;
-  min-width: 0px;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .tag {
@@ -3273,68 +3227,6 @@ body.sidebar-collapsed {
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
 }
 
-.review-group {
-  border-radius: 1.5rem;
-  border-width: 1px;
-  border-color: var(--border);
-  background-color: var(--surface);
-  --tw-shadow-color: var(--shadow);
-  --tw-shadow: var(--tw-shadow-colored);
-  margin-bottom: 1.25rem;
-  overflow: hidden;
-}
-
-.review-group-head {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-bottom-width: 1px;
-  border-color: var(--border);
-  background-color: var(--surface-muted);
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-  text-align: left;
-  font-weight: 900;
-  color: var(--accent);
-}
-
-.review-head-left {
-  display: flex;
-  min-width: 0px;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.review-specialisation {
-  border-bottom-width: 1px;
-  border-color: var(--border);
-}
-
-.review-specialisation:last-child {
-  border-bottom-width: 0px;
-}
-
-.review-specialisation-head {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-bottom-width: 1px;
-  border-color: var(--border);
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-  text-align: left;
-  font-weight: 900;
-  color: var(--text);
-}
-
 .review-group.closed > .collapsible-content,
   .review-specialisation.closed > .collapsible-content {
   display: none;
@@ -3820,6 +3712,10 @@ body.sidebar-collapsed {
 
 .pointer-events-none {
   pointer-events: none;
+}
+
+.visible {
+  visibility: visible;
 }
 
 .fixed {
@@ -4450,16 +4346,6 @@ body.sidebar-collapsed {
   color: var(--text);
 }
 
-.text-green-500 {
-  --tw-text-opacity: 1;
-  color: rgb(34 197 94 / var(--tw-text-opacity, 1));
-}
-
-.text-orange-500 {
-  --tw-text-opacity: 1;
-  color: rgb(249 115 22 / var(--tw-text-opacity, 1));
-}
-
 .text-transparent {
   color: transparent;
 }
@@ -4506,6 +4392,10 @@ body.sidebar-collapsed {
 .outline-none {
   outline: 2px solid transparent;
   outline-offset: 2px;
+}
+
+.filter {
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 
 .backdrop-blur-2xl {

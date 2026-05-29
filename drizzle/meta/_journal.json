@@ -15,6 +15,13 @@
       "when": 1779822000000,
       "tag": "0001_profile_professor_specializations",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1780016872745,
+      "tag": "0002_thesis_topic_lifecycle",
+      "breakpoints": true
     }
   ]
 }

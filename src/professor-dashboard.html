@@ -111,7 +111,7 @@
         <h2 class="section-title-main">My Students</h2>
       </section>
 
-      <section class="panel">
+      <section class="panel" id="studentsPanel">
         <p class="profile-text">No students are assigned yet.</p>
       </section>
     </main>
@@ -120,6 +120,23 @@
       <span id="modeIcon">S</span>
       <span id="modeText">LIGHT MODE</span>
     </div>
+  </div>
+  <div class="modal-backdrop" id="topicModal">
+    <article class="proposal-modal">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title" id="modalTitle">Topic title</h2>
+          <p class="modal-subtitle" id="modalSubtitle">Faculty - Specialisation - Professor</p>
+        </div>
+        <button class="modal-close" type="button" id="modalClose" aria-label="Close modal">x</button>
+      </div>
+      <div class="modal-body">
+        <section class="modal-section">
+          <h3>Description</h3>
+          <p id="modalDescription">Description appears here.</p>
+        </section>
+      </div>
+    </article>
   </div>
   <script src="/js/top-actions.js"></script>
   <script src="/js/page-guard.js"></script>
@@ -136,6 +153,13 @@
     const collapseSidebarBtn = document.getElementById("collapseSidebarBtn");
     const facultySidebar = document.getElementById("facultySidebar");
     const facultyBlocks = document.getElementById("facultyBlocks");
+    const studentsPanel = document.getElementById("studentsPanel");
+    const topicModal = document.getElementById("topicModal");
+    const modalClose = document.getElementById("modalClose");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSubtitle = document.getElementById("modalSubtitle");
+    const modalDescription = document.getElementById("modalDescription");
+    let dashboardData = null;
 
     function setTheme(theme) {
       const isDark = theme === "dark";
@@ -192,6 +216,46 @@
       return Array.from(facultiesById.values()).filter((faculty) => faculty.specialisations.length > 0);
     }
 
+    function openTopicModal(item, subtitle) {
+      modalTitle.textContent = item.title;
+      modalSubtitle.textContent = subtitle;
+      modalDescription.textContent = item.description;
+      topicModal.classList.add("open");
+    }
+
+    function createTopicRow(topic, professorName) {
+      const row = document.createElement("article");
+      row.className = "thesis-row";
+
+      const main = document.createElement("div");
+      const title = document.createElement("h3");
+      title.className = "thesis-title";
+      title.textContent = topic.title;
+
+      const desc = document.createElement("p");
+      desc.className = "thesis-desc";
+      desc.textContent = topic.summary;
+      main.append(title, desc);
+
+      const status = document.createElement("span");
+      status.className = `status-pill ${topic.status === "reserved" ? "pending" : topic.status === "inactive" ? "withdrawn" : "available"}`;
+      status.textContent = topic.status;
+
+      const actions = document.createElement("div");
+      actions.className = "row-actions";
+      const view = document.createElement("button");
+      view.className = "small-btn";
+      view.type = "button";
+      view.textContent = "View";
+      view.addEventListener("click", () => {
+        openTopicModal(topic, `${topic.faculty} - ${topic.specialization} - ${professorName}`);
+      });
+      actions.append(view);
+
+      row.append(main, status, actions);
+      return row;
+    }
+
     function createEmptyThesisList() {
       const list = document.createElement("div");
       list.className = "thesis-list collapsible-content";
@@ -245,7 +309,7 @@
       });
     }
 
-    function renderProfessorFacultyBlocks(faculties) {
+    function renderProfessorFacultyBlocks(faculties, topics, professorName) {
       facultyBlocks.innerHTML = "";
 
       if (!faculties.length) {
@@ -313,13 +377,80 @@
 
           specialisationName.append(specialisationIcon, specialisationText);
           specialisationButton.append(specialisationName, specialisationArrow);
-          specialisationBlock.append(specialisationButton, createEmptyThesisList());
+          const list = document.createElement("div");
+          list.className = "thesis-list collapsible-content";
+          const specialisationTopics = topics.filter((topic) => topic.specializationId === specialisation.id);
+
+          if (!specialisationTopics.length) {
+            const empty = document.createElement("p");
+            empty.className = "profile-text py-4";
+            empty.textContent = "No theses have been added for this specialisation yet.";
+            list.append(empty);
+          } else {
+            specialisationTopics.forEach((topic) => {
+              list.append(createTopicRow(topic, professorName));
+            });
+          }
+
+          specialisationBlock.append(specialisationButton, list);
           content.append(specialisationBlock);
         });
 
         facultyBlock.append(facultyButton, content);
         facultyBlocks.append(facultyBlock);
       });
+    }
+
+    function renderStudents(assignments) {
+      studentsPanel.innerHTML = "";
+
+      if (!assignments.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No students are assigned yet.";
+        studentsPanel.append(empty);
+        return;
+      }
+
+      const grid = document.createElement("div");
+      grid.className = "students-grid";
+
+      assignments.forEach((assignment) => {
+        const card = document.createElement("article");
+        card.className = "student-card";
+
+        const head = document.createElement("div");
+        head.className = "student-head";
+        const avatar = document.createElement("span");
+        avatar.className = "avatar";
+        avatar.textContent = initialsFromName(assignment.studentName);
+        const headText = document.createElement("div");
+        const name = document.createElement("h3");
+        name.className = "student-name";
+        name.textContent = assignment.studentName;
+        const topic = document.createElement("p");
+        topic.className = "student-topic";
+        topic.textContent = assignment.title;
+        headText.append(name, topic);
+        head.append(avatar, headText);
+
+        const meta = document.createElement("div");
+        meta.className = "student-meta";
+        meta.textContent = assignment.summary;
+
+        const view = document.createElement("button");
+        view.className = "small-btn";
+        view.type = "button";
+        view.textContent = "View";
+        view.addEventListener("click", () => {
+          openTopicModal(assignment, `${assignment.faculty} - ${assignment.specialization} - ${assignment.studentName}`);
+        });
+
+        card.append(head, meta, view);
+        grid.append(card);
+      });
+
+      studentsPanel.append(grid);
     }
 
     function setupDynamicDashboardInteractions() {
@@ -350,7 +481,7 @@
         }
       }
 
-      const response = await fetch("/profile");
+      const response = await fetch("/api/professor/dashboard");
 
       if (!response.ok) {
         window.location.href = "/login.html";
@@ -358,15 +489,20 @@
       }
 
       const data = await response.json();
-
-      if (data.user.role !== "professor") {
-        window.location.href = "/login.html";
-        return;
-      }
+      dashboardData = data;
 
       const faculties = groupSpecialisationsByFaculty(data);
       renderProfessorSidebar(faculties);
-      renderProfessorFacultyBlocks(faculties);
+      renderProfessorFacultyBlocks(faculties, data.topics || [], data.professor?.name || "Professor");
+      renderStudents(data.assignments || []);
+
+      document.querySelectorAll(".stat-card").forEach((card) => {
+        const label = card.querySelector(".stat-label")?.textContent?.trim();
+        const number = card.querySelector(".stat-number");
+        if (label === "Pending Claims" && number) number.textContent = String(data.stats?.pendingRequests ?? 0);
+        if (label === "Approved Students" && number) number.textContent = String(data.stats?.approvedStudents ?? 0);
+      });
+
       setupDynamicDashboardInteractions();
     }
 
@@ -410,6 +546,18 @@
         body.classList.toggle("sidebar-collapsed");
       });
     }
+
+    function closeModal() {
+      topicModal.classList.remove("open");
+    }
+
+    modalClose.addEventListener("click", closeModal);
+    topicModal.addEventListener("click", (event) => {
+      if (event.target === topicModal) closeModal();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeModal();
+    });
 
     const savedTheme = localStorage.getItem("professorInterfaceTheme") || "light";
     setTheme(savedTheme);

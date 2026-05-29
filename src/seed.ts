@@ -8,6 +8,10 @@ import {
   professorSpecializations,
   sessions,
   specializations,
+  topicAssignments,
+  topicChangeRequests,
+  topicRequests,
+  topics,
   users,
   verifications
 } from './db/schema';
@@ -89,6 +93,10 @@ async function createUser(input: {
 }
 
 async function seed() {
+  await db.delete(topicChangeRequests);
+  await db.delete(topicAssignments);
+  await db.delete(topicRequests);
+  await db.delete(topics);
   await db.delete(professorSpecializations);
   await db.delete(sessions);
   await db.delete(verifications);
@@ -108,6 +116,15 @@ async function seed() {
     role: 'student',
     facultyId: info.faculty.id,
     specializationId: info.specialization.id
+  });
+
+  await createUser({
+    name: 'Marketing Test Student',
+    email: 'student.marketing.mk23@uab.ro',
+    password: 'password123',
+    role: 'student',
+    facultyId: marketing.faculty.id,
+    specializationId: marketing.specialization.id
   });
 
   const infoProfessor = await createUser({

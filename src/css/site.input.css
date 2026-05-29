@@ -504,6 +504,10 @@ a {
     @apply bg-red-500/15 text-red-600;
   }
 
+  .status.reserved {
+    @apply bg-orange-500/15 text-orange-600;
+  }
+
   .spots {
     @apply text-sm font-bold;
   }

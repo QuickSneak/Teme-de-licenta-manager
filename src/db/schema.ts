@@ -44,6 +44,77 @@ export const professorSpecializations = sqliteTable(
   })
 );
 
+export const topics = sqliteTable('topics', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  professorId: text('professor_id')
+    .notNull()
+    .references(() => users.id),
+  specializationId: integer('specialization_id')
+    .notNull()
+    .references(() => specializations.id),
+  origin: text('origin').notNull(),
+  status: text('status').notNull().default('available'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+});
+
+export const topicRequests = sqliteTable('topic_requests', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  studentId: text('student_id')
+    .notNull()
+    .references(() => users.id),
+  professorId: text('professor_id')
+    .notNull()
+    .references(() => users.id),
+  topicId: integer('topic_id').references(() => topics.id),
+  type: text('type').notNull(),
+  customTitle: text('custom_title'),
+  customDescription: text('custom_description'),
+  status: text('status').notNull().default('pending'),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+});
+
+export const topicAssignments = sqliteTable('topic_assignments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  studentId: text('student_id')
+    .notNull()
+    .references(() => users.id),
+  professorId: text('professor_id')
+    .notNull()
+    .references(() => users.id),
+  topicId: integer('topic_id')
+    .notNull()
+    .references(() => topics.id),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  status: text('status').notNull().default('active'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+});
+
+export const topicChangeRequests = sqliteTable('topic_change_requests', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  assignmentId: integer('assignment_id')
+    .notNull()
+    .references(() => topicAssignments.id),
+  studentId: text('student_id')
+    .notNull()
+    .references(() => users.id),
+  professorId: text('professor_id')
+    .notNull()
+    .references(() => users.id),
+  requestedTitle: text('requested_title').notNull(),
+  requestedDescription: text('requested_description').notNull(),
+  status: text('status').notNull().default('pending'),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+});
+
 export const sessions = sqliteTable('sessions', {
   id: text('id').primaryKey(),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),

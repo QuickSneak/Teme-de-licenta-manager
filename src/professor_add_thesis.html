@@ -102,9 +102,9 @@
     </div>
 
     <div class="toast" id="toast">
-      <p class="toast-title">Example thesis added</p>
+      <p class="toast-title" id="toastTitle">Thesis added</p>
       <p class="toast-text">
-        Your thesis topic was saved. This is demo feedback for testing only.
+        <span id="toastText">Your thesis topic was saved.</span>
       </p>
     </div>
   </div>
@@ -284,7 +284,9 @@
       selects.forEach((select) => select.classList.remove("open"));
     });
 
-    function showToast() {
+    function showToast(title, text) {
+      document.getElementById("toastTitle").textContent = title;
+      document.getElementById("toastText").textContent = text;
       toast.classList.add("show");
 
       setTimeout(() => {
@@ -300,7 +302,7 @@
       field.classList.toggle("error", !isValid);
     }
 
-    thesisForm.addEventListener("submit", (event) => {
+    thesisForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 
       const title = document.getElementById("title").value.trim();
@@ -340,16 +342,32 @@
         return;
       }
 
-      showToast();
+      try {
+        const response = await fetch("/api/professor/topics", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            title,
+            description,
+            specializationId: Number(specialisationId)
+          })
+        });
 
-      console.log({
-        title,
-        faculty,
-        facultyId,
-        specialisation,
-        specialisationId,
-        description
-      });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          showToast("Thesis was not added", data.error || "Please check the form and try again.");
+          return;
+        }
+
+        thesisForm.reset();
+        resetSelect(facultySelect, "Select faculty");
+        resetSelect(specialisationSelect, "Select specialisation");
+        renderSpecialisationOptions(null);
+        showToast("Thesis added", "Your thesis topic is now visible on your dashboard.");
+      } catch (error) {
+        showToast("Thesis was not added", "The server could not be reached.");
+      }
     });
 
     cancelBtn.addEventListener("click", () => {

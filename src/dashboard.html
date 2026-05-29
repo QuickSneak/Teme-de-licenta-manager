@@ -113,36 +113,8 @@
             <h2 class="panel-title">My Claims</h2>
           </div>
 
-          <div class="list-body">
-            <article class="data-row">
-              <span class="mini-icon orange">AI</span>
-              <div class="row-main">
-                <p class="row-title">Example Thesis: AI-Based Scheduling Assistant</p>
-                <p class="row-subtitle">Prof. Example Ionescu</p>
-              </div>
-              <span class="status-pill pending">Pending</span>
-              <a href="#" class="view-btn">View &rsaquo;</a>
-            </article>
-
-            <article class="data-row">
-              <span class="mini-icon green">IoT</span>
-              <div class="row-main">
-                <p class="row-title">Example Thesis: Data Security in IoT Networks</p>
-                <p class="row-subtitle">Prof. Example Popescu</p>
-              </div>
-              <span class="status-pill approved">Approved</span>
-              <a href="#" class="view-btn">View &rsaquo;</a>
-            </article>
-
-            <article class="data-row">
-              <span class="mini-icon gray">Web</span>
-              <div class="row-main">
-                <p class="row-title">Example Thesis: Web App for Thesis Management</p>
-                <p class="row-subtitle">Prof. Example Stan</p>
-              </div>
-              <span class="status-pill withdrawn">Withdrawn</span>
-              <a href="#" class="view-btn">View &rsaquo;</a>
-            </article>
+          <div class="list-body" id="claimsList">
+            <p class="profile-text">Loading claims...</p>
           </div>
         </section>
 
@@ -150,6 +122,9 @@
           <div class="panel-head">
             <span class="panel-icon">P</span>
             <h2 class="panel-title">My Confirmed Topic</h2>
+          </div>
+          <div class="list-body" id="assignmentPanel">
+            <p class="profile-text">Loading confirmed topic...</p>
           </div>
         </section>
 
@@ -196,6 +171,23 @@
       <span id="modeText">LIGHT MODE</span>
     </div>
   </div>
+  <div class="modal-backdrop" id="topicModal">
+    <article class="proposal-modal">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title" id="modalTitle">Topic title</h2>
+          <p class="modal-subtitle" id="modalSubtitle">Professor</p>
+        </div>
+        <button class="modal-close" type="button" id="modalClose" aria-label="Close modal">x</button>
+      </div>
+      <div class="modal-body">
+        <section class="modal-section">
+          <h3>Description</h3>
+          <p id="modalDescription">Description appears here.</p>
+        </section>
+      </div>
+    </article>
+  </div>
   <script src="/js/top-actions.js"></script>
   <script src="/js/page-guard.js"></script>
   <script>
@@ -206,6 +198,13 @@
     const sunOption = document.querySelector(".theme-option.sun");
     const modeIcon = document.getElementById("modeIcon");
     const modeText = document.getElementById("modeText");
+    const claimsList = document.getElementById("claimsList");
+    const assignmentPanel = document.getElementById("assignmentPanel");
+    const topicModal = document.getElementById("topicModal");
+    const modalClose = document.getElementById("modalClose");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSubtitle = document.getElementById("modalSubtitle");
+    const modalDescription = document.getElementById("modalDescription");
 
     function setTheme(theme) {
       const isDark = theme === "dark";
@@ -224,21 +223,172 @@
       setTheme(nextTheme);
     });
 
-    document.querySelectorAll(".view-btn").forEach((button) => {
-      button.addEventListener("click", (event) => {
-        event.preventDefault();
+    function statusClass(status) {
+      if (status === "accepted") return "approved";
+      if (status === "rejected") return "rejected";
+      if (status === "expired" || status === "cancelled") return "withdrawn";
+      return "pending";
+    }
 
-        const row = button.closest(".notification-row, .data-row");
-        const title = row?.querySelector(".row-title")?.textContent?.trim();
+    function statusLabel(status) {
+      if (status === "accepted") return "approved";
+      return status;
+    }
 
-        if (title) {
-          console.log("Opening:", title);
-        }
+    function openTopicModal(item, subtitle) {
+      modalTitle.textContent = item.title;
+      modalSubtitle.textContent = subtitle;
+      modalDescription.textContent = item.description;
+      topicModal.classList.add("open");
+    }
+
+    function renderClaims(requests) {
+      claimsList.innerHTML = "";
+
+      if (!requests.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No claims or proposals have been submitted yet.";
+        claimsList.append(empty);
+        return;
+      }
+
+      requests.forEach((request) => {
+        const row = document.createElement("article");
+        row.className = "data-row";
+
+        const icon = document.createElement("span");
+        icon.className = `mini-icon ${request.status === "accepted" ? "green" : request.status === "rejected" ? "red" : "orange"}`;
+        icon.textContent = request.type === "topic_claim" ? "C" : "P";
+
+        const main = document.createElement("div");
+        main.className = "row-main";
+        const title = document.createElement("p");
+        title.className = "row-title";
+        title.textContent = request.title;
+        const subtitle = document.createElement("p");
+        subtitle.className = "row-subtitle";
+        subtitle.textContent = `${request.professorName} - ${request.summary}`;
+        main.append(title, subtitle);
+
+        const status = document.createElement("span");
+        status.className = `status-pill ${statusClass(request.status)}`;
+        status.textContent = statusLabel(request.status);
+
+        const view = document.createElement("button");
+        view.className = "view-btn";
+        view.type = "button";
+        view.textContent = "View";
+        view.addEventListener("click", () => {
+          openTopicModal(request, `${request.professorName} - ${request.status}`);
+        });
+
+        row.append(icon, main, status, view);
+        claimsList.append(row);
       });
+    }
+
+    function renderAssignment(assignment) {
+      assignmentPanel.innerHTML = "";
+
+      if (!assignment) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No topic has been confirmed yet.";
+        assignmentPanel.append(empty);
+        return;
+      }
+
+      const row = document.createElement("article");
+      row.className = "data-row";
+
+      const icon = document.createElement("span");
+      icon.className = "mini-icon green";
+      icon.textContent = "OK";
+
+      const main = document.createElement("div");
+      main.className = "row-main";
+      const title = document.createElement("p");
+      title.className = "row-title";
+      title.textContent = assignment.title;
+      const subtitle = document.createElement("p");
+      subtitle.className = "row-subtitle";
+      subtitle.textContent = `${assignment.professorName} - ${assignment.faculty} - ${assignment.specialization}`;
+      main.append(title, subtitle);
+
+      const view = document.createElement("button");
+      view.className = "view-btn";
+      view.type = "button";
+      view.textContent = "View";
+      view.addEventListener("click", () => openTopicModal(assignment, `${assignment.professorName} - active`));
+
+      const drop = document.createElement("button");
+      drop.className = "small-btn danger";
+      drop.type = "button";
+      drop.textContent = "Drop";
+      drop.addEventListener("click", async () => {
+        if (!confirm("Drop your confirmed topic?")) return;
+        const response = await fetch(`/api/student/assignments/${assignment.id}/abandon`, { method: "POST" });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          alert(data.error || "The assignment could not be dropped.");
+          return;
+        }
+        await loadDashboard();
+      });
+
+      const actions = document.createElement("div");
+      actions.className = "row-actions";
+      actions.append(view, drop);
+      row.append(icon, main, actions);
+      assignmentPanel.append(row);
+    }
+
+    async function loadDashboard() {
+      const [requestsResponse, assignmentResponse] = await Promise.all([
+        fetch("/api/student/requests"),
+        fetch("/api/student/assignment")
+      ]);
+
+      if (!requestsResponse.ok || !assignmentResponse.ok) {
+        if (requestsResponse.status === 401 || assignmentResponse.status === 401) {
+          window.location.href = "/login.html";
+        }
+        return;
+      }
+
+      const requestsData = await requestsResponse.json();
+      const assignmentData = await assignmentResponse.json();
+      renderClaims(requestsData.requests || []);
+      renderAssignment(assignmentData.assignment);
+
+      const requests = requestsData.requests || [];
+      const pending = requests.filter((item) => item.status === "pending").length;
+      const approved = requests.filter((item) => item.status === "accepted").length;
+      document.querySelectorAll(".stat-card").forEach((card) => {
+        const label = card.querySelector(".stat-label")?.textContent?.trim();
+        const number = card.querySelector(".stat-number");
+        if (label === "Pending Claims" && number) number.textContent = String(pending);
+        if (label === "Approved" && number) number.textContent = String(approved);
+        if (label === "Withdrawn" && number) number.textContent = String(requests.filter((item) => item.status === "cancelled" || item.status === "expired").length);
+      });
+    }
+
+    function closeModal() {
+      topicModal.classList.remove("open");
+    }
+
+    modalClose.addEventListener("click", closeModal);
+    topicModal.addEventListener("click", (event) => {
+      if (event.target === topicModal) closeModal();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeModal();
     });
 
     const savedTheme = localStorage.getItem("studentInterfaceTheme") || "light";
     setTheme(savedTheme);
+    loadDashboard();
   </script>
 </body>
 </html>

@@ -70,12 +70,7 @@
                 <span class="select-arrow">⌄</span>
 
                 <div class="dropdown">
-                  <button type="button" data-value="Prof. Example Ionescu">Prof. Example Ionescu</button>
-                  <button type="button" data-value="Prof. Example Popescu">Prof. Example Popescu</button>
-                  <button type="button" data-value="Prof. Example Mihai">Prof. Example Mihai</button>
-                  <button type="button" data-value="Prof. Example Marin">Prof. Example Marin</button>
-                  <button type="button" data-value="Prof. Example Stan">Prof. Example Stan</button>
-                  <button type="button" data-value="Prof. Example Dumitru">Prof. Example Dumitru</button>
+                  <button type="button" disabled>Loading professors...</button>
                 </div>
               </div>
               <p class="error-text">Please select a professor.</p>
@@ -109,9 +104,9 @@
     </div>
 
     <div class="toast" id="toast">
-      <p class="toast-title">Example proposal submitted</p>
+      <p class="toast-title" id="toastTitle">Proposal submitted</p>
       <p class="toast-text">
-        Your custom thesis proposal was saved for professor review. This is demo feedback for testing only.
+        <span id="toastText">Your custom thesis proposal was saved for professor review.</span>
       </p>
     </div>
   </div>
@@ -130,6 +125,7 @@
     const proposalForm = document.getElementById("proposalForm");
     const cancelBtn = document.getElementById("cancelBtn");
     const toast = document.getElementById("toast");
+    const professorSelect = document.querySelector('[data-select="professor"]');
 
     function setTheme(theme) {
       const isDark = theme === "dark";
@@ -150,10 +146,29 @@
       setTheme(nextTheme);
     });
 
-    selects.forEach((select) => {
+    function bindSelect(select) {
       const value = select.querySelector(".select-value");
       const options = select.querySelectorAll(".dropdown button");
 
+      options.forEach((option) => {
+        if (option.disabled) return;
+        option.addEventListener("click", (event) => {
+          event.stopPropagation();
+
+          value.textContent = option.dataset.value;
+          value.dataset.selected = option.dataset.value;
+          value.dataset.selectedId = option.dataset.id;
+          select.classList.remove("open");
+
+          const field = select.closest(".field");
+          if (field) {
+            field.classList.remove("error");
+          }
+        });
+      });
+    }
+
+    selects.forEach((select) => {
       select.addEventListener("click", (event) => {
         event.stopPropagation();
 
@@ -166,20 +181,7 @@
         select.classList.toggle("open");
       });
 
-      options.forEach((option) => {
-        option.addEventListener("click", (event) => {
-          event.stopPropagation();
-
-          value.textContent = option.dataset.value;
-          value.dataset.selected = option.dataset.value;
-          select.classList.remove("open");
-
-          const field = select.closest(".field");
-          if (field) {
-            field.classList.remove("error");
-          }
-        });
-      });
+      bindSelect(select);
     });
 
     document.addEventListener("click", () => {
@@ -192,7 +194,9 @@
       });
     });
 
-    function showToast() {
+    function showToast(title, text) {
+      document.getElementById("toastTitle").textContent = title;
+      document.getElementById("toastText").textContent = text;
       toast.classList.add("show");
 
       setTimeout(() => {
@@ -208,7 +212,7 @@
       field.classList.toggle("error", !isValid);
     }
 
-    proposalForm.addEventListener("submit", (event) => {
+    proposalForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 
       const title = document.getElementById("title").value.trim();
@@ -217,6 +221,9 @@
       const professor = document
         .querySelector('[data-select="professor"] .select-value')
         .dataset.selected;
+      const professorId = document
+        .querySelector('[data-select="professor"] .select-value')
+        .dataset.selectedId;
 
       const isTitleValid = title.length > 0;
       const isProfessorValid = Boolean(professor);
@@ -235,16 +242,29 @@
         return;
       }
 
-      showToast();
+      try {
+        const response = await fetch("/api/student/custom-proposals", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ professorId, title, description })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          showToast("Proposal was not submitted", data.error || "Please check the form and try again.");
+          return;
+        }
 
-      console.log({
-        title,
-        professor,
-        keywords: Array.from(document.querySelectorAll(".tag")).map((tag) =>
-          tag.textContent.replace("×", "").trim()
-        ),
-        description
-      });
+        proposalForm.reset();
+        document.querySelectorAll(".select-value").forEach((value) => {
+          delete value.dataset.selected;
+          delete value.dataset.selectedId;
+        });
+        document.querySelector('[data-select="professor"] .select-value').textContent =
+          "Search or select professor";
+        showToast("Proposal submitted", "Your custom proposal is now waiting for professor review.");
+      } catch (error) {
+        showToast("Proposal was not submitted", "The server could not be reached.");
+      }
     });
 
     cancelBtn.addEventListener("click", () => {
@@ -256,14 +276,49 @@
 
       document.querySelectorAll(".select-value").forEach((value) => {
         delete value.dataset.selected;
+        delete value.dataset.selectedId;
       });
 
       document.querySelector('[data-select="professor"] .select-value').textContent =
         "Search or select professor";
     });
 
+    async function loadProfessors() {
+      const response = await fetch("/api/student/professors");
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) window.location.href = "/login.html";
+        return;
+      }
+
+      const data = await response.json();
+      const dropdown = professorSelect.querySelector(".dropdown");
+      dropdown.innerHTML = "";
+      const professors = data.professorOptions || data.professors || [];
+
+      if (!professors.length) {
+        const empty = document.createElement("button");
+        empty.type = "button";
+        empty.disabled = true;
+        empty.textContent = "No professors available";
+        dropdown.append(empty);
+        return;
+      }
+
+      professors.forEach((professor) => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.dataset.value = professor.name;
+        option.dataset.id = professor.id;
+        option.textContent = professor.name;
+        dropdown.append(option);
+      });
+
+      bindSelect(professorSelect);
+    }
+
     const savedTheme = localStorage.getItem("studentInterfaceTheme") || "light";
     setTheme(savedTheme);
+    loadProfessors();
   </script>
 </body>
 </html>

@@ -34,7 +34,7 @@
     <main class="page-shell proposals-shell">
       <section class="page-head">
         <h1 class="page-title">Student Proposals</h1>
-        <p class="page-subtitle">Review example/test thesis requests submitted by students.</p>
+        <p class="page-subtitle">Review thesis requests submitted by students.</p>
       </section>
 
       <section class="summary-strip">
@@ -44,7 +44,7 @@
           <span class="summary-number">3 shown</span>
         </div>
         <div class="summary-right">
-          <span>Last demo refresh: 10 minutes ago</span>
+          <span id="lastRefresh">Loading proposals...</span>
           <button class="refresh-btn" type="button" aria-label="Refresh proposals">R</button>
         </div>
       </section>
@@ -53,142 +53,8 @@
         <h2 class="section-title-main">Active Proposals</h2>
       </div>
 
-      <section class="review-group faculty-proposals">
-        <button class="review-group-head collapsible-trigger" type="button">
-          <span class="review-head-left">
-            <span class="section-icon">FI</span>
-            <span>Example Faculty of Informatics and Engineering</span>
-          </span>
-          <span class="collapse-arrow">^</span>
-        </button>
-
-        <div class="collapsible-content">
-          <section class="review-specialisation specialisation-group">
-            <button class="review-specialisation-head collapsible-trigger" type="button">
-              <span class="review-head-left">
-                <span class="section-icon">I</span>
-                <span>Example Informatics</span>
-              </span>
-              <span class="collapse-arrow">^</span>
-            </button>
-
-            <div class="proposal-review-list collapsible-content">
-              <article class="proposal-review-card"
-                data-title="Example Proposal: AI Code Review Assistant for Academic Projects"
-                data-student="Test Student Ayesha"
-                data-faculty="Example Faculty of Informatics and Engineering"
-                data-specialisation="Example Informatics"
-                data-type="Solo"
-                data-description="Example proposal text: build an assistant that analyzes student code, highlights likely bugs, and suggests improvements for academic programming projects.">
-                <div class="student-side">
-                  <span class="avatar">AS</span>
-                  <div>
-                    <h3 class="student-name">Test Student Ayesha</h3>
-                    <span class="student-type">Solo example</span>
-                  </div>
-                </div>
-                <div class="proposal-main">
-                  <h3 class="proposal-title">Example Proposal: AI Code Review Assistant for Academic Projects</h3>
-                  <p class="proposal-meta">Example Faculty of Informatics and Engineering - Example Informatics</p>
-                  <p class="proposal-desc">Example/test idea focused on automated feedback for student programming assignments.</p>
-                </div>
-                <div class="proposal-actions">
-                  <span class="proposal-time">12 minutes ago</span>
-                  <span class="new-pill">New</span>
-                  <button class="small-btn view-proposal-btn" type="button">View</button>
-                </div>
-              </article>
-            </div>
-          </section>
-
-          <section class="review-specialisation specialisation-group">
-            <button class="review-specialisation-head collapsible-trigger" type="button">
-              <span class="review-head-left">
-                <span class="section-icon">CS</span>
-                <span>Example Cybersecurity Track</span>
-              </span>
-              <span class="collapse-arrow">^</span>
-            </button>
-
-            <div class="proposal-review-list collapsible-content">
-              <article class="proposal-review-card"
-                data-title="Example Proposal: Behavioral Biometrics Authentication"
-                data-student="Test Student Talha and Test Student Noor"
-                data-faculty="Example Faculty of Informatics and Engineering"
-                data-specialisation="Example Cybersecurity Track"
-                data-type="Collaborative"
-                data-description="Example proposal text: investigate typing rhythm and interaction patterns as a second signal for authentication risk scoring.">
-                <div class="student-side">
-                  <span class="avatar">TN</span>
-                  <div>
-                    <h3 class="student-name">Test Student Talha and Test Student Noor</h3>
-                    <span class="student-type">Collaborative example</span>
-                  </div>
-                </div>
-                <div class="proposal-main">
-                  <h3 class="proposal-title">Example Proposal: Behavioral Biometrics Authentication</h3>
-                  <p class="proposal-meta">Example Faculty of Informatics and Engineering - Example Cybersecurity Track</p>
-                  <p class="proposal-desc">Example/test idea about anomaly detection for digital identity verification.</p>
-                </div>
-                <div class="proposal-actions">
-                  <span class="proposal-time">1 hour ago</span>
-                  <span class="new-pill">New</span>
-                  <button class="small-btn view-proposal-btn" type="button">View</button>
-                </div>
-              </article>
-            </div>
-          </section>
-        </div>
-      </section>
-
-      <section class="review-group faculty-proposals">
-        <button class="review-group-head collapsible-trigger" type="button">
-          <span class="review-head-left">
-            <span class="section-icon">FE</span>
-            <span>Example Faculty of Economics</span>
-          </span>
-          <span class="collapse-arrow">^</span>
-        </button>
-
-        <div class="collapsible-content">
-          <section class="review-specialisation specialisation-group">
-            <button class="review-specialisation-head collapsible-trigger" type="button">
-              <span class="review-head-left">
-                <span class="section-icon">M</span>
-                <span>Example Management</span>
-              </span>
-              <span class="collapse-arrow">^</span>
-            </button>
-
-            <div class="proposal-review-list collapsible-content">
-              <article class="proposal-review-card"
-                data-title="Example Proposal: Sustainable Supply Chain Practices in SMEs"
-                data-student="Test Student Noor"
-                data-faculty="Example Faculty of Economics"
-                data-specialisation="Example Management"
-                data-type="Solo"
-                data-description="Example proposal text: compare how sustainability practices affect cost pressure, supplier reliability, and long-term competitiveness for small businesses.">
-                <div class="student-side">
-                  <span class="avatar">NR</span>
-                  <div>
-                    <h3 class="student-name">Test Student Noor</h3>
-                    <span class="student-type">Solo example</span>
-                  </div>
-                </div>
-                <div class="proposal-main">
-                  <h3 class="proposal-title">Example Proposal: Sustainable Supply Chain Practices in SMEs</h3>
-                  <p class="proposal-meta">Example Faculty of Economics - Example Management</p>
-                  <p class="proposal-desc">Example/test idea about operational performance in small and medium enterprises.</p>
-                </div>
-                <div class="proposal-actions">
-                  <span class="proposal-time">2 hours ago</span>
-                  <span class="new-pill">New</span>
-                  <button class="small-btn view-proposal-btn" type="button">View</button>
-                </div>
-              </article>
-            </div>
-          </section>
-        </div>
+      <section class="proposal-review-list" id="activeProposals">
+        <p class="profile-text">Loading student proposals...</p>
       </section>
 
       <div class="section-toolbar">
@@ -294,7 +160,7 @@
 
       <div class="modal-body">
         <section class="modal-section">
-          <h3>Proposal Type</h3>
+          <h3>Student</h3>
           <p id="modalType">Solo</p>
         </section>
         <section class="modal-section">
@@ -302,8 +168,8 @@
           <p id="modalDescription">Proposal description appears here.</p>
         </section>
         <section class="modal-section">
-          <h3>Review Note</h3>
-          <p>This is a demo-only review panel. Replace this test guidance with real professor decision rules later.</p>
+          <h3>Time Remaining</h3>
+          <p id="modalTime">Time remaining appears here.</p>
         </section>
       </div>
 
@@ -329,6 +195,32 @@
     const modalSubtitle = document.getElementById("modalSubtitle");
     const modalType = document.getElementById("modalType");
     const modalDescription = document.getElementById("modalDescription");
+    const modalTime = document.getElementById("modalTime");
+    const activeProposals = document.getElementById("activeProposals");
+    const lastRefresh = document.getElementById("lastRefresh");
+    const approveButton = document.querySelector(".modal-btn.approve");
+    const rejectButton = document.querySelector(".modal-btn.reject");
+    let selectedRequestId = null;
+
+    function initialsFromName(name) {
+      return name
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((word) => word[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "?";
+    }
+
+    function timeRemaining(expiresAt) {
+      const diff = new Date(expiresAt).getTime() - Date.now();
+      if (diff <= 0) return "Expired";
+      const hours = Math.floor(diff / 3600000);
+      const minutes = Math.floor((diff % 3600000) / 60000);
+      if (hours >= 24) return `${Math.floor(hours / 24)}d ${hours % 24}h left`;
+      if (hours > 0) return `${hours}h ${minutes}m left`;
+      return `${minutes}m left`;
+    }
 
     function setTheme(theme) {
       const isDark = theme === "dark";
@@ -344,32 +236,108 @@
       setTheme(body.classList.contains("dark") ? "light" : "dark");
     });
 
-    document.querySelectorAll(".faculty-proposals > .collapsible-trigger").forEach((trigger) => {
-      trigger.addEventListener("click", () => {
-        trigger.closest(".faculty-proposals")?.classList.toggle("closed");
-      });
-    });
+    function openRequestModal(item) {
+      selectedRequestId = item.id;
+      modalTitle.textContent = item.title;
+      modalSubtitle.textContent = `${item.faculty || "Faculty"} - ${item.specialization || "Specialisation"}`;
+      modalType.textContent = item.studentName;
+      modalDescription.textContent = item.description;
+      modalTime.textContent = timeRemaining(item.expiresAt);
+      proposalModal.classList.add("open");
+    }
 
-    document.querySelectorAll(".specialisation-group > .collapsible-trigger").forEach((trigger) => {
-      trigger.addEventListener("click", () => {
-        trigger.closest(".specialisation-group")?.classList.toggle("closed");
-      });
-    });
+    function renderRequests(requests) {
+      activeProposals.innerHTML = "";
+      document.querySelector(".summary-number").textContent = `${requests.length} shown`;
+      document.querySelector(".summary-label").textContent = "Pending Student Proposals";
+      document.querySelector(".summary-icon").textContent = String(requests.length);
+      lastRefresh.textContent = `Last refresh: ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 
-    document.querySelectorAll(".view-proposal-btn").forEach((button) => {
-      button.addEventListener("click", () => {
-        const card = button.closest(".proposal-review-card");
+      if (!requests.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No active proposals are waiting for review.";
+        activeProposals.append(empty);
+        return;
+      }
 
-        modalTitle.textContent = card.dataset.title;
-        modalSubtitle.textContent = `${card.dataset.student} - ${card.dataset.faculty} - ${card.dataset.specialisation}`;
-        modalType.textContent = card.dataset.type;
-        modalDescription.textContent = card.dataset.description;
-        proposalModal.classList.add("open");
+      requests.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "proposal-review-card";
+
+        const student = document.createElement("div");
+        student.className = "student-side";
+        const avatar = document.createElement("span");
+        avatar.className = "avatar";
+        avatar.textContent = initialsFromName(item.studentName);
+        const studentText = document.createElement("div");
+        const name = document.createElement("h3");
+        name.className = "student-name";
+        name.textContent = item.studentName;
+        const type = document.createElement("span");
+        type.className = "student-type";
+        type.textContent = item.type === "topic_claim" ? "Topic claim" : "Custom proposal";
+        studentText.append(name, type);
+        student.append(avatar, studentText);
+
+        const main = document.createElement("div");
+        main.className = "proposal-main";
+        const title = document.createElement("h3");
+        title.className = "proposal-title";
+        title.textContent = item.title;
+        const meta = document.createElement("p");
+        meta.className = "proposal-meta";
+        meta.textContent = `${item.faculty || "Faculty"} - ${item.specialization || "Specialisation"}`;
+        const desc = document.createElement("p");
+        desc.className = "proposal-desc";
+        desc.textContent = item.summary;
+        main.append(title, meta, desc);
+
+        const actions = document.createElement("div");
+        actions.className = "proposal-actions";
+        const time = document.createElement("span");
+        time.className = "proposal-time";
+        time.textContent = timeRemaining(item.expiresAt);
+        const pill = document.createElement("span");
+        pill.className = "new-pill";
+        pill.textContent = item.status;
+        const view = document.createElement("button");
+        view.className = "small-btn view-proposal-btn";
+        view.type = "button";
+        view.textContent = "View";
+        view.addEventListener("click", () => openRequestModal(item));
+        actions.append(time, pill, view);
+
+        card.append(student, main, actions);
+        activeProposals.append(card);
       });
-    });
+    }
+
+    async function loadRequests() {
+      const response = await fetch("/api/professor/requests");
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) window.location.href = "/login.html";
+        return;
+      }
+      const data = await response.json();
+      renderRequests(data.requests || []);
+    }
+
+    async function decideRequest(action) {
+      if (!selectedRequestId) return;
+      const response = await fetch(`/api/professor/requests/${selectedRequestId}/${action}`, { method: "POST" });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        alert(data.error || "The request could not be updated.");
+        return;
+      }
+      closeModal();
+      await loadRequests();
+    }
 
     function closeModal() {
       proposalModal.classList.remove("open");
+      selectedRequestId = null;
     }
 
     modalClose.addEventListener("click", closeModal);
@@ -386,18 +354,13 @@
       }
     });
 
-    document.querySelector(".refresh-btn").addEventListener("click", () => {
-      console.log("Refreshing demo student proposals");
-    });
+    document.querySelector(".refresh-btn").addEventListener("click", loadRequests);
 
-    document.querySelectorAll(".modal-btn.approve, .modal-btn.reject").forEach((button) => {
-      button.addEventListener("click", () => {
-        console.log("Demo decision:", button.textContent.trim());
-        closeModal();
-      });
-    });
+    approveButton.addEventListener("click", () => decideRequest("accept"));
+    rejectButton.addEventListener("click", () => decideRequest("reject"));
 
     setTheme(localStorage.getItem("professorInterfaceTheme") || "light");
+    loadRequests();
   </script>
 </body>
 </html>
