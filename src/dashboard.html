@@ -38,37 +38,15 @@
 
       <section class="panel">
         <div class="panel-head">
-          <span class="panel-icon">!</span>
-          <h2 class="panel-title">Recent Notifications</h2>
+          <div class="panel-title-wrap">
+            <span class="panel-icon">!</span>
+            <h2 class="panel-title">Recent Notifications</h2>
+          </div>
+          <button class="view-all" type="button" id="clearNotificationsBtn">Clear all</button>
         </div>
 
-        <div class="notification-list">
-          <article class="notification-row">
-            <span class="mini-icon green">OK</span>
-            <div class="row-main">
-              <p class="row-title">Example notification: your claim has been approved by Prof. Example Popescu.</p>
-            </div>
-            <p class="row-time">15 minutes ago</p>
-            <a href="#" class="view-btn">View &rsaquo;</a>
-          </article>
-
-          <article class="notification-row">
-            <span class="mini-icon blue">Msg</span>
-            <div class="row-main">
-              <p class="row-title">Prof. Example Mihai sent a test reply to your example proposal.</p>
-            </div>
-            <p class="row-time">2 hours ago</p>
-            <a href="#" class="view-btn">View &rsaquo;</a>
-          </article>
-
-          <article class="notification-row">
-            <span class="mini-icon orange">Due</span>
-            <div class="row-main">
-              <p class="row-title">Example final thesis selection test deadline is approaching.</p>
-            </div>
-            <p class="row-time">1 day ago</p>
-            <a href="#" class="view-btn">View &rsaquo;</a>
-          </article>
+        <div class="notification-list" id="notificationsList">
+          <p class="profile-text">Loading notifications...</p>
         </div>
       </section>
 
@@ -185,6 +163,21 @@
           <h3>Description</h3>
           <p id="modalDescription">Description appears here.</p>
         </section>
+        <form class="modal-edit-form hidden" id="assignmentEditForm">
+          <label class="field">
+            <span class="label">Requested Title</span>
+            <input class="control" id="assignmentTitleInput" type="text" required maxlength="180" />
+          </label>
+          <label class="field">
+            <span class="label">Requested Description</span>
+            <textarea class="textarea large" id="assignmentDescriptionInput" required></textarea>
+          </label>
+        </form>
+      </div>
+      <div class="modal-actions hidden" id="assignmentModalActions">
+        <button class="modal-btn reject hidden" type="button" id="assignmentCancelEditBtn">Cancel</button>
+        <button class="modal-btn approve" type="button" id="assignmentEditBtn">Request Edit</button>
+        <button class="modal-btn approve hidden" type="submit" form="assignmentEditForm" id="assignmentSubmitEditBtn">Submit Request</button>
       </div>
     </article>
   </div>
@@ -200,11 +193,21 @@
     const modeText = document.getElementById("modeText");
     const claimsList = document.getElementById("claimsList");
     const assignmentPanel = document.getElementById("assignmentPanel");
+    const notificationsList = document.getElementById("notificationsList");
+    const clearNotificationsBtn = document.getElementById("clearNotificationsBtn");
     const topicModal = document.getElementById("topicModal");
     const modalClose = document.getElementById("modalClose");
     const modalTitle = document.getElementById("modalTitle");
     const modalSubtitle = document.getElementById("modalSubtitle");
     const modalDescription = document.getElementById("modalDescription");
+    const assignmentModalActions = document.getElementById("assignmentModalActions");
+    const assignmentEditForm = document.getElementById("assignmentEditForm");
+    const assignmentTitleInput = document.getElementById("assignmentTitleInput");
+    const assignmentDescriptionInput = document.getElementById("assignmentDescriptionInput");
+    const assignmentEditBtn = document.getElementById("assignmentEditBtn");
+    const assignmentSubmitEditBtn = document.getElementById("assignmentSubmitEditBtn");
+    const assignmentCancelEditBtn = document.getElementById("assignmentCancelEditBtn");
+    let selectedAssignment = null;
 
     function setTheme(theme) {
       const isDark = theme === "dark";
@@ -235,10 +238,90 @@
       return status;
     }
 
-    function openTopicModal(item, subtitle) {
+    function timeAgo(value) {
+      const diff = Date.now() - new Date(value).getTime();
+      if (diff < 60000) return "just now";
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
+    }
+
+    function notificationIcon(type) {
+      if (type.includes("accepted")) return { text: "OK", color: "green" };
+      if (type.includes("rejected")) return { text: "X", color: "red" };
+      if (type.includes("edit")) return { text: "E", color: "blue" };
+      return { text: "T", color: "orange" };
+    }
+
+    function renderNotifications(notifications) {
+      notificationsList.innerHTML = "";
+      clearNotificationsBtn.disabled = notifications.length === 0;
+
+      if (!notifications.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No recent notifications yet.";
+        notificationsList.append(empty);
+        return;
+      }
+
+      notifications.forEach((notification) => {
+        const row = document.createElement("article");
+        row.className = "notification-row";
+
+        const iconData = notificationIcon(notification.type);
+        const icon = document.createElement("span");
+        icon.className = `mini-icon ${iconData.color}`;
+        icon.textContent = iconData.text;
+
+        const main = document.createElement("div");
+        main.className = "row-main";
+        const title = document.createElement("p");
+        title.className = "row-title";
+        title.textContent = notification.title;
+        const subtitle = document.createElement("p");
+        subtitle.className = "row-subtitle";
+        subtitle.textContent = notification.message;
+        main.append(title, subtitle);
+
+        const time = document.createElement("p");
+        time.className = "row-time";
+        time.textContent = timeAgo(notification.createdAt);
+
+        row.append(icon, main, time);
+        notificationsList.append(row);
+      });
+    }
+
+    async function loadNotifications() {
+      const response = await fetch("/api/notifications");
+      if (!response.ok) return [];
+      const data = await response.json();
+      const notifications = data.notifications || [];
+      renderNotifications(notifications);
+      return notifications;
+    }
+
+    function setAssignmentModalEditing(isEditing) {
+      modalDescription.closest(".modal-section").classList.toggle("hidden", isEditing);
+      assignmentEditForm.classList.toggle("hidden", !isEditing);
+      assignmentEditBtn.classList.toggle("hidden", isEditing);
+      assignmentSubmitEditBtn.classList.toggle("hidden", !isEditing);
+      assignmentCancelEditBtn.classList.toggle("hidden", !isEditing);
+    }
+
+    function openTopicModal(item, subtitle, canRequestEdit = false) {
       modalTitle.textContent = item.title;
       modalSubtitle.textContent = subtitle;
       modalDescription.textContent = item.description;
+      selectedAssignment = canRequestEdit ? item : null;
+      assignmentTitleInput.value = item.title;
+      assignmentDescriptionInput.value = item.description;
+      assignmentModalActions.classList.toggle("hidden", !canRequestEdit);
+      setAssignmentModalEditing(false);
       topicModal.classList.add("open");
     }
 
@@ -313,14 +396,24 @@
       title.textContent = assignment.title;
       const subtitle = document.createElement("p");
       subtitle.className = "row-subtitle";
-      subtitle.textContent = `${assignment.professorName} - ${assignment.faculty} - ${assignment.specialization}`;
+      const pendingChange = Boolean(assignment.pendingChangeRequest);
+      subtitle.textContent = `${assignment.professorName} - ${assignment.faculty} - ${assignment.specialization}${pendingChange ? " - edit request pending" : ""}`;
       main.append(title, subtitle);
 
       const view = document.createElement("button");
       view.className = "view-btn";
       view.type = "button";
       view.textContent = "View";
-      view.addEventListener("click", () => openTopicModal(assignment, `${assignment.professorName} - active`));
+      view.addEventListener("click", () => openTopicModal(assignment, `${assignment.professorName} - active`, !pendingChange));
+
+      const edit = document.createElement("button");
+      edit.className = "small-btn";
+      edit.type = "button";
+      edit.textContent = pendingChange ? "Edit Pending" : "Request Edit";
+      edit.disabled = pendingChange;
+      edit.addEventListener("click", () => {
+        if (!pendingChange) openTopicModal(assignment, `${assignment.professorName} - active`, true);
+      });
 
       const drop = document.createElement("button");
       drop.className = "small-btn danger";
@@ -339,15 +432,16 @@
 
       const actions = document.createElement("div");
       actions.className = "row-actions";
-      actions.append(view, drop);
+      actions.append(view, edit, drop);
       row.append(icon, main, actions);
       assignmentPanel.append(row);
     }
 
     async function loadDashboard() {
-      const [requestsResponse, assignmentResponse] = await Promise.all([
+      const [requestsResponse, assignmentResponse, notifications] = await Promise.all([
         fetch("/api/student/requests"),
-        fetch("/api/student/assignment")
+        fetch("/api/student/assignment"),
+        loadNotifications()
       ]);
 
       if (!requestsResponse.ok || !assignmentResponse.ok) {
@@ -371,12 +465,52 @@
         if (label === "Pending Claims" && number) number.textContent = String(pending);
         if (label === "Approved" && number) number.textContent = String(approved);
         if (label === "Withdrawn" && number) number.textContent = String(requests.filter((item) => item.status === "cancelled" || item.status === "expired").length);
+        if (label === "Notifications" && number) number.textContent = String(notifications.length);
       });
     }
 
     function closeModal() {
       topicModal.classList.remove("open");
+      selectedAssignment = null;
+      setAssignmentModalEditing(false);
     }
+
+    assignmentEditBtn.addEventListener("click", () => setAssignmentModalEditing(true));
+    assignmentCancelEditBtn.addEventListener("click", () => setAssignmentModalEditing(false));
+
+    assignmentEditForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!selectedAssignment) return;
+
+      const response = await fetch(`/api/student/assignments/${selectedAssignment.id}/change-requests`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          title: assignmentTitleInput.value,
+          description: assignmentDescriptionInput.value
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        alert(data.error || "The edit request could not be submitted.");
+        return;
+      }
+
+      closeModal();
+      await loadDashboard();
+    });
+
+    clearNotificationsBtn.addEventListener("click", async () => {
+      const response = await fetch("/api/notifications/clear", { method: "POST" });
+      if (!response.ok) return;
+      renderNotifications([]);
+      document.querySelectorAll(".stat-card").forEach((card) => {
+        const label = card.querySelector(".stat-label")?.textContent?.trim();
+        const number = card.querySelector(".stat-number");
+        if (label === "Notifications" && number) number.textContent = "0";
+      });
+    });
 
     modalClose.addEventListener("click", closeModal);
     topicModal.addEventListener("click", (event) => {

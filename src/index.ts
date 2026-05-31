@@ -1,10 +1,11 @@
 import { Elysia, t, type Context } from 'elysia';
 import { staticPlugin } from '@elysiajs/static';
-import { and, eq, inArray, lt, or } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt, or } from 'drizzle-orm';
 import { auth } from './auth';
 import { db } from './db';
 import {
   faculties,
+  notifications,
   professorSpecializations,
   specializations,
   topicAssignments,
@@ -24,6 +25,7 @@ import {
 
 type AuthUser = typeof users.$inferSelect;
 type UserWithRole = AuthUser & { role: UserRole };
+type TopicRequestRow = typeof topicRequests.$inferSelect;
 
 const requestLifetimeMs = 72 * 60 * 60 * 1000;
 const changeRequestLifetimeMs = 3 * 24 * 60 * 60 * 1000;
@@ -103,6 +105,74 @@ function nowDate() {
 
 function addMs(date: Date, ms: number) {
   return new Date(date.getTime() + ms);
+}
+
+async function createNotification(input: {
+  userId: string;
+  actorId?: string | null;
+  type: string;
+  title: string;
+  message: string;
+  entityType?: string | null;
+  entityId?: number | null;
+  topicTitle?: string | null;
+  createdAt?: Date;
+}) {
+  await db.insert(notifications).values({
+    userId: input.userId,
+    actorId: input.actorId ?? null,
+    type: input.type,
+    title: input.title,
+    message: input.message,
+    entityType: input.entityType ?? null,
+    entityId: input.entityId ?? null,
+    topicTitle: input.topicTitle ?? null,
+    isCleared: false,
+    createdAt: input.createdAt ?? nowDate()
+  });
+}
+
+async function topicRequestTitle(request: TopicRequestRow) {
+  if (request.type === 'custom_proposal') return request.customTitle ?? 'Custom proposal';
+  if (!request.topicId) return 'Topic request';
+
+  const topic = await db.select({ title: topics.title }).from(topics).where(eq(topics.id, request.topicId)).get();
+  return topic?.title ?? 'Topic request';
+}
+
+async function notifyEligibleStudentsForTopic(topic: typeof topics.$inferSelect, professor: UserWithRole) {
+  const studentRows = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(and(eq(users.role, 'student'), eq(users.specializationId, topic.specializationId)));
+
+  if (!studentRows.length) return;
+
+  const studentIds = studentRows.map((student) => student.id);
+  const activeAssignments = await db
+    .select({ studentId: topicAssignments.studentId })
+    .from(topicAssignments)
+    .where(and(inArray(topicAssignments.studentId, studentIds), eq(topicAssignments.status, 'active')));
+  const assignedStudentIds = new Set(activeAssignments.map((assignment) => assignment.studentId));
+  const now = nowDate();
+
+  await Promise.all(
+    studentRows
+      .filter((student) => !assignedStudentIds.has(student.id))
+      .map((student) =>
+        createNotification({
+          userId: student.id,
+          actorId: professor.id,
+          type: 'topic_suggestion_added',
+          title: 'New topic suggestion',
+          message: `${professor.name} added "${topic.title}".`,
+          entityType: 'topic',
+          entityId: topic.id,
+          topicTitle: topic.title,
+          createdAt: now
+        })
+      )
+  );
 }
 
 function trimRequired(value: string, label: string) {
@@ -482,6 +552,29 @@ new Elysia()
       })
     }
   )
+  .get('/api/notifications', async ({ request }) => {
+    const user = await getCurrentUser(request.headers);
+    if (!user) return jsonResponse({ error: 'Not authenticated.' }, { status: 401 });
+
+    const rows = await db
+      .select()
+      .from(notifications)
+      .where(and(eq(notifications.userId, user.id), eq(notifications.isCleared, false)))
+      .orderBy(desc(notifications.createdAt));
+
+    return { notifications: rows };
+  })
+  .post('/api/notifications/clear', async ({ request }) => {
+    const user = await getCurrentUser(request.headers);
+    if (!user) return jsonResponse({ error: 'Not authenticated.' }, { status: 401 });
+
+    await db
+      .update(notifications)
+      .set({ isCleared: true })
+      .where(and(eq(notifications.userId, user.id), eq(notifications.isCleared, false)));
+
+    return { ok: true };
+  })
   .get('/api/professor/dashboard', async ({ request }) => {
     const authResult = await requireRole(request.headers, 'professor');
     if ('response' in authResult) return authResult.response;
@@ -667,6 +760,8 @@ new Elysia()
         })
         .returning();
 
+      await notifyEligibleStudentsForTopic(created, authResult.user);
+
       return jsonResponse({ topic: created }, { status: 201 });
     },
     {
@@ -687,6 +782,13 @@ new Elysia()
       const topic = await db.select().from(topics).where(eq(topics.id, topicId)).get();
       if (!topic || topic.professorId !== authResult.user.id) {
         return jsonResponse({ error: 'Topic not found.' }, { status: 404 });
+      }
+
+      if (
+        topic.status !== 'available' &&
+        (body.title !== undefined || body.description !== undefined || body.specializationId !== undefined)
+      ) {
+        return jsonResponse({ error: 'Only available topics can be edited.' }, { status: 400 });
       }
 
       const updates: Partial<typeof topics.$inferInsert> = { updatedAt: nowDate() };
@@ -718,6 +820,34 @@ new Elysia()
       })
     }
   )
+  .delete('/api/professor/topics/:id', async ({ params, request }) => {
+    const authResult = await requireRole(request.headers, 'professor');
+    if ('response' in authResult) return authResult.response;
+
+    const topicId = Number(params.id);
+    const topic = await db.select().from(topics).where(eq(topics.id, topicId)).get();
+    if (!topic || topic.professorId !== authResult.user.id) {
+      return jsonResponse({ error: 'Topic not found.' }, { status: 404 });
+    }
+    if (topic.origin !== 'professor' || topic.status !== 'available') {
+      return jsonResponse({ error: 'Only available professor topics can be deleted.' }, { status: 400 });
+    }
+
+    const assignmentRows = await db
+      .select({ id: topicAssignments.id })
+      .from(topicAssignments)
+      .where(eq(topicAssignments.topicId, topicId));
+    const assignmentIds = assignmentRows.map((assignment) => assignment.id);
+
+    if (assignmentIds.length) {
+      await db.delete(topicChangeRequests).where(inArray(topicChangeRequests.assignmentId, assignmentIds));
+      await db.delete(topicAssignments).where(eq(topicAssignments.topicId, topicId));
+    }
+
+    await db.delete(topicRequests).where(eq(topicRequests.topicId, topicId));
+    await db.delete(topics).where(eq(topics.id, topicId));
+    return { ok: true };
+  })
   .post('/api/professor/requests/:id/accept', async ({ params, request }) => {
     const authResult = await requireRole(request.headers, 'professor');
     if ('response' in authResult) return authResult.response;
@@ -797,6 +927,17 @@ new Elysia()
       .returning();
 
     await db.update(topicRequests).set({ status: 'accepted', updatedAt: now }).where(eq(topicRequests.id, requestId));
+    await createNotification({
+      userId: topicRequest.studentId,
+      actorId: authResult.user.id,
+      type: 'topic_request_accepted',
+      title: topicRequest.type === 'custom_proposal' ? 'Custom proposal accepted' : 'Topic claim accepted',
+      message: `${authResult.user.name} accepted "${acceptedTopic.title}".`,
+      entityType: 'topic_request',
+      entityId: topicRequest.id,
+      topicTitle: acceptedTopic.title,
+      createdAt: now
+    });
 
     return { assignment };
   })
@@ -815,6 +956,7 @@ new Elysia()
     }
 
     const now = nowDate();
+    const title = await topicRequestTitle(topicRequest);
     await db.update(topicRequests).set({ status: 'rejected', updatedAt: now }).where(eq(topicRequests.id, requestId));
 
     if (topicRequest.type === 'topic_claim' && topicRequest.topicId) {
@@ -824,6 +966,18 @@ new Elysia()
         .where(and(eq(topics.id, topicRequest.topicId), eq(topics.status, 'reserved')));
     }
 
+    await createNotification({
+      userId: topicRequest.studentId,
+      actorId: authResult.user.id,
+      type: 'topic_request_rejected',
+      title: topicRequest.type === 'custom_proposal' ? 'Custom proposal rejected' : 'Topic claim rejected',
+      message: `${authResult.user.name} rejected "${title}".`,
+      entityType: 'topic_request',
+      entityId: topicRequest.id,
+      topicTitle: title,
+      createdAt: now
+    });
+
     return { ok: true };
   })
   .get('/api/professor/change-requests', async ({ request }) => {
@@ -832,8 +986,30 @@ new Elysia()
 
     await expirePendingChangeRequests();
     const rows = await db
-      .select()
+      .select({
+        id: topicChangeRequests.id,
+        assignmentId: topicChangeRequests.assignmentId,
+        studentId: topicChangeRequests.studentId,
+        professorId: topicChangeRequests.professorId,
+        requestedTitle: topicChangeRequests.requestedTitle,
+        requestedDescription: topicChangeRequests.requestedDescription,
+        status: topicChangeRequests.status,
+        expiresAt: topicChangeRequests.expiresAt,
+        createdAt: topicChangeRequests.createdAt,
+        updatedAt: topicChangeRequests.updatedAt,
+        currentTitle: topicAssignments.title,
+        currentDescription: topicAssignments.description,
+        studentName: users.name,
+        topicOrigin: topics.origin,
+        specialization: specializations.name,
+        faculty: faculties.name
+      })
       .from(topicChangeRequests)
+      .innerJoin(topicAssignments, eq(topicChangeRequests.assignmentId, topicAssignments.id))
+      .innerJoin(users, eq(topicChangeRequests.studentId, users.id))
+      .innerJoin(topics, eq(topicAssignments.topicId, topics.id))
+      .innerJoin(specializations, eq(topics.specializationId, specializations.id))
+      .innerJoin(faculties, eq(specializations.facultyId, faculties.id))
       .where(and(eq(topicChangeRequests.professorId, authResult.user.id), eq(topicChangeRequests.status, 'pending')));
     return { changeRequests: rows };
   })
@@ -852,6 +1028,7 @@ new Elysia()
     }
 
     const now = nowDate();
+    const assignment = await db.select().from(topicAssignments).where(eq(topicAssignments.id, changeRequest.assignmentId)).get();
     await db
       .update(topicAssignments)
       .set({
@@ -861,6 +1038,17 @@ new Elysia()
       })
       .where(eq(topicAssignments.id, changeRequest.assignmentId));
     await db.update(topicChangeRequests).set({ status: 'accepted', updatedAt: now }).where(eq(topicChangeRequests.id, id));
+    await createNotification({
+      userId: changeRequest.studentId,
+      actorId: authResult.user.id,
+      type: 'edit_request_accepted',
+      title: 'Edit request accepted',
+      message: `${authResult.user.name} accepted changes to "${assignment?.title ?? changeRequest.requestedTitle}".`,
+      entityType: 'topic_change_request',
+      entityId: changeRequest.id,
+      topicTitle: assignment?.title ?? changeRequest.requestedTitle,
+      createdAt: now
+    });
     return { ok: true };
   })
   .post('/api/professor/change-requests/:id/reject', async ({ params, request }) => {
@@ -877,7 +1065,20 @@ new Elysia()
       return jsonResponse({ error: 'Only pending change requests can be rejected.' }, { status: 400 });
     }
 
-    await db.update(topicChangeRequests).set({ status: 'rejected', updatedAt: nowDate() }).where(eq(topicChangeRequests.id, id));
+    const now = nowDate();
+    const assignment = await db.select().from(topicAssignments).where(eq(topicAssignments.id, changeRequest.assignmentId)).get();
+    await db.update(topicChangeRequests).set({ status: 'rejected', updatedAt: now }).where(eq(topicChangeRequests.id, id));
+    await createNotification({
+      userId: changeRequest.studentId,
+      actorId: authResult.user.id,
+      type: 'edit_request_rejected',
+      title: 'Edit request rejected',
+      message: `${authResult.user.name} rejected changes to "${assignment?.title ?? changeRequest.requestedTitle}".`,
+      entityType: 'topic_change_request',
+      entityId: changeRequest.id,
+      topicTitle: assignment?.title ?? changeRequest.requestedTitle,
+      createdAt: now
+    });
     return { ok: true };
   })
   .get('/api/student/professors', async ({ request }) => {
@@ -944,6 +1145,7 @@ new Elysia()
     if ('response' in authResult) return authResult.response;
 
     await expirePendingLifecycleItems();
+    await expirePendingChangeRequests();
     const row = await db
       .select({
         id: topicAssignments.id,
@@ -967,7 +1169,28 @@ new Elysia()
       .where(and(eq(topicAssignments.studentId, authResult.user.id), eq(topicAssignments.status, 'active')))
       .get();
 
-    return { assignment: row ? { ...row, summary: summarizeWords(row.description) } : null };
+    if (!row) return { assignment: null };
+
+    const pendingChangeRequest = await db
+      .select()
+      .from(topicChangeRequests)
+      .where(and(eq(topicChangeRequests.assignmentId, row.id), eq(topicChangeRequests.status, 'pending')))
+      .get();
+
+    return {
+      assignment: {
+        ...row,
+        summary: summarizeWords(row.description),
+        pendingChangeRequest: pendingChangeRequest
+          ? {
+              id: pendingChangeRequest.id,
+              requestedTitle: pendingChangeRequest.requestedTitle,
+              requestedDescription: pendingChangeRequest.requestedDescription,
+              expiresAt: pendingChangeRequest.expiresAt
+            }
+          : null
+      }
+    };
   })
   .post(
     '/api/student/topic-requests',
@@ -1009,6 +1232,18 @@ new Elysia()
         })
         .returning();
 
+      await createNotification({
+        userId: topic.professorId,
+        actorId: student.id,
+        type: 'topic_claim_received',
+        title: 'New topic claim',
+        message: `${student.name} requested "${topic.title}".`,
+        entityType: 'topic_request',
+        entityId: created.id,
+        topicTitle: topic.title,
+        createdAt: now
+      });
+
       return jsonResponse({ request: created }, { status: 201 });
     },
     {
@@ -1045,20 +1280,34 @@ new Elysia()
       }
 
       const now = nowDate();
+      const title = trimRequired(body.title, 'Title');
+      const description = trimRequired(body.description, 'Description');
       const [created] = await db
         .insert(topicRequests)
         .values({
           studentId: student.id,
           professorId,
           type: 'custom_proposal',
-          customTitle: trimRequired(body.title, 'Title'),
-          customDescription: trimRequired(body.description, 'Description'),
+          customTitle: title,
+          customDescription: description,
           status: 'pending',
           expiresAt: addMs(now, requestLifetimeMs),
           createdAt: now,
           updatedAt: now
         })
         .returning();
+
+      await createNotification({
+        userId: professorId,
+        actorId: student.id,
+        type: 'custom_proposal_received',
+        title: 'New custom proposal',
+        message: `${student.name} proposed "${title}".`,
+        entityType: 'topic_request',
+        entityId: created.id,
+        topicTitle: title,
+        createdAt: now
+      });
 
       return jsonResponse({ request: created }, { status: 201 });
     },
@@ -1091,6 +1340,18 @@ new Elysia()
       await db.update(topics).set({ status: 'available', updatedAt: now }).where(eq(topics.id, topic.id));
     }
 
+    await createNotification({
+      userId: assignment.professorId,
+      actorId: authResult.user.id,
+      type: 'student_assignment_dropped',
+      title: 'Assignment dropped',
+      message: `${authResult.user.name} dropped "${assignment.title}".`,
+      entityType: 'assignment',
+      entityId: assignment.id,
+      topicTitle: assignment.title,
+      createdAt: now
+    });
+
     return { ok: true };
   })
   .post(
@@ -1116,20 +1377,34 @@ new Elysia()
       }
 
       const now = nowDate();
+      const requestedTitle = trimRequired(body.title, 'Title');
+      const requestedDescription = trimRequired(body.description, 'Description');
       const [created] = await db
         .insert(topicChangeRequests)
         .values({
           assignmentId: assignment.id,
           studentId: authResult.user.id,
           professorId: assignment.professorId,
-          requestedTitle: trimRequired(body.title, 'Title'),
-          requestedDescription: trimRequired(body.description, 'Description'),
+          requestedTitle,
+          requestedDescription,
           status: 'pending',
           expiresAt: addMs(now, changeRequestLifetimeMs),
           createdAt: now,
           updatedAt: now
         })
         .returning();
+
+      await createNotification({
+        userId: assignment.professorId,
+        actorId: authResult.user.id,
+        type: 'edit_request_received',
+        title: 'New edit request',
+        message: `${authResult.user.name} requested changes to "${assignment.title}".`,
+        entityType: 'topic_change_request',
+        entityId: created.id,
+        topicTitle: assignment.title,
+        createdAt: now
+      });
 
       return jsonResponse({ changeRequest: created }, { status: 201 });
     },

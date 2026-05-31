@@ -115,6 +115,22 @@ export const topicChangeRequests = sqliteTable('topic_change_requests', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
 });
 
+export const notifications = sqliteTable('notifications', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id),
+  actorId: text('actor_id').references(() => users.id),
+  type: text('type').notNull(),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  entityType: text('entity_type'),
+  entityId: integer('entity_id'),
+  topicTitle: text('topic_title'),
+  isCleared: integer('is_cleared', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+});
+
 export const sessions = sqliteTable('sessions', {
   id: text('id').primaryKey(),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),

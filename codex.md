@@ -135,11 +135,42 @@ Professor routes:
   * The package itself was fine.
   * Running the same Bun command with escalated permissions worked.
   * If this appears again, retry the same Bun command outside the sandbox or with Codex approval.
+  * Better Auth imports can surface the same underlying issue because Better Auth telemetry imports `@better-fetch/fetch`.
   * In Codex/agent sandbox sessions on Windows, Bun process launch can fail even when it works in VS Code. If CSS must be rebuilt and `bun run build:css` fails, running Tailwind through Node is an acceptable local fallback.
 
 * SQLite connection locks:
   * SQLite writes can fail when DB Browser or another app holds `sqlite.db` open.
   * Close the external connection before seed/migration/server write actions.
+
+* Bun local binary remap failures:
+  * In this workspace, `bun x tailwindcss --help`, `bun x drizzle-kit --version`, and `bun x tsc --noEmit` failed with `could not create process` / Bun bin remap errors.
+  * Bun recommended `bun install --force`, but this also failed in Codex on the `esbuild` postinstall script with `Operation not permitted`.
+  * Do not assume `bun install --force` is a safe Codex-side repair. Prefer running it manually from the user's VS Code terminal if a dependency repair is needed.
+  * `typescript` is not currently installed as a project dependency, and there is no local `node_modules/.bin/tsc.exe`; `bun x tsc --noEmit` is not a reliable verification command until TypeScript is added.
+
+* Bundled Node fallback:
+  * The plain `node` command can fail in Codex with `Access is denied`.
+  * Use the Codex workspace dependency runtime when Node is needed: call `load_workspace_dependencies`, then run the returned Node executable by absolute path.
+  * Tailwind fallback that worked:
+    * `NODE_EXE .\node_modules\tailwindcss\lib\cli.js -c tailwind.config.js -i src/css/site.input.css -o src/css/site.css`
+  * Drizzle fallback that worked:
+    * `NODE_EXE .\node_modules\drizzle-kit\bin.cjs generate`
+    * This may require escalation outside the sandbox because Drizzle can hit `spawn EPERM` while loading the TypeScript config.
+
+* Bun dev server and browser verification:
+  * Starting the server through Codex may require escalation. `bun src/index.ts` successfully started outside the sandbox; inside the sandbox it could fail to resolve Better Auth / `@better-fetch/fetch`.
+  * When checking whether the server starts, a timeout can mean success because the Bun process keeps serving. Verify separately with `Invoke-WebRequest http://localhost:3000/`.
+  * Multiple old Bun processes can keep serving stale files on `localhost:3000`.
+  * Before browser testing changed HTML, check `Get-Process bun`. If stale content appears, inspect process command lines with escalated `Get-CimInstance Win32_Process -Filter "name = 'bun.exe'" | Select-Object ProcessId,CommandLine`, stop the relevant old project servers, and start one clean server.
+  * The browser can also show cached static HTML. Use cache-busting URLs such as `professor_add_thesis.html?v=2` after frontend edits.
+  * Do not leave Codex-started Bun servers running after verification if the user wants to run the app from VS Code.
+
+* Seed data reset behavior:
+  * Running `src/seed.ts` deletes thesis lifecycle data before recreating users and academic units.
+  * Manual test topics, topic requests, assignments, and change requests will be removed by seed.
+  * Current seeded student accounts include:
+    * `student.test.info23@uab.ro` / `password123`
+    * `student.marketing.mk23@uab.ro` / `password123`
 
 ## Development Guidelines
 * Do not use React, Vue, or other frontend frameworks. Return standard HTML/JS.

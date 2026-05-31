@@ -57,16 +57,11 @@
             <span class="panel-icon">!</span>
             <h2 class="panel-title">Recent Notifications</h2>
           </div>
-          <a href="#" class="view-all">View All</a>
+          <button class="view-all" type="button" id="clearNotificationsBtn">Clear all</button>
         </div>
 
-        <div class="list-body">
-          <article class="data-row">
-            <span class="mini-icon accent">0</span>
-            <div class="row-main">
-              <p class="row-title">No recent notifications yet.</p>
-            </div>
-          </article>
+        <div class="list-body" id="notificationsList">
+          <p class="profile-text">Loading notifications...</p>
         </div>
       </section>
 
@@ -135,6 +130,22 @@
           <h3>Description</h3>
           <p id="modalDescription">Description appears here.</p>
         </section>
+        <form class="modal-edit-form hidden" id="topicEditForm">
+          <label class="field">
+            <span class="label">Title</span>
+            <input class="control" id="topicTitleInput" type="text" required maxlength="180" />
+          </label>
+          <label class="field">
+            <span class="label">Description</span>
+            <textarea class="textarea large" id="topicDescriptionInput" required></textarea>
+          </label>
+        </form>
+      </div>
+      <div class="modal-actions hidden" id="topicModalActions">
+        <button class="modal-btn reject" type="button" id="topicDeleteBtn">Delete Topic</button>
+        <button class="modal-btn reject hidden" type="button" id="topicCancelEditBtn">Cancel</button>
+        <button class="modal-btn approve" type="button" id="topicEditBtn">Edit Topic</button>
+        <button class="modal-btn approve hidden" type="submit" form="topicEditForm" id="topicSaveBtn">Save Changes</button>
       </div>
     </article>
   </div>
@@ -154,12 +165,23 @@
     const facultySidebar = document.getElementById("facultySidebar");
     const facultyBlocks = document.getElementById("facultyBlocks");
     const studentsPanel = document.getElementById("studentsPanel");
+    const notificationsList = document.getElementById("notificationsList");
+    const clearNotificationsBtn = document.getElementById("clearNotificationsBtn");
     const topicModal = document.getElementById("topicModal");
     const modalClose = document.getElementById("modalClose");
     const modalTitle = document.getElementById("modalTitle");
     const modalSubtitle = document.getElementById("modalSubtitle");
     const modalDescription = document.getElementById("modalDescription");
+    const topicModalActions = document.getElementById("topicModalActions");
+    const topicEditForm = document.getElementById("topicEditForm");
+    const topicTitleInput = document.getElementById("topicTitleInput");
+    const topicDescriptionInput = document.getElementById("topicDescriptionInput");
+    const topicEditBtn = document.getElementById("topicEditBtn");
+    const topicSaveBtn = document.getElementById("topicSaveBtn");
+    const topicCancelEditBtn = document.getElementById("topicCancelEditBtn");
+    const topicDeleteBtn = document.getElementById("topicDeleteBtn");
     let dashboardData = null;
+    let selectedManagedTopic = null;
 
     function setTheme(theme) {
       const isDark = theme === "dark";
@@ -181,6 +203,71 @@
         .join("")
         .slice(0, 2)
         .toUpperCase() || "?";
+    }
+
+    function timeAgo(value) {
+      const diff = Date.now() - new Date(value).getTime();
+      if (diff < 60000) return "just now";
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
+    }
+
+    function notificationIcon(type) {
+      if (type.includes("dropped") || type.includes("rejected")) return { text: "!", color: "red" };
+      if (type.includes("edit")) return { text: "E", color: "blue" };
+      if (type.includes("proposal")) return { text: "P", color: "orange" };
+      return { text: "C", color: "accent" };
+    }
+
+    function renderNotifications(notifications) {
+      notificationsList.innerHTML = "";
+      clearNotificationsBtn.disabled = notifications.length === 0;
+
+      if (!notifications.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No recent notifications yet.";
+        notificationsList.append(empty);
+        return;
+      }
+
+      notifications.forEach((notification) => {
+        const row = document.createElement("article");
+        row.className = "data-row";
+
+        const iconData = notificationIcon(notification.type);
+        const icon = document.createElement("span");
+        icon.className = `mini-icon ${iconData.color}`;
+        icon.textContent = iconData.text;
+
+        const main = document.createElement("div");
+        main.className = "row-main";
+        const title = document.createElement("p");
+        title.className = "row-title";
+        title.textContent = notification.title;
+        const subtitle = document.createElement("p");
+        subtitle.className = "row-subtitle";
+        subtitle.textContent = notification.message;
+        main.append(title, subtitle);
+
+        const time = document.createElement("span");
+        time.className = "proposal-time";
+        time.textContent = timeAgo(notification.createdAt);
+
+        row.append(icon, main, time);
+        notificationsList.append(row);
+      });
+    }
+
+    async function loadNotifications() {
+      const response = await fetch("/api/notifications");
+      if (!response.ok) return;
+      const data = await response.json();
+      renderNotifications(data.notifications || []);
     }
 
     function facultyAnchorId(facultyId) {
@@ -216,11 +303,39 @@
       return Array.from(facultiesById.values()).filter((faculty) => faculty.specialisations.length > 0);
     }
 
-    function openTopicModal(item, subtitle) {
+    function setTopicModalEditing(isEditing) {
+      modalDescription.closest(".modal-section").classList.toggle("hidden", isEditing);
+      topicEditForm.classList.toggle("hidden", !isEditing);
+      topicEditBtn.classList.toggle("hidden", isEditing);
+      topicDeleteBtn.classList.toggle("hidden", isEditing);
+      topicSaveBtn.classList.toggle("hidden", !isEditing);
+      topicCancelEditBtn.classList.toggle("hidden", !isEditing);
+    }
+
+    function openTopicModal(item, subtitle, canManage = false) {
       modalTitle.textContent = item.title;
       modalSubtitle.textContent = subtitle;
       modalDescription.textContent = item.description;
+      selectedManagedTopic = canManage ? item : null;
+      topicTitleInput.value = item.title;
+      topicDescriptionInput.value = item.description;
+      topicModalActions.classList.toggle("hidden", !canManage);
+      setTopicModalEditing(false);
       topicModal.classList.add("open");
+    }
+
+    async function deleteTopic(topic) {
+      if (!topic || !confirm(`Delete "${topic.title}" permanently?`)) return;
+
+      const response = await fetch(`/api/professor/topics/${topic.id}`, { method: "DELETE" });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        alert(data.error || "The topic could not be deleted.");
+        return;
+      }
+
+      closeModal();
+      await loadProfessorAssignments();
     }
 
     function createTopicRow(topic, professorName) {
@@ -246,11 +361,21 @@
       const view = document.createElement("button");
       view.className = "small-btn";
       view.type = "button";
-      view.textContent = "View";
+      const canManage = topic.origin === "professor" && topic.status === "available";
+      view.textContent = canManage ? "View / Edit" : "View";
       view.addEventListener("click", () => {
-        openTopicModal(topic, `${topic.faculty} - ${topic.specialization} - ${professorName}`);
+        openTopicModal(topic, `${topic.faculty} - ${topic.specialization} - ${professorName}`, canManage);
       });
       actions.append(view);
+
+      if (canManage) {
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "small-btn danger";
+        deleteButton.type = "button";
+        deleteButton.textContent = "Delete";
+        deleteButton.addEventListener("click", () => deleteTopic(topic));
+        actions.append(deleteButton);
+      }
 
       row.append(main, status, actions);
       return row;
@@ -495,6 +620,7 @@
       renderProfessorSidebar(faculties);
       renderProfessorFacultyBlocks(faculties, data.topics || [], data.professor?.name || "Professor");
       renderStudents(data.assignments || []);
+      await loadNotifications();
 
       document.querySelectorAll(".stat-card").forEach((card) => {
         const label = card.querySelector(".stat-label")?.textContent?.trim();
@@ -549,7 +675,42 @@
 
     function closeModal() {
       topicModal.classList.remove("open");
+      selectedManagedTopic = null;
+      setTopicModalEditing(false);
     }
+
+    topicEditBtn.addEventListener("click", () => setTopicModalEditing(true));
+    topicCancelEditBtn.addEventListener("click", () => setTopicModalEditing(false));
+    topicDeleteBtn.addEventListener("click", () => deleteTopic(selectedManagedTopic));
+
+    topicEditForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!selectedManagedTopic) return;
+
+      const response = await fetch(`/api/professor/topics/${selectedManagedTopic.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          title: topicTitleInput.value,
+          description: topicDescriptionInput.value
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        alert(data.error || "The topic could not be updated.");
+        return;
+      }
+
+      closeModal();
+      await loadProfessorAssignments();
+    });
+
+    clearNotificationsBtn.addEventListener("click", async () => {
+      const response = await fetch("/api/notifications/clear", { method: "POST" });
+      if (!response.ok) return;
+      renderNotifications([]);
+    });
 
     modalClose.addEventListener("click", closeModal);
     topicModal.addEventListener("click", (event) => {

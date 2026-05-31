@@ -528,6 +528,10 @@ a {
     @apply border-red-500 text-red-500 hover:bg-red-500 hover:text-white hover:shadow-[0_10px_22px_rgba(239,68,68,0.2)];
   }
 
+  .small-btn:disabled {
+    @apply cursor-not-allowed border-[var(--border)] bg-[var(--surface-muted)] text-[var(--muted)] opacity-70 hover:translate-y-0 hover:bg-[var(--surface-muted)] hover:text-[var(--muted)] hover:shadow-none;
+  }
+
   .section-toolbar {
     @apply mb-3 mt-4 flex items-center justify-between gap-4;
   }
@@ -1162,6 +1166,10 @@ a {
     @apply grid gap-4 px-5 py-5 md:px-7;
   }
 
+  .modal-edit-form {
+    @apply grid gap-4;
+  }
+
   .modal-section {
     @apply rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4;
   }
@@ -1172,6 +1180,10 @@ a {
 
   .modal-section p {
     @apply font-semibold leading-relaxed text-[var(--muted)];
+  }
+
+  .modal-section strong {
+    @apply text-[var(--text)];
   }
 
   .modal-actions {

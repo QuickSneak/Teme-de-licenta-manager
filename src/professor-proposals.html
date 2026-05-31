@@ -167,6 +167,16 @@
           <h3>Full Proposal</h3>
           <p id="modalDescription">Proposal description appears here.</p>
         </section>
+        <section class="modal-section hidden" id="modalCurrentSection">
+          <h3>Current Version</h3>
+          <p><strong id="modalCurrentTitle">Current title</strong></p>
+          <p id="modalCurrentDescription">Current description appears here.</p>
+        </section>
+        <section class="modal-section hidden" id="modalRequestedSection">
+          <h3>Requested Version</h3>
+          <p><strong id="modalRequestedTitle">Requested title</strong></p>
+          <p id="modalRequestedDescription">Requested description appears here.</p>
+        </section>
         <section class="modal-section">
           <h3>Time Remaining</h3>
           <p id="modalTime">Time remaining appears here.</p>
@@ -195,12 +205,18 @@
     const modalSubtitle = document.getElementById("modalSubtitle");
     const modalType = document.getElementById("modalType");
     const modalDescription = document.getElementById("modalDescription");
+    const modalCurrentSection = document.getElementById("modalCurrentSection");
+    const modalRequestedSection = document.getElementById("modalRequestedSection");
+    const modalCurrentTitle = document.getElementById("modalCurrentTitle");
+    const modalCurrentDescription = document.getElementById("modalCurrentDescription");
+    const modalRequestedTitle = document.getElementById("modalRequestedTitle");
+    const modalRequestedDescription = document.getElementById("modalRequestedDescription");
     const modalTime = document.getElementById("modalTime");
     const activeProposals = document.getElementById("activeProposals");
     const lastRefresh = document.getElementById("lastRefresh");
     const approveButton = document.querySelector(".modal-btn.approve");
     const rejectButton = document.querySelector(".modal-btn.reject");
-    let selectedRequestId = null;
+    let selectedRequest = null;
 
     function initialsFromName(name) {
       return name
@@ -237,13 +253,29 @@
     });
 
     function openRequestModal(item) {
-      selectedRequestId = item.id;
+      selectedRequest = item;
+      const isChangeRequest = item.kind === "change_request";
       modalTitle.textContent = item.title;
       modalSubtitle.textContent = `${item.faculty || "Faculty"} - ${item.specialization || "Specialisation"}`;
       modalType.textContent = item.studentName;
+      modalDescription.closest(".modal-section").classList.toggle("hidden", isChangeRequest);
+      modalCurrentSection.classList.toggle("hidden", !isChangeRequest);
+      modalRequestedSection.classList.toggle("hidden", !isChangeRequest);
       modalDescription.textContent = item.description;
+      modalCurrentTitle.textContent = item.currentTitle || "";
+      modalCurrentDescription.textContent = item.currentDescription || "";
+      modalRequestedTitle.textContent = item.requestedTitle || "";
+      modalRequestedDescription.textContent = item.requestedDescription || "";
       modalTime.textContent = timeRemaining(item.expiresAt);
+      rejectButton.textContent = isChangeRequest ? "Reject Edit" : "Reject Proposal";
+      approveButton.textContent = isChangeRequest ? "Approve Edit" : "Approve Proposal";
       proposalModal.classList.add("open");
+    }
+
+    function requestTypeLabel(item) {
+      if (item.kind === "change_request") return "Edit request";
+      if (item.type === "topic_claim") return "Topic claim";
+      return "Custom proposal";
     }
 
     function renderRequests(requests) {
@@ -276,7 +308,7 @@
         name.textContent = item.studentName;
         const type = document.createElement("span");
         type.className = "student-type";
-        type.textContent = item.type === "topic_claim" ? "Topic claim" : "Custom proposal";
+        type.textContent = requestTypeLabel(item);
         studentText.append(name, type);
         student.append(avatar, studentText);
 
@@ -313,19 +345,51 @@
       });
     }
 
+    function normalizeChangeRequest(item) {
+      return {
+        ...item,
+        kind: "change_request",
+        type: "change_request",
+        title: item.currentTitle,
+        description: "Review the requested update against the current confirmed assignment.",
+        summary: "Review the requested update against the current confirmed assignment."
+      };
+    }
+
+    function normalizeTopicRequest(item) {
+      return { ...item, kind: item.type };
+    }
+
     async function loadRequests() {
-      const response = await fetch("/api/professor/requests");
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) window.location.href = "/login.html";
+      const [requestsResponse, changeRequestsResponse] = await Promise.all([
+        fetch("/api/professor/requests"),
+        fetch("/api/professor/change-requests")
+      ]);
+
+      if (!requestsResponse.ok || !changeRequestsResponse.ok) {
+        if (
+          requestsResponse.status === 401 ||
+          requestsResponse.status === 403 ||
+          changeRequestsResponse.status === 401 ||
+          changeRequestsResponse.status === 403
+        ) {
+          window.location.href = "/login.html";
+        }
         return;
       }
-      const data = await response.json();
-      renderRequests(data.requests || []);
+      const requestsData = await requestsResponse.json();
+      const changeRequestsData = await changeRequestsResponse.json();
+      const requests = [
+        ...(requestsData.requests || []).map(normalizeTopicRequest),
+        ...(changeRequestsData.changeRequests || []).map(normalizeChangeRequest)
+      ].sort((a, b) => new Date(a.expiresAt).getTime() - new Date(b.expiresAt).getTime());
+      renderRequests(requests);
     }
 
     async function decideRequest(action) {
-      if (!selectedRequestId) return;
-      const response = await fetch(`/api/professor/requests/${selectedRequestId}/${action}`, { method: "POST" });
+      if (!selectedRequest) return;
+      const basePath = selectedRequest.kind === "change_request" ? "change-requests" : "requests";
+      const response = await fetch(`/api/professor/${basePath}/${selectedRequest.id}/${action}`, { method: "POST" });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         alert(data.error || "The request could not be updated.");
@@ -337,7 +401,7 @@
 
     function closeModal() {
       proposalModal.classList.remove("open");
-      selectedRequestId = null;
+      selectedRequest = null;
     }
 
     modalClose.addEventListener("click", closeModal);

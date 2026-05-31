@@ -1989,6 +1989,24 @@ body.mobile-sidebar-open .sidebar {
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
+.small-btn:disabled {
+  cursor: not-allowed;
+  border-color: var(--border);
+  background-color: var(--surface-muted);
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.small-btn:disabled:hover {
+  --tw-translate-y: 0px;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  background-color: var(--surface-muted);
+  color: var(--muted);
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
 .section-toolbar {
   margin-bottom: 0.75rem;
   margin-top: 1rem;
@@ -2867,6 +2885,24 @@ body.sidebar-collapsed {
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
+.change-photo-btn:disabled {
+  cursor: not-allowed;
+  border-color: var(--border);
+  background-color: var(--surface-muted);
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.change-photo-btn:disabled:hover {
+  --tw-translate-y: 0px;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  background-color: var(--surface-muted);
+  color: var(--muted);
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
 .photo-note {
   font-size: 0.875rem;
   line-height: 1.25rem;
@@ -3588,6 +3624,11 @@ body.sidebar-collapsed {
   }
 }
 
+.modal-edit-form {
+  display: grid;
+  gap: 1rem;
+}
+
 .modal-section {
   border-radius: 1rem;
   border-width: 1px;
@@ -3610,6 +3651,10 @@ body.sidebar-collapsed {
   font-weight: 600;
   line-height: 1.625;
   color: var(--muted);
+}
+
+.modal-section strong {
+  color: var(--text);
 }
 
 .modal-actions {
@@ -3983,6 +4028,10 @@ body.sidebar-collapsed {
   max-width: 520px;
 }
 
+.max-w-\[560px\] {
+  max-width: 560px;
+}
+
 .max-w-\[74vw\] {
   max-width: 74vw;
 }
@@ -4008,6 +4057,10 @@ body.sidebar-collapsed {
 
 .grid-cols-2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-cols-\[auto_1fr\] {
+  grid-template-columns: auto 1fr;
 }
 
 .grid-cols-\[auto_1fr_auto\] {
@@ -4094,10 +4147,6 @@ body.sidebar-collapsed {
   border-radius: 18px;
 }
 
-.rounded-\[9px\] {
-  border-radius: 9px;
-}
-
 .rounded-full {
   border-radius: 9999px;
 }
@@ -4168,10 +4217,6 @@ body.sidebar-collapsed {
 
 .bg-\[var\(--accent-soft\)\] {
   background-color: var(--accent-soft);
-}
-
-.bg-\[var\(--blue-soft\)\] {
-  background-color: var(--blue-soft);
 }
 
 .bg-\[var\(--border\)\] {
@@ -4266,10 +4311,6 @@ body.sidebar-collapsed {
   font-size: 1.35rem;
 }
 
-.text-\[1\.3rem\] {
-  font-size: 1.3rem;
-}
-
 .text-\[clamp\(2rem\2c 4vw\2c 2\.55rem\)\] {
   font-size: clamp(2rem,4vw,2.55rem);
 }
@@ -4332,10 +4373,6 @@ body.sidebar-collapsed {
 
 .text-\[var\(--accent\)\] {
   color: var(--accent);
-}
-
-.text-\[var\(--blue\)\] {
-  color: var(--blue);
 }
 
 .text-\[var\(--muted\)\] {
@@ -4508,27 +4545,12 @@ a {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
-.hover\:-translate-y-px:hover {
-  --tw-translate-y: -1px;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
 .hover\:bg-\[var\(--accent-soft\)\]:hover {
   background-color: var(--accent-soft);
 }
 
-.hover\:text-\[var\(--accent\)\]:hover {
-  color: var(--accent);
-}
-
 .hover\:opacity-75:hover {
   opacity: 0.75;
-}
-
-.hover\:shadow-\[0_12px_26px_var\(--accent-glow\)\]:hover {
-  --tw-shadow: 0 12px 26px var(--accent-glow);
-  --tw-shadow-colored: 0 12px 26px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
 .hover\:brightness-105:hover {
