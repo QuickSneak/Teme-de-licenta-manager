@@ -73,6 +73,7 @@ export const topicRequests = sqliteTable('topic_requests', {
   customTitle: text('custom_title'),
   customDescription: text('custom_description'),
   status: text('status').notNull().default('pending'),
+  studentHidden: integer('student_hidden', { mode: 'boolean' }).notNull().default(false),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()

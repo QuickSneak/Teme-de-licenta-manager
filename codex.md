@@ -73,6 +73,7 @@ The app now includes the core student/professor thesis workflow.
   * Supports claims on professor topics and custom student proposals.
   * `type`: `topic_claim` or `custom_proposal`.
   * `status`: `pending`, `accepted`, `rejected`, `expired`, or `cancelled`.
+  * `student_hidden`: hides completed/expired requests from the student's dashboard without deleting the request record.
   * Custom proposals use `custom_title` and `custom_description`; they do not create a topic until accepted.
 * `topic_assignments`
   * Created only after professor acceptance.
@@ -80,8 +81,13 @@ The app now includes the core student/professor thesis workflow.
   * Stores assignment-level `title` and `description` snapshots.
   * `status`: `active` or `abandoned`.
 * `topic_change_requests`
-  * Schema/API foundation for student title/details change requests after assignment acceptance.
+  * Stores student title/details change requests after assignment acceptance.
   * Pending change requests expire after 3 days.
+  * Approval updates `topic_assignments.title` and `topic_assignments.description` only. It intentionally does not rewrite the original `topics` row.
+* `notifications`
+  * Stores persisted notifications for students and professors.
+  * Key fields: `user_id`, `actor_id`, `type`, `title`, `message`, `entity_type`, `entity_id`, `topic_title`, `is_cleared`, `created_at`.
+  * `is_cleared = true` hides notifications from dashboard panels without deleting them.
 
 ### Rules
 * A student can have only one `pending` topic request at a time.
@@ -103,9 +109,39 @@ The app now includes the core student/professor thesis workflow.
   * a `topics` row is created with `origin = 'student_proposal'` and `status = 'inactive'`;
   * an active assignment is created;
   * the request becomes `accepted`.
+* Professors can edit only their own professor-origin topics while the topic is `available`.
+* Professors can hard-delete only their own professor-origin topics while the topic is `available`.
+  * Delete also removes dependent topic request/assignment/change-request rows for that topic before deleting the topic row.
 * Students can abandon their active assignment without professor confirmation.
 * Abandoning a professor-origin assignment marks the assignment `abandoned` and reopens the topic as `available`.
 * Abandoning a student-proposal assignment marks the assignment `abandoned`, but keeps the generated topic `inactive` as history.
+* Students can request title/description edits for active assignments.
+  * A student can have only one pending change request per active assignment.
+  * Professors review edit requests on `professor-proposals.html` alongside topic claims and custom proposals.
+  * Edit-request review modals compare the current assignment title/description with the requested version.
+* `professor-proposals.html` history shows accepted/rejected topic claims, custom proposals, and edit requests.
+  * History sections are separated into approved/rejected lists and sorted newest to oldest by `updated_at`.
+  * Each list shows three rows by default and expands with the footer button when more records exist.
+* Students can hide completed or expired claim/proposal rows from `dashboard.html`.
+  * Hiding is allowed only for `accepted`, `rejected`, `expired`, or `cancelled` requests.
+  * Pending requests remain visible and cannot be hidden.
+  * Hidden rows remain in `topic_requests` for professor history and audit context.
+* `professors.html` loads with the desktop sidebar collapsed by default. Users can open it manually.
+
+### Notifications
+* Professor notifications are created when:
+  * a student submits a topic claim;
+  * a student submits a custom proposal;
+  * a student submits an edit request;
+  * one of their students drops an active assignment.
+* Student notifications are created when:
+  * a professor accepts or rejects their topic claim;
+  * a professor accepts or rejects their custom proposal;
+  * a professor accepts or rejects their edit request;
+  * a professor adds a new topic suggestion for the student's specialization.
+* New topic suggestion notifications are sent only to students in the topic specialization who do not already have an active assignment.
+* Dashboards use `GET /api/notifications` and hide all current notifications through `POST /api/notifications/clear`.
+* Notification panels display relative time labels such as `just now`, `4m ago`, `2h ago`, and `3d ago`.
 
 ### Implemented API Surface
 Student routes:
@@ -113,6 +149,7 @@ Student routes:
 * `GET /api/student/requests`
 * `GET /api/student/assignment`
 * `POST /api/student/topic-requests`
+* `POST /api/student/requests/:id/dismiss`
 * `POST /api/student/custom-proposals`
 * `POST /api/student/assignments/:id/abandon`
 * `POST /api/student/assignments/:id/change-requests`
@@ -120,13 +157,19 @@ Student routes:
 Professor routes:
 * `GET /api/professor/dashboard`
 * `GET /api/professor/requests`
+* `GET /api/professor/request-history`
 * `POST /api/professor/topics`
 * `PATCH /api/professor/topics/:id`
+* `DELETE /api/professor/topics/:id`
 * `POST /api/professor/requests/:id/accept`
 * `POST /api/professor/requests/:id/reject`
 * `GET /api/professor/change-requests`
 * `POST /api/professor/change-requests/:id/accept`
 * `POST /api/professor/change-requests/:id/reject`
+
+Shared routes:
+* `GET /api/notifications`
+* `POST /api/notifications/clear`
 
 ## Known Local Issues / Lessons
 

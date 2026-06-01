@@ -65,78 +65,26 @@
         <article class="history-card">
           <div class="history-head approved">
             <span>+</span>
-            <span>Approved Examples</span>
+            <span>Approved Requests</span>
           </div>
-          <div class="history-list">
-            <article class="history-row">
-              <span class="history-avatar approved">ZK</span>
-              <div>
-                <p class="history-name">Test Student Zainab</p>
-                <p class="history-title">Example Topic: Explainable AI for Student Performance</p>
-                <p class="history-meta">Example Informatics - 3 days ago</p>
-              </div>
-              <span class="status-pill approved">Approved</span>
-            </article>
-            <article class="history-row">
-              <span class="history-avatar approved">AH</span>
-              <div>
-                <p class="history-name">Test Student Ali</p>
-                <p class="history-title">Example Topic: Academic Credential Verification</p>
-                <p class="history-meta">Example Cybersecurity - 5 days ago</p>
-              </div>
-              <span class="status-pill approved">Approved</span>
-            </article>
-            <article class="history-row">
-              <span class="history-avatar approved">SM</span>
-              <div>
-                <p class="history-name">Test Student Sara</p>
-                <p class="history-title">Example Topic: Digital Banking Adoption</p>
-                <p class="history-meta">Example Management - 8 days ago</p>
-              </div>
-              <span class="status-pill approved">Approved</span>
-            </article>
+          <div class="history-list" id="approvedHistory">
+            <p class="profile-text py-4">Loading approved requests...</p>
           </div>
           <div class="history-footer">
-            <a href="#" class="history-link">View all approved examples</a>
+            <button class="history-link" type="button" id="approvedHistoryToggle">View all approved requests</button>
           </div>
         </article>
 
         <article class="history-card">
           <div class="history-head rejected">
             <span>x</span>
-            <span>Rejected Examples</span>
+            <span>Rejected Requests</span>
           </div>
-          <div class="history-list">
-            <article class="history-row">
-              <span class="history-avatar rejected">US</span>
-              <div>
-                <p class="history-name">Test Student Usman</p>
-                <p class="history-title">Example Topic: Smart Attendance Prototype</p>
-                <p class="history-meta">Example Informatics - 4 days ago</p>
-              </div>
-              <span class="status-pill rejected">Rejected</span>
-            </article>
-            <article class="history-row">
-              <span class="history-avatar rejected">MA</span>
-              <div>
-                <p class="history-name">Test Student Maham</p>
-                <p class="history-title">Example Topic: Intrusion Detection Model</p>
-                <p class="history-meta">Example Cybersecurity - 6 days ago</p>
-              </div>
-              <span class="status-pill rejected">Rejected</span>
-            </article>
-            <article class="history-row">
-              <span class="history-avatar rejected">FA</span>
-              <div>
-                <p class="history-name">Test Student Fatima</p>
-                <p class="history-title">Example Topic: Social Media Marketing Impact</p>
-                <p class="history-meta">Example Management - 9 days ago</p>
-              </div>
-              <span class="status-pill rejected">Rejected</span>
-            </article>
+          <div class="history-list" id="rejectedHistory">
+            <p class="profile-text py-4">Loading rejected requests...</p>
           </div>
           <div class="history-footer">
-            <a href="#" class="history-link">View all rejected examples</a>
+            <button class="history-link" type="button" id="rejectedHistoryToggle">View all rejected requests</button>
           </div>
         </article>
       </section>
@@ -213,10 +161,20 @@
     const modalRequestedDescription = document.getElementById("modalRequestedDescription");
     const modalTime = document.getElementById("modalTime");
     const activeProposals = document.getElementById("activeProposals");
+    const approvedHistory = document.getElementById("approvedHistory");
+    const rejectedHistory = document.getElementById("rejectedHistory");
+    const approvedHistoryToggle = document.getElementById("approvedHistoryToggle");
+    const rejectedHistoryToggle = document.getElementById("rejectedHistoryToggle");
     const lastRefresh = document.getElementById("lastRefresh");
     const approveButton = document.querySelector(".modal-btn.approve");
     const rejectButton = document.querySelector(".modal-btn.reject");
     let selectedRequest = null;
+    let historyState = {
+      approved: [],
+      rejected: [],
+      approvedExpanded: false,
+      rejectedExpanded: false
+    };
 
     function initialsFromName(name) {
       return name
@@ -236,6 +194,17 @@
       if (hours >= 24) return `${Math.floor(hours / 24)}d ${hours % 24}h left`;
       if (hours > 0) return `${hours}h ${minutes}m left`;
       return `${minutes}m left`;
+    }
+
+    function timeAgo(value) {
+      const diff = Date.now() - new Date(value).getTime();
+      if (diff < 60000) return "just now";
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
     }
 
     function setTheme(theme) {
@@ -345,6 +314,54 @@
       });
     }
 
+    function renderHistoryList(container, items, status, expanded) {
+      container.innerHTML = "";
+      const visibleItems = expanded ? items : items.slice(0, 3);
+
+      if (!items.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text py-4";
+        empty.textContent = status === "approved" ? "No approved requests yet." : "No rejected requests yet.";
+        container.append(empty);
+        return;
+      }
+
+      visibleItems.forEach((item) => {
+        const row = document.createElement("article");
+        row.className = "history-row";
+
+        const avatar = document.createElement("span");
+        avatar.className = `history-avatar ${status}`;
+        avatar.textContent = initialsFromName(item.studentName);
+
+        const main = document.createElement("div");
+        const name = document.createElement("p");
+        name.className = "history-name";
+        name.textContent = item.studentName;
+        const title = document.createElement("p");
+        title.className = "history-title";
+        title.textContent = item.title;
+        const meta = document.createElement("p");
+        meta.className = "history-meta";
+        const unit = item.specialization || item.faculty || item.requestType;
+        meta.textContent = `${item.requestType}${unit && unit !== item.requestType ? ` - ${unit}` : ""} - ${timeAgo(item.updatedAt)}`;
+        main.append(name, title, meta);
+
+        row.append(avatar, main);
+        container.append(row);
+      });
+    }
+
+    function renderHistory() {
+      renderHistoryList(approvedHistory, historyState.approved, "approved", historyState.approvedExpanded);
+      renderHistoryList(rejectedHistory, historyState.rejected, "rejected", historyState.rejectedExpanded);
+
+      approvedHistoryToggle.hidden = historyState.approved.length <= 3;
+      rejectedHistoryToggle.hidden = historyState.rejected.length <= 3;
+      approvedHistoryToggle.textContent = historyState.approvedExpanded ? "Show latest approved requests" : "View all approved requests";
+      rejectedHistoryToggle.textContent = historyState.rejectedExpanded ? "Show latest rejected requests" : "View all rejected requests";
+    }
+
     function normalizeChangeRequest(item) {
       return {
         ...item,
@@ -386,6 +403,19 @@
       renderRequests(requests);
     }
 
+    async function loadHistory() {
+      const response = await fetch("/api/professor/request-history");
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) window.location.href = "/login.html";
+        return;
+      }
+
+      const data = await response.json();
+      historyState.approved = data.approved || [];
+      historyState.rejected = data.rejected || [];
+      renderHistory();
+    }
+
     async function decideRequest(action) {
       if (!selectedRequest) return;
       const basePath = selectedRequest.kind === "change_request" ? "change-requests" : "requests";
@@ -397,6 +427,7 @@
       }
       closeModal();
       await loadRequests();
+      await loadHistory();
     }
 
     function closeModal() {
@@ -418,13 +449,25 @@
       }
     });
 
-    document.querySelector(".refresh-btn").addEventListener("click", loadRequests);
+    document.querySelector(".refresh-btn").addEventListener("click", async () => {
+      await loadRequests();
+      await loadHistory();
+    });
+    approvedHistoryToggle.addEventListener("click", () => {
+      historyState.approvedExpanded = !historyState.approvedExpanded;
+      renderHistory();
+    });
+    rejectedHistoryToggle.addEventListener("click", () => {
+      historyState.rejectedExpanded = !historyState.rejectedExpanded;
+      renderHistory();
+    });
 
     approveButton.addEventListener("click", () => decideRequest("accept"));
     rejectButton.addEventListener("click", () => decideRequest("reject"));
 
     setTheme(localStorage.getItem("professorInterfaceTheme") || "light");
     loadRequests();
+    loadHistory();
   </script>
 </body>
 </html>

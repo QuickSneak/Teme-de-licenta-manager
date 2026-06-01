@@ -264,6 +264,7 @@ async function buildTopicRequestRows(whereClause: ReturnType<typeof and> | Retur
       customTitle: topicRequests.customTitle,
       customDescription: topicRequests.customDescription,
       status: topicRequests.status,
+      studentHidden: topicRequests.studentHidden,
       expiresAt: topicRequests.expiresAt,
       createdAt: topicRequests.createdAt,
       updatedAt: topicRequests.updatedAt,
@@ -1013,6 +1014,75 @@ new Elysia()
       .where(and(eq(topicChangeRequests.professorId, authResult.user.id), eq(topicChangeRequests.status, 'pending')));
     return { changeRequests: rows };
   })
+  .get('/api/professor/request-history', async ({ request }) => {
+    const authResult = await requireRole(request.headers, 'professor');
+    if ('response' in authResult) return authResult.response;
+
+    const topicHistory = await buildTopicRequestRows(
+      and(
+        eq(topicRequests.professorId, authResult.user.id),
+        or(eq(topicRequests.status, 'accepted'), eq(topicRequests.status, 'rejected'))
+      )
+    );
+
+    const changeHistory = await db
+      .select({
+        id: topicChangeRequests.id,
+        status: topicChangeRequests.status,
+        updatedAt: topicChangeRequests.updatedAt,
+        createdAt: topicChangeRequests.createdAt,
+        requestedTitle: topicChangeRequests.requestedTitle,
+        currentTitle: topicAssignments.title,
+        studentName: users.name,
+        specialization: specializations.name,
+        faculty: faculties.name
+      })
+      .from(topicChangeRequests)
+      .innerJoin(topicAssignments, eq(topicChangeRequests.assignmentId, topicAssignments.id))
+      .innerJoin(users, eq(topicChangeRequests.studentId, users.id))
+      .innerJoin(topics, eq(topicAssignments.topicId, topics.id))
+      .innerJoin(specializations, eq(topics.specializationId, specializations.id))
+      .innerJoin(faculties, eq(specializations.facultyId, faculties.id))
+      .where(
+        and(
+          eq(topicChangeRequests.professorId, authResult.user.id),
+          or(eq(topicChangeRequests.status, 'accepted'), eq(topicChangeRequests.status, 'rejected'))
+        )
+      );
+
+    const normalizedTopicHistory = topicHistory.map((item) => ({
+      id: item.id,
+      kind: item.type,
+      status: item.status,
+      studentName: item.studentName,
+      title: item.title,
+      requestType: item.type === 'topic_claim' ? 'Topic claim' : 'Custom proposal',
+      updatedAt: item.updatedAt,
+      createdAt: item.createdAt
+    }));
+
+    const normalizedChangeHistory = changeHistory.map((item) => ({
+      id: item.id,
+      kind: 'change_request',
+      status: item.status,
+      studentName: item.studentName,
+      title: item.status === 'accepted' ? item.requestedTitle : item.currentTitle,
+      requestType: 'Edit request',
+      faculty: item.faculty,
+      specialization: item.specialization,
+      updatedAt: item.updatedAt,
+      createdAt: item.createdAt
+    }));
+
+    const allHistory = [...normalizedTopicHistory, ...normalizedChangeHistory].sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+
+    return {
+      approved: allHistory.filter((item) => item.status === 'accepted'),
+      rejected: allHistory.filter((item) => item.status === 'rejected')
+    };
+  })
   .post('/api/professor/change-requests/:id/accept', async ({ params, request }) => {
     const authResult = await requireRole(request.headers, 'professor');
     if ('response' in authResult) return authResult.response;
@@ -1137,7 +1207,9 @@ new Elysia()
     if ('response' in authResult) return authResult.response;
 
     await expirePendingLifecycleItems();
-    const rows = await buildTopicRequestRows(eq(topicRequests.studentId, authResult.user.id));
+    const rows = await buildTopicRequestRows(
+      and(eq(topicRequests.studentId, authResult.user.id), eq(topicRequests.studentHidden, false))
+    );
     return { requests: rows };
   })
   .get('/api/student/assignment', async ({ request }) => {
@@ -1252,6 +1324,22 @@ new Elysia()
       })
     }
   )
+  .post('/api/student/requests/:id/dismiss', async ({ params, request }) => {
+    const authResult = await requireRole(request.headers, 'student');
+    if ('response' in authResult) return authResult.response;
+
+    const requestId = Number(params.id);
+    const topicRequest = await db.select().from(topicRequests).where(eq(topicRequests.id, requestId)).get();
+    if (!topicRequest || topicRequest.studentId !== authResult.user.id) {
+      return jsonResponse({ error: 'Request not found.' }, { status: 404 });
+    }
+    if (!['accepted', 'rejected', 'expired', 'cancelled'].includes(topicRequest.status)) {
+      return jsonResponse({ error: 'Only completed or expired requests can be removed from the dashboard.' }, { status: 400 });
+    }
+
+    await db.update(topicRequests).set({ studentHidden: true }).where(eq(topicRequests.id, requestId));
+    return { ok: true };
+  })
   .post(
     '/api/student/custom-proposals',
     async ({ body, request }) => {

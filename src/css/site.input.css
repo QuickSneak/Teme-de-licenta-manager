@@ -200,6 +200,14 @@ a {
     @apply grid gap-3 border-t border-[var(--border)] py-4 first:border-t-0 md:grid-cols-[auto_1fr_auto_auto] md:items-center md:gap-4;
   }
 
+  .claim-row {
+    @apply relative pl-6 md:grid-cols-[auto_1fr_auto_auto_auto];
+  }
+
+  .claim-dismiss-btn {
+    @apply absolute left-0 top-3 grid h-6 w-6 place-items-center rounded-full border border-[var(--border)] bg-[var(--surface-muted)] text-sm font-black leading-none text-[var(--muted)] transition hover:border-[var(--danger)] hover:bg-[var(--danger-soft)] hover:text-[var(--danger)];
+  }
+
   .row-main {
     @apply min-w-0;
   }
@@ -1131,7 +1139,7 @@ a {
   }
 
   .history-link {
-    @apply font-black text-[var(--accent)];
+    @apply font-black text-[var(--accent)] transition hover:opacity-75;
   }
 
   .modal-backdrop {
