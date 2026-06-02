@@ -29,6 +29,13 @@ type TopicRequestRow = typeof topicRequests.$inferSelect;
 
 const requestLifetimeMs = 72 * 60 * 60 * 1000;
 const changeRequestLifetimeMs = 3 * 24 * 60 * 60 * 1000;
+const pageRoot = 'src/pages';
+const textLimits = {
+  userName: 120,
+  profileBio: 1000,
+  topicTitle: 180,
+  topicDescription: 4000
+};
 
 function jsonResponse(body: unknown, init?: ResponseInit) {
   const headers = new Headers(init?.headers);
@@ -61,6 +68,27 @@ async function requireRole(headers: Headers, role: UserRole) {
   if (!user) return { response: jsonResponse({ error: 'Not authenticated.' }, { status: 401 }) };
   if (user.role !== role) return { response: jsonResponse({ error: 'Forbidden.' }, { status: 403 }) };
   return { user: user as UserWithRole };
+}
+
+function pageFile(fileName: string) {
+  return Bun.file(`${pageRoot}/${fileName}`);
+}
+
+function redirectResponse(location: string) {
+  return new Response(null, {
+    status: 302,
+    headers: { location }
+  });
+}
+
+async function protectedPage(headers: Headers, role: UserRole, fileName: string) {
+  const user = await getCurrentUser(headers);
+  if (!user) return redirectResponse('/login.html');
+  if (user.role !== role) {
+    return redirectResponse(isUserRole(user.role) ? dashboardByRole[user.role] : '/login.html');
+  }
+
+  return pageFile(fileName);
 }
 
 async function buildMeResponse(user: AuthUser) {
@@ -175,10 +203,25 @@ async function notifyEligibleStudentsForTopic(topic: typeof topics.$inferSelect,
   );
 }
 
-function trimRequired(value: string, label: string) {
+function validateRequiredText(value: string, label: string, maxLength: number) {
   const trimmed = value.trim();
-  if (!trimmed) throw new Error(`${label} is required.`);
-  return trimmed;
+  if (!trimmed) {
+    return { response: jsonResponse({ error: `${label} is required.` }, { status: 400 }) };
+  }
+  if (trimmed.length > maxLength) {
+    return { response: jsonResponse({ error: `${label} must be ${maxLength} characters or fewer.` }, { status: 400 }) };
+  }
+
+  return { value: trimmed };
+}
+
+function validateOptionalText(value: string, label: string, maxLength: number) {
+  const trimmed = value.trim();
+  if (trimmed.length > maxLength) {
+    return { response: jsonResponse({ error: `${label} must be ${maxLength} characters or fewer.` }, { status: 400 }) };
+  }
+
+  return { value: trimmed };
 }
 
 function summarizeWords(text: string, limit = 20) {
@@ -379,8 +422,31 @@ new Elysia()
   .all('/api/auth/request-password-reset', betterAuthView)
   .all('/api/auth/send-verification-email', betterAuthView)
   .all('/api/auth/*', betterAuthView)
-  .use(staticPlugin({ assets: 'src', prefix: '' }))
-  .get('/', () => Bun.file('src/login.html'))
+  .get('/', () => pageFile('login.html'))
+  .get('/login.html', () => pageFile('login.html'))
+  .get('/register.html', () => pageFile('register.html'))
+  .get('/reset-password.html', () => pageFile('reset-password.html'))
+  .get('/verify-email.html', () => pageFile('verify-email.html'))
+  .get('/dashboard.html', async ({ request }) => protectedPage(request.headers, 'student', 'dashboard.html'))
+  .get('/professors.html', async ({ request }) => protectedPage(request.headers, 'student', 'professors.html'))
+  .get('/propose.html', async ({ request }) => protectedPage(request.headers, 'student', 'propose.html'))
+  .get('/profile.html', async ({ request }) => protectedPage(request.headers, 'student', 'profile.html'))
+  .get('/professor-dashboard.html', async ({ request }) =>
+    protectedPage(request.headers, 'professor', 'professor-dashboard.html')
+  )
+  .get('/professor_add_thesis.html', async ({ request }) =>
+    protectedPage(request.headers, 'professor', 'professor_add_thesis.html')
+  )
+  .get('/professor-proposals.html', async ({ request }) =>
+    protectedPage(request.headers, 'professor', 'professor-proposals.html')
+  )
+  .get('/professor-profile.html', async ({ request }) =>
+    protectedPage(request.headers, 'professor', 'professor-profile.html')
+  )
+  .get('/secretary-dashboard.html', async ({ request }) =>
+    protectedPage(request.headers, 'secretary', 'secretary-dashboard.html')
+  )
+  .use(staticPlugin({ assets: 'public', prefix: '' }))
   .post(
     '/login',
     async ({ body, request }) => {
@@ -436,6 +502,8 @@ new Elysia()
     async ({ body, request }) => {
       const role = body.role as UserRole;
       const password = body.password.trim();
+      const nameResult = validateRequiredText(body.name, 'Full name', textLimits.userName);
+      if ('response' in nameResult) return nameResult.response;
 
       if (role === 'secretary') {
         return jsonResponse({ error: 'Secretary accounts are pre-created.' }, { status: 403 });
@@ -473,7 +541,7 @@ new Elysia()
           body: {
             email: normalizedEmail,
             password,
-            name: body.name.trim(),
+            name: nameResult.value,
             bio: '',
             role,
             facultyId,
@@ -529,16 +597,14 @@ new Elysia()
       const user = await getCurrentUser(request.headers);
       if (!user) return jsonResponse({ error: 'Not authenticated.' }, { status: 401 });
 
-      const name = body.name.trim();
-      const bio = body.bio.trim();
-
-      if (!name) {
-        return jsonResponse({ error: 'Full name is required.' }, { status: 400 });
-      }
+      const nameResult = validateRequiredText(body.name, 'Full name', textLimits.userName);
+      if ('response' in nameResult) return nameResult.response;
+      const bioResult = validateOptionalText(body.bio, 'Bio', textLimits.profileBio);
+      if ('response' in bioResult) return bioResult.response;
 
       await db
         .update(users)
-        .set({ name, bio, updatedAt: new Date() })
+        .set({ name: nameResult.value, bio: bioResult.value, updatedAt: new Date() })
         .where(eq(users.id, user.id));
 
       const updatedUser = await db.select().from(users).where(eq(users.id, user.id)).get();
@@ -738,8 +804,10 @@ new Elysia()
       const authResult = await requireRole(request.headers, 'professor');
       if ('response' in authResult) return authResult.response;
 
-      const title = trimRequired(body.title, 'Title');
-      const description = trimRequired(body.description, 'Description');
+      const titleResult = validateRequiredText(body.title, 'Title', textLimits.topicTitle);
+      if ('response' in titleResult) return titleResult.response;
+      const descriptionResult = validateRequiredText(body.description, 'Description', textLimits.topicDescription);
+      if ('response' in descriptionResult) return descriptionResult.response;
       const specializationId = Number(body.specializationId);
 
       if (!(await hasProfessorSpecialization(authResult.user.id, specializationId))) {
@@ -750,8 +818,8 @@ new Elysia()
       const [created] = await db
         .insert(topics)
         .values({
-          title,
-          description,
+          title: titleResult.value,
+          description: descriptionResult.value,
           professorId: authResult.user.id,
           specializationId,
           origin: 'professor',
@@ -793,8 +861,16 @@ new Elysia()
       }
 
       const updates: Partial<typeof topics.$inferInsert> = { updatedAt: nowDate() };
-      if (body.title !== undefined) updates.title = trimRequired(body.title, 'Title');
-      if (body.description !== undefined) updates.description = trimRequired(body.description, 'Description');
+      if (body.title !== undefined) {
+        const titleResult = validateRequiredText(body.title, 'Title', textLimits.topicTitle);
+        if ('response' in titleResult) return titleResult.response;
+        updates.title = titleResult.value;
+      }
+      if (body.description !== undefined) {
+        const descriptionResult = validateRequiredText(body.description, 'Description', textLimits.topicDescription);
+        if ('response' in descriptionResult) return descriptionResult.response;
+        updates.description = descriptionResult.value;
+      }
       if (body.status !== undefined) {
         if (!['available', 'reserved', 'inactive'].includes(body.status)) {
           return jsonResponse({ error: 'Invalid topic status.' }, { status: 400 });
@@ -1368,16 +1444,18 @@ new Elysia()
       }
 
       const now = nowDate();
-      const title = trimRequired(body.title, 'Title');
-      const description = trimRequired(body.description, 'Description');
+      const titleResult = validateRequiredText(body.title, 'Title', textLimits.topicTitle);
+      if ('response' in titleResult) return titleResult.response;
+      const descriptionResult = validateRequiredText(body.description, 'Description', textLimits.topicDescription);
+      if ('response' in descriptionResult) return descriptionResult.response;
       const [created] = await db
         .insert(topicRequests)
         .values({
           studentId: student.id,
           professorId,
           type: 'custom_proposal',
-          customTitle: title,
-          customDescription: description,
+          customTitle: titleResult.value,
+          customDescription: descriptionResult.value,
           status: 'pending',
           expiresAt: addMs(now, requestLifetimeMs),
           createdAt: now,
@@ -1390,10 +1468,10 @@ new Elysia()
         actorId: student.id,
         type: 'custom_proposal_received',
         title: 'New custom proposal',
-        message: `${student.name} proposed "${title}".`,
+        message: `${student.name} proposed "${titleResult.value}".`,
         entityType: 'topic_request',
         entityId: created.id,
-        topicTitle: title,
+        topicTitle: titleResult.value,
         createdAt: now
       });
 
@@ -1465,16 +1543,18 @@ new Elysia()
       }
 
       const now = nowDate();
-      const requestedTitle = trimRequired(body.title, 'Title');
-      const requestedDescription = trimRequired(body.description, 'Description');
+      const requestedTitleResult = validateRequiredText(body.title, 'Title', textLimits.topicTitle);
+      if ('response' in requestedTitleResult) return requestedTitleResult.response;
+      const requestedDescriptionResult = validateRequiredText(body.description, 'Description', textLimits.topicDescription);
+      if ('response' in requestedDescriptionResult) return requestedDescriptionResult.response;
       const [created] = await db
         .insert(topicChangeRequests)
         .values({
           assignmentId: assignment.id,
           studentId: authResult.user.id,
           professorId: assignment.professorId,
-          requestedTitle,
-          requestedDescription,
+          requestedTitle: requestedTitleResult.value,
+          requestedDescription: requestedDescriptionResult.value,
           status: 'pending',
           expiresAt: addMs(now, changeRequestLifetimeMs),
           createdAt: now,

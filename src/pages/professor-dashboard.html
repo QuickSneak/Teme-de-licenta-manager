@@ -687,12 +687,6 @@
     });
 
     modalClose.addEventListener("click", closeModal);
-    topicModal.addEventListener("click", (event) => {
-      if (event.target === topicModal) closeModal();
-    });
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") closeModal();
-    });
 
     const savedTheme = localStorage.getItem("professorInterfaceTheme") || "light";
     setTheme(savedTheme);

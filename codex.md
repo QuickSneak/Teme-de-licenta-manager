@@ -8,6 +8,12 @@
 * **Frontend:** Plain HTML + Vanilla JS (no frontend frameworks)
 * **Styling:** Tailwind CSS v3, compiled locally
 
+## Security Baseline
+* `sqlite.db` is local runtime state and is ignored by git. It should not be committed because it can contain password hashes, sessions, verification records, reset tokens, and user data.
+* `BETTER_AUTH_SECRET` may fall back to a dev-only value outside production. In `NODE_ENV=production`, startup fails unless the secret is a real non-placeholder value with at least 32 characters.
+* User-controlled frontend rendering should use DOM node creation plus `textContent`. Do not interpolate names, topic titles, descriptions, summaries, or statuses into `innerHTML`.
+* Server-side text limits are enforced in `src/index.ts`: names up to 120 chars, bios up to 1000 chars, topic/proposal/edit titles up to 180 chars, and descriptions up to 4000 chars.
+
 ## Current Auth Focus
 Building functional email/password authentication featuring:
 1. Hashed passwords.
@@ -42,8 +48,9 @@ Email verification and password reset use SMTP email links. OTP-based flows are 
 * A secretary manages all specializations that are part of their assigned faculty.
 
 ## Current App Structure
-* Shared demo/app styling is in `src/css/site.input.css` and generated to `src/css/site.css`; auth-only styling remains in `src/css/auth.input.css` and `src/css/auth.css`.
-* Topbar logout buttons use `src/js/top-actions.js`, which calls `POST /logout` and redirects to `login.html`.
+* Server-owned HTML pages live in `src/pages` and are returned through Elysia routes. Protected pages are checked server-side before HTML is served.
+* Public browser assets live in `public`. Shared demo/app styling is in `src/css/site.input.css` and generated to `public/css/site.css`; auth-only styling is in `src/css/auth.input.css` and generated to `public/css/auth.css`.
+* Topbar logout buttons use `public/js/top-actions.js`, which calls `POST /logout` and redirects to `login.html`.
 
 ## Profile Data
 * `GET /profile` returns the logged-in user's real profile data. `PUT /profile` currently saves only `name` and `bio`.
@@ -195,7 +202,7 @@ Shared routes:
   * The plain `node` command can fail in Codex with `Access is denied`.
   * Use the Codex workspace dependency runtime when Node is needed: call `load_workspace_dependencies`, then run the returned Node executable by absolute path.
   * Tailwind fallback that worked:
-    * `NODE_EXE .\node_modules\tailwindcss\lib\cli.js -c tailwind.config.js -i src/css/site.input.css -o src/css/site.css`
+    * `NODE_EXE .\node_modules\tailwindcss\lib\cli.js -c tailwind.config.js -i src/css/site.input.css -o public/css/site.css`
   * Drizzle fallback that worked:
     * `NODE_EXE .\node_modules\drizzle-kit\bin.cjs generate`
     * This may require escalation outside the sandbox because Drizzle can hit `spawn EPERM` while loading the TypeScript config.
@@ -218,7 +225,7 @@ Shared routes:
 ## Development Guidelines
 * Do not use React, Vue, or other frontend frameworks. Return standard HTML/JS.
 * Use Tailwind utility classes for styling new or updated frontend screens.
-* Tailwind source CSS lives in `src/css/*.input.css`; generated browser CSS lives beside it, e.g. `src/css/auth.css`.
+* Tailwind source CSS lives in `src/css/*.input.css`; generated browser CSS lives in `public/css`, e.g. `public/css/auth.css`.
 * Do not hand-edit generated CSS unless intentionally debugging output. Regenerate with `bun run build:css`; use `bun run dev:css` while actively editing styles.
 * Avoid Tailwind CDN in production pages.
 * Rely on `better-auth` for session management and standard auth flows, extending it only where the custom UAB email parsing requires it.

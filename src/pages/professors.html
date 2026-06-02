@@ -211,8 +211,18 @@
       professorsStack.innerHTML = "";
 
       if (!professors.length) {
-        professorList.innerHTML = '<p class="profile-text">No professors have available topics for your specialisation.</p>';
-        professorsStack.innerHTML = '<section class="panel"><p class="profile-text">No thesis topics are currently available.</p></section>';
+        const emptyList = document.createElement("p");
+        emptyList.className = "profile-text";
+        emptyList.textContent = "No professors have available topics for your specialisation.";
+        professorList.append(emptyList);
+
+        const emptyPanel = document.createElement("section");
+        emptyPanel.className = "panel";
+        const emptyText = document.createElement("p");
+        emptyText.className = "profile-text";
+        emptyText.textContent = "No thesis topics are currently available.";
+        emptyPanel.append(emptyText);
+        professorsStack.append(emptyPanel);
         return;
       }
 
@@ -221,7 +231,11 @@
         link.href = "#";
         link.className = `prof-link ${index === 0 ? "active" : ""}`;
         link.dataset.professor = professor.id;
-        link.innerHTML = `<span>${professor.name}</span><span>&rsaquo;</span>`;
+        const linkName = document.createElement("span");
+        linkName.textContent = professor.name;
+        const linkArrow = document.createElement("span");
+        linkArrow.textContent = ">";
+        link.append(linkName, linkArrow);
         professorList.append(link);
 
         const card = document.createElement("article");
@@ -232,14 +246,21 @@
         const header = document.createElement("button");
         header.className = "professor-header";
         header.type = "button";
-        header.innerHTML = `
-          <span class="avatar">${initialsFromName(professor.name)}</span>
-          <span>
-            <span class="professor-name">${professor.name}</span>
-            <span class="professor-meta">${professor.topics.length} theses | ${availableCount} available</span>
-          </span>
-          <span class="chevron">v</span>
-        `;
+        const avatar = document.createElement("span");
+        avatar.className = "avatar";
+        avatar.textContent = initialsFromName(professor.name);
+        const headerText = document.createElement("span");
+        const professorName = document.createElement("span");
+        professorName.className = "professor-name";
+        professorName.textContent = professor.name;
+        const professorMeta = document.createElement("span");
+        professorMeta.className = "professor-meta";
+        professorMeta.textContent = `${professor.topics.length} theses | ${availableCount} available`;
+        headerText.append(professorName, professorMeta);
+        const chevron = document.createElement("span");
+        chevron.className = "chevron";
+        chevron.textContent = "v";
+        header.append(avatar, headerText, chevron);
 
         const topicsWrap = document.createElement("div");
         topicsWrap.className = "topics";
@@ -247,13 +268,17 @@
           const topicCard = document.createElement("article");
           topicCard.className = "topic-card";
           const statusClass = topic.status === "available" ? "available" : "reserved";
-          topicCard.innerHTML = `
-            <h3>${topic.title}</h3>
-            <p>${topic.summary}</p>
-            <div class="topic-footer">
-              <span class="status ${statusClass}">${topic.status}</span>
-            </div>
-          `;
+          const title = document.createElement("h3");
+          title.textContent = topic.title;
+          const summary = document.createElement("p");
+          summary.textContent = topic.summary;
+          const footer = document.createElement("div");
+          footer.className = "topic-footer";
+          const status = document.createElement("span");
+          status.className = `status ${statusClass}`;
+          status.textContent = topic.status;
+          footer.append(status);
+          topicCard.append(title, summary, footer);
           const details = document.createElement("button");
           details.className = "details-btn";
           details.type = "button";
@@ -296,12 +321,6 @@
     }
 
     modalClose.addEventListener("click", closeModal);
-    topicModal.addEventListener("click", (event) => {
-      if (event.target === topicModal) closeModal();
-    });
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") closeModal();
-    });
 
     claimButton.addEventListener("click", async () => {
       if (!currentTopic) return;

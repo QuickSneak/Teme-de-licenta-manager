@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from '@better-auth/drizzle-adapter';
+import { getAuthSecret } from './config';
 import { db } from './db';
 import { accounts, sessions, users, verifications } from './db/schema';
 import { sendPasswordResetEmail, sendVerificationEmail } from './email';
@@ -14,7 +15,7 @@ function appURL(path: string) {
 }
 
 export const auth = betterAuth({
-  secret: process.env.BETTER_AUTH_SECRET ?? 'dev-secret-change-before-production',
+  secret: getAuthSecret(),
   baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000/api/auth',
   database: drizzleAdapter(db, {
     provider: 'sqlite',

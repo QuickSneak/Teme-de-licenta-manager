@@ -437,18 +437,6 @@
 
     modalClose.addEventListener("click", closeModal);
 
-    proposalModal.addEventListener("click", (event) => {
-      if (event.target === proposalModal) {
-        closeModal();
-      }
-    });
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        closeModal();
-      }
-    });
-
     document.querySelector(".refresh-btn").addEventListener("click", async () => {
       await loadRequests();
       await loadHistory();
