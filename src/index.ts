@@ -1,6 +1,6 @@
 import { Elysia, t, type Context } from 'elysia';
 import { staticPlugin } from '@elysiajs/static';
-import { and, desc, eq, inArray, lt, or } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt, ne, or } from 'drizzle-orm';
 import { auth } from './auth';
 import { db } from './db';
 import {
@@ -30,30 +30,288 @@ type TopicRequestRow = typeof topicRequests.$inferSelect;
 const requestLifetimeMs = 72 * 60 * 60 * 1000;
 const changeRequestLifetimeMs = 3 * 24 * 60 * 60 * 1000;
 const pageRoot = 'src/pages';
+const minuteMs = 60 * 1000;
+const hourMs = 60 * minuteMs;
+const dayMs = 24 * hourMs;
 const textLimits = {
   userName: 120,
   profileBio: 1000,
   topicTitle: 180,
   topicDescription: 4000
 };
+const securityHeaders: Record<string, string> = {
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    "script-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data:",
+    "font-src 'self' data:",
+    "connect-src 'self'"
+  ].join('; '),
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()'
+};
+const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+const rateLimitPolicies = {
+  loginIp: { limit: 30, windowMs: 15 * minuteMs, message: 'Too many login attempts. Try again later.' },
+  loginFailedEmail: { limit: 5, windowMs: 15 * minuteMs, message: 'Too many failed login attempts for this email. Try again later.' },
+  registrationIp: { limit: 5, windowMs: 20 * minuteMs, message: 'Too many registration attempts. Try again later.' },
+  registrationEmail: { limit: 3, windowMs: 20 * minuteMs, message: 'Too many registration attempts for this email. Try again later.' },
+  passwordResetIp: { limit: 10, windowMs: 20 * minuteMs, message: 'Too many password reset requests. Try again later.' },
+  passwordResetEmail: { limit: 3, windowMs: 20 * minuteMs, message: 'Too many password reset requests for this email. Try again later.' },
+  verificationEmailIp: { limit: 10, windowMs: 20 * minuteMs, message: 'Too many verification email requests. Try again later.' },
+  verificationEmail: { limit: 3, windowMs: 20 * minuteMs, message: 'Too many verification email requests for this email. Try again later.' },
+  studentProposal: { limit: 20, windowMs: dayMs, message: 'Too many thesis request actions today. Try again later.' },
+  studentEditRequest: { limit: 20, windowMs: dayMs, message: 'Too many edit request submissions today. Try again later.' },
+  authenticatedMutation: { limit: 300, windowMs: hourMs, message: 'Too many account actions. Try again later.' }
+};
+type RateLimitPolicy = {
+  limit: number;
+  windowMs: number;
+  message: string;
+};
+type RateLimitBucket = {
+  count: number;
+  resetAt: number;
+};
+const rateLimitBuckets = new Map<string, RateLimitBucket>();
 
 function jsonResponse(body: unknown, init?: ResponseInit) {
   const headers = new Headers(init?.headers);
   headers.set('content-type', 'application/json');
+  applySecurityHeaders(headers);
   return new Response(JSON.stringify(body), { ...init, headers });
 }
 
 function withAuthHeaders(body: unknown, headers: Headers, status = 200) {
   headers.set('content-type', 'application/json');
+  applySecurityHeaders(headers);
   return new Response(JSON.stringify(body), { status, headers });
 }
 
-function betterAuthView(context: Context) {
-  if (context.request.method !== 'GET' && context.request.method !== 'POST') {
-    return new Response(null, { status: 405 });
+function rateLimitResponse(policy: RateLimitPolicy, retryAfterSeconds: number) {
+  return jsonResponse(
+    { error: policy.message },
+    {
+      status: 429,
+      headers: { 'retry-after': String(retryAfterSeconds) }
+    }
+  );
+}
+
+function bucketFor(key: string, policy: RateLimitPolicy) {
+  const now = Date.now();
+  const existing = rateLimitBuckets.get(key);
+  if (!existing || existing.resetAt <= now) {
+    const bucket = { count: 0, resetAt: now + policy.windowMs };
+    rateLimitBuckets.set(key, bucket);
+    return bucket;
   }
 
-  return auth.handler(context.request);
+  return existing;
+}
+
+function retryAfterSeconds(bucket: RateLimitBucket) {
+  return Math.max(1, Math.ceil((bucket.resetAt - Date.now()) / 1000));
+}
+
+function isRateLimited(key: string, policy: RateLimitPolicy) {
+  const bucket = bucketFor(key, policy);
+  if (bucket.count < policy.limit) return null;
+  return rateLimitResponse(policy, retryAfterSeconds(bucket));
+}
+
+function consumeRateLimit(key: string, policy: RateLimitPolicy) {
+  const bucket = bucketFor(key, policy);
+  if (bucket.count >= policy.limit) {
+    return rateLimitResponse(policy, retryAfterSeconds(bucket));
+  }
+
+  bucket.count += 1;
+  return null;
+}
+
+function resetRateLimit(key: string) {
+  rateLimitBuckets.delete(key);
+}
+
+function rateLimitKey(scope: string, identifier: string) {
+  return `${scope}:${identifier}`;
+}
+
+function normalizeRateLimitEmail(value: unknown) {
+  return typeof value === 'string' ? value.trim().toLowerCase() : null;
+}
+
+function getClientIdentifier(request: Request) {
+  const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  return (
+    forwardedFor ||
+    request.headers.get('cf-connecting-ip') ||
+    request.headers.get('x-real-ip') ||
+    request.headers.get('forwarded') ||
+    'local'
+  );
+}
+
+async function requestJsonBody(request: Request) {
+  try {
+    return await request.clone().json();
+  } catch {
+    return null;
+  }
+}
+
+function applySecurityHeaders(headers: Headers) {
+  for (const [name, value] of Object.entries(securityHeaders)) {
+    if (!headers.has(name)) headers.set(name, value);
+  }
+}
+
+function applySecurityHeadersToSet(headers: Record<string, unknown>) {
+  for (const [name, value] of Object.entries(securityHeaders)) {
+    if (headers[name] === undefined) headers[name] = value;
+  }
+}
+
+function withSecurityHeaders(response: Response) {
+  try {
+    applySecurityHeaders(response.headers);
+    return response;
+  } catch {
+    const headers = new Headers(response.headers);
+    applySecurityHeaders(headers);
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
+  }
+}
+
+function configuredOrigin(value?: string) {
+  if (!value) return null;
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function trustedOriginsForRequest(requestURL: URL) {
+  const origins = new Set<string>();
+  const appOrigin = configuredOrigin(process.env.APP_URL);
+  const authOrigin = configuredOrigin(process.env.BETTER_AUTH_URL);
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (appOrigin) origins.add(appOrigin);
+  if (authOrigin) origins.add(authOrigin);
+
+  if (!isProduction) {
+    origins.add('http://localhost:3000');
+    origins.add(requestURL.origin);
+  }
+
+  return origins;
+}
+
+function requestHeaderOrigin(value: string) {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function isAuthRoute(pathname: string) {
+  return pathname === '/api/auth' || pathname.startsWith('/api/auth/');
+}
+
+function isTrustedRequestOrigin(request: Request, requestURL: URL) {
+  if (!unsafeMethods.has(request.method) || isAuthRoute(requestURL.pathname)) return true;
+
+  const origins = trustedOriginsForRequest(requestURL);
+  const origin = request.headers.get('origin');
+  if (origin) {
+    const parsedOrigin = requestHeaderOrigin(origin);
+    return parsedOrigin !== null && origins.has(parsedOrigin);
+  }
+
+  const referer = request.headers.get('referer');
+  if (referer) {
+    const parsedReferer = requestHeaderOrigin(referer);
+    return parsedReferer !== null && origins.has(parsedReferer);
+  }
+
+  return true;
+}
+
+async function applyAuthRouteRateLimits(request: Request, requestURL: URL) {
+  if (request.method !== 'POST') return null;
+
+  const client = getClientIdentifier(request);
+  const body = await requestJsonBody(request);
+  const email = normalizeRateLimitEmail(body && typeof body === 'object' && 'email' in body ? body.email : null);
+
+  if (requestURL.pathname === '/api/auth/request-password-reset') {
+    const ipLimit = consumeRateLimit(rateLimitKey('password-reset-ip', client), rateLimitPolicies.passwordResetIp);
+    if (ipLimit) return ipLimit;
+
+    if (email) {
+      const emailLimit = consumeRateLimit(rateLimitKey('password-reset-email', email), rateLimitPolicies.passwordResetEmail);
+      if (emailLimit) return emailLimit;
+    }
+  }
+
+  if (requestURL.pathname === '/api/auth/send-verification-email') {
+    const ipLimit = consumeRateLimit(rateLimitKey('verification-email-ip', client), rateLimitPolicies.verificationEmailIp);
+    if (ipLimit) return ipLimit;
+
+    if (email) {
+      const emailLimit = consumeRateLimit(rateLimitKey('verification-email', email), rateLimitPolicies.verificationEmail);
+      if (emailLimit) return emailLimit;
+    }
+  }
+
+  return null;
+}
+
+async function applyAppMutationRateLimits(request: Request, requestURL: URL) {
+  if (!unsafeMethods.has(request.method)) return null;
+  if (isAuthRoute(requestURL.pathname) || requestURL.pathname === '/login' || requestURL.pathname === '/register') return null;
+
+  const user = await getCurrentUser(request.headers);
+  if (!user) return null;
+
+  if (request.method === 'POST' && (requestURL.pathname === '/api/student/topic-requests' || requestURL.pathname === '/api/student/custom-proposals')) {
+    const studentProposalLimit = consumeRateLimit(rateLimitKey('student-proposal', user.id), rateLimitPolicies.studentProposal);
+    if (studentProposalLimit) return studentProposalLimit;
+  }
+
+  if (request.method === 'POST' && /^\/api\/student\/assignments\/[^/]+\/change-requests$/.test(requestURL.pathname)) {
+    const studentEditLimit = consumeRateLimit(rateLimitKey('student-edit-request', user.id), rateLimitPolicies.studentEditRequest);
+    if (studentEditLimit) return studentEditLimit;
+  }
+
+  return consumeRateLimit(rateLimitKey('authenticated-mutation', user.id), rateLimitPolicies.authenticatedMutation);
+}
+
+async function authHandlerResponse(request: Request) {
+  return withSecurityHeaders(await auth.handler(request));
+}
+
+async function betterAuthView(context: Context) {
+  if (context.request.method !== 'GET' && context.request.method !== 'POST') {
+    return withSecurityHeaders(new Response(null, { status: 405 }));
+  }
+
+  return authHandlerResponse(context.request);
 }
 
 async function getCurrentUser(headers: Headers) {
@@ -71,14 +329,17 @@ async function requireRole(headers: Headers, role: UserRole) {
 }
 
 function pageFile(fileName: string) {
-  return Bun.file(`${pageRoot}/${fileName}`);
+  const headers = new Headers();
+  if (fileName.endsWith('.html')) headers.set('content-type', 'text/html; charset=utf-8');
+  applySecurityHeaders(headers);
+  return new Response(Bun.file(`${pageRoot}/${fileName}`), { headers });
 }
 
 function redirectResponse(location: string) {
-  return new Response(null, {
+  return withSecurityHeaders(new Response(null, {
     status: 302,
     headers: { location }
-  });
+  }));
 }
 
 async function protectedPage(headers: Headers, role: UserRole, fileName: string) {
@@ -253,19 +514,41 @@ async function expirePendingTopicRequests() {
     .where(and(eq(topicRequests.status, 'pending'), lt(topicRequests.expiresAt, now)));
 
   for (const request of expired) {
-    await db.update(topicRequests).set({ status: 'expired', updatedAt: now }).where(eq(topicRequests.id, request.id));
+    db.transaction((tx) => {
+      const expiredRequest = tx
+        .update(topicRequests)
+        .set({ status: 'expired', updatedAt: now })
+        .where(and(eq(topicRequests.id, request.id), eq(topicRequests.status, 'pending')))
+        .returning()
+        .get();
+      if (!expiredRequest) return;
 
-    if (request.type === 'topic_claim' && request.topicId) {
-      const topic = await db.select().from(topics).where(eq(topics.id, request.topicId)).get();
-      if (topic?.status === 'reserved') {
-        await db.update(topics).set({ status: 'available', updatedAt: now }).where(eq(topics.id, topic.id));
+      if (request.type === 'topic_claim' && request.topicId) {
+        tx.update(topics)
+          .set({ status: 'available', updatedAt: now })
+          .where(and(eq(topics.id, request.topicId), eq(topics.status, 'reserved')))
+          .run();
       }
-    }
+    });
   }
 }
 
 async function expirePendingChangeRequests() {
   const now = nowDate();
+  const inactiveRows = await db
+    .select({ id: topicChangeRequests.id })
+    .from(topicChangeRequests)
+    .innerJoin(topicAssignments, eq(topicChangeRequests.assignmentId, topicAssignments.id))
+    .where(and(eq(topicChangeRequests.status, 'pending'), ne(topicAssignments.status, 'active')));
+  const inactiveIds = inactiveRows.map((row) => row.id);
+
+  if (inactiveIds.length) {
+    await db
+      .update(topicChangeRequests)
+      .set({ status: 'cancelled', updatedAt: now })
+      .where(inArray(topicChangeRequests.id, inactiveIds));
+  }
+
   await db
     .update(topicChangeRequests)
     .set({ status: 'expired', updatedAt: now })
@@ -410,11 +693,29 @@ function getApiErrorCode(error: unknown) {
   return typeof body?.code === 'string' ? body.code : null;
 }
 
+function isSqliteConstraintError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  return error.message.includes('UNIQUE constraint failed') || error.message.includes('constraint failed');
+}
+
 new Elysia()
-  .onRequest(({ request }) => {
-    if (new URL(request.url).pathname.startsWith('/api/auth/')) {
-      return auth.handler(request);
+  .onRequest(async ({ request, set }) => {
+    applySecurityHeadersToSet(set.headers as Record<string, unknown>);
+
+    const requestURL = new URL(request.url);
+    if (isAuthRoute(requestURL.pathname)) {
+      const rateLimit = await applyAuthRouteRateLimits(request, requestURL);
+      if (rateLimit) return rateLimit;
+
+      return authHandlerResponse(request);
     }
+
+    if (!isTrustedRequestOrigin(request, requestURL)) {
+      return jsonResponse({ error: 'Cross-origin request rejected.' }, { status: 403 });
+    }
+
+    const rateLimit = await applyAppMutationRateLimits(request, requestURL);
+    if (rateLimit) return rateLimit;
   })
   .all('/api/auth/verify-email', betterAuthView)
   .all('/api/auth/reset-password/:token', betterAuthView)
@@ -446,12 +747,19 @@ new Elysia()
   .get('/secretary-dashboard.html', async ({ request }) =>
     protectedPage(request.headers, 'secretary', 'secretary-dashboard.html')
   )
-  .use(staticPlugin({ assets: 'public', prefix: '' }))
+  .use(staticPlugin({ assets: 'public', prefix: '', headers: securityHeaders }))
   .post(
     '/login',
     async ({ body, request }) => {
       const email = body.email.trim().toLowerCase();
       const role = body.role;
+      const client = getClientIdentifier(request);
+      const loginIpLimit = consumeRateLimit(rateLimitKey('login-ip', client), rateLimitPolicies.loginIp);
+      if (loginIpLimit) return loginIpLimit;
+
+      const failedEmailKey = rateLimitKey('login-failed-email', email);
+      const failedEmailLimit = isRateLimited(failedEmailKey, rateLimitPolicies.loginFailedEmail);
+      if (failedEmailLimit) return failedEmailLimit;
 
       if (!isUserRole(role)) {
         return jsonResponse({ error: 'Invalid role.' }, { status: 400 });
@@ -459,6 +767,7 @@ new Elysia()
 
       const user = await db.select().from(users).where(eq(users.email, email)).get();
       if (!user || user.role !== role) {
+        consumeRateLimit(failedEmailKey, rateLimitPolicies.loginFailedEmail);
         return jsonResponse({ error: 'Invalid email, password, or role.' }, { status: 401 });
       }
 
@@ -473,6 +782,7 @@ new Elysia()
           returnHeaders: true
         });
 
+        resetRateLimit(failedEmailKey);
         return withAuthHeaders({ redirect: dashboardByRole[role] }, result.headers);
       } catch (error) {
         if (getApiErrorCode(error) === 'EMAIL_NOT_VERIFIED') {
@@ -485,6 +795,7 @@ new Elysia()
           );
         }
 
+        consumeRateLimit(failedEmailKey, rateLimitPolicies.loginFailedEmail);
         return jsonResponse({ error: 'Invalid email, password, or role.' }, { status: 401 });
       }
     },
@@ -500,6 +811,19 @@ new Elysia()
   .post(
     '/register',
     async ({ body, request }) => {
+      const client = getClientIdentifier(request);
+      const registrationIpLimit = consumeRateLimit(rateLimitKey('registration-ip', client), rateLimitPolicies.registrationIp);
+      if (registrationIpLimit) return registrationIpLimit;
+
+      const registrationEmail = normalizeRateLimitEmail(body.email);
+      if (registrationEmail) {
+        const registrationEmailLimit = consumeRateLimit(
+          rateLimitKey('registration-email', registrationEmail),
+          rateLimitPolicies.registrationEmail
+        );
+        if (registrationEmailLimit) return registrationEmailLimit;
+      }
+
       const role = body.role as UserRole;
       const password = body.password.trim();
       const nameResult = validateRequiredText(body.name, 'Full name', textLimits.userName);
@@ -931,92 +1255,136 @@ new Elysia()
 
     await expirePendingLifecycleItems();
     const requestId = Number(params.id);
-    const topicRequest = await db.select().from(topicRequests).where(eq(topicRequests.id, requestId)).get();
-    if (!topicRequest || topicRequest.professorId !== authResult.user.id) {
-      return jsonResponse({ error: 'Request not found.' }, { status: 404 });
-    }
-    if (topicRequest.status !== 'pending') {
-      return jsonResponse({ error: 'Only pending requests can be accepted.' }, { status: 400 });
-    }
-    if (await studentHasActiveAssignment(topicRequest.studentId)) {
-      return jsonResponse({ error: 'This student already has an active assignment.' }, { status: 409 });
-    }
-
     const now = nowDate();
-    let acceptedTopic: typeof topics.$inferSelect | undefined;
 
-    if (topicRequest.type === 'topic_claim') {
-      if (!topicRequest.topicId) return jsonResponse({ error: 'Topic claim is missing a topic.' }, { status: 400 });
+    try {
+      const result = db.transaction((tx) => {
+        const topicRequest = tx.select().from(topicRequests).where(eq(topicRequests.id, requestId)).get();
+        if (!topicRequest || topicRequest.professorId !== authResult.user.id) {
+          return { response: jsonResponse({ error: 'Request not found.' }, { status: 404 }) };
+        }
+        if (topicRequest.status !== 'pending') {
+          return { response: jsonResponse({ error: 'Only pending requests can be accepted.' }, { status: 400 }) };
+        }
 
-      const topic = await db.select().from(topics).where(eq(topics.id, topicRequest.topicId)).get();
-      if (!topic || topic.professorId !== authResult.user.id) {
-        return jsonResponse({ error: 'Topic not found.' }, { status: 404 });
-      }
-      if (topic.status !== 'reserved') {
-        return jsonResponse({ error: 'Topic is not reserved by this request.' }, { status: 409 });
-      }
+        const activeAssignment = tx
+          .select()
+          .from(topicAssignments)
+          .where(and(eq(topicAssignments.studentId, topicRequest.studentId), eq(topicAssignments.status, 'active')))
+          .get();
+        if (activeAssignment) {
+          return { response: jsonResponse({ error: 'This student already has an active assignment.' }, { status: 409 }) };
+        }
 
-      const [updatedTopic] = await db
-        .update(topics)
-        .set({ status: 'inactive', updatedAt: now })
-        .where(eq(topics.id, topic.id))
-        .returning();
-      acceptedTopic = updatedTopic;
-    } else {
-      const student = await db.select().from(users).where(eq(users.id, topicRequest.studentId)).get();
-      if (!student?.specializationId) {
-        return jsonResponse({ error: 'Student specialisation could not be found.' }, { status: 400 });
-      }
-      if (!(await hasProfessorSpecialization(authResult.user.id, student.specializationId))) {
-        return jsonResponse({ error: 'This professor is not assigned to the student specialisation.' }, { status: 403 });
-      }
+        let acceptedTopic: typeof topics.$inferSelect | undefined;
 
-      const [createdTopic] = await db
-        .insert(topics)
-        .values({
-          title: topicRequest.customTitle ?? '',
-          description: topicRequest.customDescription ?? '',
-          professorId: authResult.user.id,
-          specializationId: student.specializationId,
-          origin: 'student_proposal',
-          status: 'inactive',
-          createdAt: now,
-          updatedAt: now
-        })
-        .returning();
-      acceptedTopic = createdTopic;
+        if (topicRequest.type === 'topic_claim') {
+          if (!topicRequest.topicId) return { response: jsonResponse({ error: 'Topic claim is missing a topic.' }, { status: 400 }) };
+
+          const updatedTopic = tx
+            .update(topics)
+            .set({ status: 'inactive', updatedAt: now })
+            .where(
+              and(
+                eq(topics.id, topicRequest.topicId),
+                eq(topics.professorId, authResult.user.id),
+                eq(topics.status, 'reserved')
+              )
+            )
+            .returning()
+            .get();
+          if (!updatedTopic) {
+            return { response: jsonResponse({ error: 'Topic is not reserved by this request.' }, { status: 409 }) };
+          }
+          acceptedTopic = updatedTopic;
+        } else {
+          const student = tx.select().from(users).where(eq(users.id, topicRequest.studentId)).get();
+          if (!student?.specializationId) {
+            return { response: jsonResponse({ error: 'Student specialisation could not be found.' }, { status: 400 }) };
+          }
+
+          const professorAssignment = tx
+            .select()
+            .from(professorSpecializations)
+            .where(
+              and(
+                eq(professorSpecializations.professorId, authResult.user.id),
+                eq(professorSpecializations.specializationId, student.specializationId)
+              )
+            )
+            .get();
+          if (!professorAssignment) {
+            return { response: jsonResponse({ error: 'This professor is not assigned to the student specialisation.' }, { status: 403 }) };
+          }
+
+          const createdTopic = tx
+            .insert(topics)
+            .values({
+              title: topicRequest.customTitle ?? '',
+              description: topicRequest.customDescription ?? '',
+              professorId: authResult.user.id,
+              specializationId: student.specializationId,
+              origin: 'student_proposal',
+              status: 'inactive',
+              createdAt: now,
+              updatedAt: now
+            })
+            .returning()
+            .get();
+          acceptedTopic = createdTopic;
+        }
+
+        if (!acceptedTopic) return { response: jsonResponse({ error: 'Topic could not be accepted.' }, { status: 500 }) };
+
+        const assignment = tx
+          .insert(topicAssignments)
+          .values({
+            studentId: topicRequest.studentId,
+            professorId: authResult.user.id,
+            topicId: acceptedTopic.id,
+            title: acceptedTopic.title,
+            description: acceptedTopic.description,
+            status: 'active',
+            createdAt: now,
+            updatedAt: now
+          })
+          .returning()
+          .get();
+
+        const acceptedRequest = tx
+          .update(topicRequests)
+          .set({ status: 'accepted', updatedAt: now })
+          .where(and(eq(topicRequests.id, requestId), eq(topicRequests.status, 'pending')))
+          .returning()
+          .get();
+        if (!acceptedRequest) {
+          return { response: jsonResponse({ error: 'Only pending requests can be accepted.' }, { status: 400 }) };
+        }
+
+        return { assignment, acceptedTopic, topicRequest };
+      });
+
+      if ('response' in result) return result.response;
+
+      await createNotification({
+        userId: result.topicRequest.studentId,
+        actorId: authResult.user.id,
+        type: 'topic_request_accepted',
+        title: result.topicRequest.type === 'custom_proposal' ? 'Custom proposal accepted' : 'Topic claim accepted',
+        message: `${authResult.user.name} accepted "${result.acceptedTopic.title}".`,
+        entityType: 'topic_request',
+        entityId: result.topicRequest.id,
+        topicTitle: result.acceptedTopic.title,
+        createdAt: now
+      });
+
+      return { assignment: result.assignment };
+    } catch (error) {
+      if (isSqliteConstraintError(error)) {
+        return jsonResponse({ error: 'This student already has an active assignment.' }, { status: 409 });
+      }
+      throw error;
     }
-
-    if (!acceptedTopic) return jsonResponse({ error: 'Topic could not be accepted.' }, { status: 500 });
-
-    const [assignment] = await db
-      .insert(topicAssignments)
-      .values({
-        studentId: topicRequest.studentId,
-        professorId: authResult.user.id,
-        topicId: acceptedTopic.id,
-        title: acceptedTopic.title,
-        description: acceptedTopic.description,
-        status: 'active',
-        createdAt: now,
-        updatedAt: now
-      })
-      .returning();
-
-    await db.update(topicRequests).set({ status: 'accepted', updatedAt: now }).where(eq(topicRequests.id, requestId));
-    await createNotification({
-      userId: topicRequest.studentId,
-      actorId: authResult.user.id,
-      type: 'topic_request_accepted',
-      title: topicRequest.type === 'custom_proposal' ? 'Custom proposal accepted' : 'Topic claim accepted',
-      message: `${authResult.user.name} accepted "${acceptedTopic.title}".`,
-      entityType: 'topic_request',
-      entityId: topicRequest.id,
-      topicTitle: acceptedTopic.title,
-      createdAt: now
-    });
-
-    return { assignment };
   })
   .post('/api/professor/requests/:id/reject', async ({ params, request }) => {
     const authResult = await requireRole(request.headers, 'professor');
@@ -1024,34 +1392,51 @@ new Elysia()
 
     await expirePendingLifecycleItems();
     const requestId = Number(params.id);
-    const topicRequest = await db.select().from(topicRequests).where(eq(topicRequests.id, requestId)).get();
-    if (!topicRequest || topicRequest.professorId !== authResult.user.id) {
-      return jsonResponse({ error: 'Request not found.' }, { status: 404 });
-    }
-    if (topicRequest.status !== 'pending') {
-      return jsonResponse({ error: 'Only pending requests can be rejected.' }, { status: 400 });
-    }
-
     const now = nowDate();
-    const title = await topicRequestTitle(topicRequest);
-    await db.update(topicRequests).set({ status: 'rejected', updatedAt: now }).where(eq(topicRequests.id, requestId));
+    const result = db.transaction((tx) => {
+      const topicRequest = tx.select().from(topicRequests).where(eq(topicRequests.id, requestId)).get();
+      if (!topicRequest || topicRequest.professorId !== authResult.user.id) {
+        return { response: jsonResponse({ error: 'Request not found.' }, { status: 404 }) };
+      }
+      if (topicRequest.status !== 'pending') {
+        return { response: jsonResponse({ error: 'Only pending requests can be rejected.' }, { status: 400 }) };
+      }
 
-    if (topicRequest.type === 'topic_claim' && topicRequest.topicId) {
-      await db
-        .update(topics)
-        .set({ status: 'available', updatedAt: now })
-        .where(and(eq(topics.id, topicRequest.topicId), eq(topics.status, 'reserved')));
-    }
+      const topic =
+        topicRequest.topicId !== null ? tx.select().from(topics).where(eq(topics.id, topicRequest.topicId)).get() : null;
+      const title = topicRequest.customTitle ?? topic?.title ?? 'requested topic';
+
+      const rejectedRequest = tx
+        .update(topicRequests)
+        .set({ status: 'rejected', updatedAt: now })
+        .where(and(eq(topicRequests.id, requestId), eq(topicRequests.status, 'pending')))
+        .returning()
+        .get();
+      if (!rejectedRequest) {
+        return { response: jsonResponse({ error: 'Only pending requests can be rejected.' }, { status: 400 }) };
+      }
+
+      if (topicRequest.type === 'topic_claim' && topicRequest.topicId) {
+        tx.update(topics)
+          .set({ status: 'available', updatedAt: now })
+          .where(and(eq(topics.id, topicRequest.topicId), eq(topics.status, 'reserved')))
+          .run();
+      }
+
+      return { topicRequest, title };
+    });
+
+    if ('response' in result) return result.response;
 
     await createNotification({
-      userId: topicRequest.studentId,
+      userId: result.topicRequest.studentId,
       actorId: authResult.user.id,
       type: 'topic_request_rejected',
-      title: topicRequest.type === 'custom_proposal' ? 'Custom proposal rejected' : 'Topic claim rejected',
-      message: `${authResult.user.name} rejected "${title}".`,
+      title: result.topicRequest.type === 'custom_proposal' ? 'Custom proposal rejected' : 'Topic claim rejected',
+      message: `${authResult.user.name} rejected "${result.title}".`,
       entityType: 'topic_request',
-      entityId: topicRequest.id,
-      topicTitle: title,
+      entityId: result.topicRequest.id,
+      topicTitle: result.title,
       createdAt: now
     });
 
@@ -1165,34 +1550,59 @@ new Elysia()
 
     await expirePendingChangeRequests();
     const id = Number(params.id);
-    const changeRequest = await db.select().from(topicChangeRequests).where(eq(topicChangeRequests.id, id)).get();
-    if (!changeRequest || changeRequest.professorId !== authResult.user.id) {
-      return jsonResponse({ error: 'Change request not found.' }, { status: 404 });
-    }
-    if (changeRequest.status !== 'pending') {
-      return jsonResponse({ error: 'Only pending change requests can be accepted.' }, { status: 400 });
-    }
-
     const now = nowDate();
-    const assignment = await db.select().from(topicAssignments).where(eq(topicAssignments.id, changeRequest.assignmentId)).get();
-    await db
-      .update(topicAssignments)
-      .set({
-        title: changeRequest.requestedTitle,
-        description: changeRequest.requestedDescription,
-        updatedAt: now
-      })
-      .where(eq(topicAssignments.id, changeRequest.assignmentId));
-    await db.update(topicChangeRequests).set({ status: 'accepted', updatedAt: now }).where(eq(topicChangeRequests.id, id));
+    const result = db.transaction((tx) => {
+      const changeRequest = tx.select().from(topicChangeRequests).where(eq(topicChangeRequests.id, id)).get();
+      if (!changeRequest || changeRequest.professorId !== authResult.user.id) {
+        return { response: jsonResponse({ error: 'Change request not found.' }, { status: 404 }) };
+      }
+      if (changeRequest.status !== 'pending') {
+        return { response: jsonResponse({ error: 'Only pending change requests can be accepted.' }, { status: 400 }) };
+      }
+
+      const assignment = tx.select().from(topicAssignments).where(eq(topicAssignments.id, changeRequest.assignmentId)).get();
+      if (!assignment || assignment.status !== 'active') {
+        return { response: jsonResponse({ error: 'Assignment is no longer active.' }, { status: 409 }) };
+      }
+
+      const updatedAssignment = tx
+        .update(topicAssignments)
+        .set({
+          title: changeRequest.requestedTitle,
+          description: changeRequest.requestedDescription,
+          updatedAt: now
+        })
+        .where(and(eq(topicAssignments.id, changeRequest.assignmentId), eq(topicAssignments.status, 'active')))
+        .returning()
+        .get();
+      if (!updatedAssignment) {
+        return { response: jsonResponse({ error: 'Assignment is no longer active.' }, { status: 409 }) };
+      }
+
+      const acceptedRequest = tx
+        .update(topicChangeRequests)
+        .set({ status: 'accepted', updatedAt: now })
+        .where(and(eq(topicChangeRequests.id, id), eq(topicChangeRequests.status, 'pending')))
+        .returning()
+        .get();
+      if (!acceptedRequest) {
+        return { response: jsonResponse({ error: 'Only pending change requests can be accepted.' }, { status: 400 }) };
+      }
+
+      return { changeRequest, assignment };
+    });
+
+    if ('response' in result) return result.response;
+
     await createNotification({
-      userId: changeRequest.studentId,
+      userId: result.changeRequest.studentId,
       actorId: authResult.user.id,
       type: 'edit_request_accepted',
       title: 'Edit request accepted',
-      message: `${authResult.user.name} accepted changes to "${assignment?.title ?? changeRequest.requestedTitle}".`,
+      message: `${authResult.user.name} accepted changes to "${result.assignment.title}".`,
       entityType: 'topic_change_request',
-      entityId: changeRequest.id,
-      topicTitle: assignment?.title ?? changeRequest.requestedTitle,
+      entityId: result.changeRequest.id,
+      topicTitle: result.assignment.title,
       createdAt: now
     });
     return { ok: true };
@@ -1203,26 +1613,41 @@ new Elysia()
 
     await expirePendingChangeRequests();
     const id = Number(params.id);
-    const changeRequest = await db.select().from(topicChangeRequests).where(eq(topicChangeRequests.id, id)).get();
-    if (!changeRequest || changeRequest.professorId !== authResult.user.id) {
-      return jsonResponse({ error: 'Change request not found.' }, { status: 404 });
-    }
-    if (changeRequest.status !== 'pending') {
-      return jsonResponse({ error: 'Only pending change requests can be rejected.' }, { status: 400 });
-    }
-
     const now = nowDate();
-    const assignment = await db.select().from(topicAssignments).where(eq(topicAssignments.id, changeRequest.assignmentId)).get();
-    await db.update(topicChangeRequests).set({ status: 'rejected', updatedAt: now }).where(eq(topicChangeRequests.id, id));
+    const result = db.transaction((tx) => {
+      const changeRequest = tx.select().from(topicChangeRequests).where(eq(topicChangeRequests.id, id)).get();
+      if (!changeRequest || changeRequest.professorId !== authResult.user.id) {
+        return { response: jsonResponse({ error: 'Change request not found.' }, { status: 404 }) };
+      }
+      if (changeRequest.status !== 'pending') {
+        return { response: jsonResponse({ error: 'Only pending change requests can be rejected.' }, { status: 400 }) };
+      }
+
+      const assignment = tx.select().from(topicAssignments).where(eq(topicAssignments.id, changeRequest.assignmentId)).get();
+      const rejectedRequest = tx
+        .update(topicChangeRequests)
+        .set({ status: 'rejected', updatedAt: now })
+        .where(and(eq(topicChangeRequests.id, id), eq(topicChangeRequests.status, 'pending')))
+        .returning()
+        .get();
+      if (!rejectedRequest) {
+        return { response: jsonResponse({ error: 'Only pending change requests can be rejected.' }, { status: 400 }) };
+      }
+
+      return { changeRequest, assignment };
+    });
+
+    if ('response' in result) return result.response;
+
     await createNotification({
-      userId: changeRequest.studentId,
+      userId: result.changeRequest.studentId,
       actorId: authResult.user.id,
       type: 'edit_request_rejected',
       title: 'Edit request rejected',
-      message: `${authResult.user.name} rejected changes to "${assignment?.title ?? changeRequest.requestedTitle}".`,
+      message: `${authResult.user.name} rejected changes to "${result.assignment?.title ?? result.changeRequest.requestedTitle}".`,
       entityType: 'topic_change_request',
-      entityId: changeRequest.id,
-      topicTitle: assignment?.title ?? changeRequest.requestedTitle,
+      entityId: result.changeRequest.id,
+      topicTitle: result.assignment?.title ?? result.changeRequest.requestedTitle,
       createdAt: now
     });
     return { ok: true };
@@ -1348,51 +1773,81 @@ new Elysia()
 
       await expirePendingLifecycleItems();
       const student = authResult.user;
-      if (await studentHasPendingRequest(student.id)) {
-        return jsonResponse({ error: 'You already have a pending request.' }, { status: 409 });
-      }
-      if (await studentHasActiveAssignment(student.id)) {
-        return jsonResponse({ error: 'You already have an active assignment.' }, { status: 409 });
-      }
-
       const topicId = Number(body.topicId);
-      const topic = await db.select().from(topics).where(eq(topics.id, topicId)).get();
-      if (!topic || topic.origin !== 'professor' || topic.specializationId !== student.specializationId) {
-        return jsonResponse({ error: 'Topic not found.' }, { status: 404 });
-      }
-      if (topic.status !== 'available') {
-        return jsonResponse({ error: 'This topic is not available.' }, { status: 409 });
-      }
-
       const now = nowDate();
-      await db.update(topics).set({ status: 'reserved', updatedAt: now }).where(eq(topics.id, topic.id));
-      const [created] = await db
-        .insert(topicRequests)
-        .values({
-          studentId: student.id,
-          professorId: topic.professorId,
-          topicId: topic.id,
-          type: 'topic_claim',
-          status: 'pending',
-          expiresAt: addMs(now, requestLifetimeMs),
-          createdAt: now,
-          updatedAt: now
-        })
-        .returning();
 
-      await createNotification({
-        userId: topic.professorId,
-        actorId: student.id,
-        type: 'topic_claim_received',
-        title: 'New topic claim',
-        message: `${student.name} requested "${topic.title}".`,
-        entityType: 'topic_request',
-        entityId: created.id,
-        topicTitle: topic.title,
-        createdAt: now
-      });
+      try {
+        const result = db.transaction((tx) => {
+          const pending = tx
+            .select()
+            .from(topicRequests)
+            .where(and(eq(topicRequests.studentId, student.id), eq(topicRequests.status, 'pending')))
+            .get();
+          if (pending) return { response: jsonResponse({ error: 'You already have a pending request.' }, { status: 409 }) };
 
-      return jsonResponse({ request: created }, { status: 201 });
+          const activeAssignment = tx
+            .select()
+            .from(topicAssignments)
+            .where(and(eq(topicAssignments.studentId, student.id), eq(topicAssignments.status, 'active')))
+            .get();
+          if (activeAssignment) {
+            return { response: jsonResponse({ error: 'You already have an active assignment.' }, { status: 409 }) };
+          }
+
+          const topic = tx.select().from(topics).where(eq(topics.id, topicId)).get();
+          if (!topic || topic.origin !== 'professor' || topic.specializationId !== student.specializationId) {
+            return { response: jsonResponse({ error: 'Topic not found.' }, { status: 404 }) };
+          }
+
+          const reservedTopic = tx
+            .update(topics)
+            .set({ status: 'reserved', updatedAt: now })
+            .where(and(eq(topics.id, topic.id), eq(topics.status, 'available')))
+            .returning()
+            .get();
+          if (!reservedTopic) {
+            return { response: jsonResponse({ error: 'This topic is not available.' }, { status: 409 }) };
+          }
+
+          const created = tx
+            .insert(topicRequests)
+            .values({
+              studentId: student.id,
+              professorId: topic.professorId,
+              topicId: topic.id,
+              type: 'topic_claim',
+              status: 'pending',
+              expiresAt: addMs(now, requestLifetimeMs),
+              createdAt: now,
+              updatedAt: now
+            })
+            .returning()
+            .get();
+
+          return { created, topic };
+        });
+
+        if ('response' in result) return result.response;
+
+        await createNotification({
+          userId: result.topic.professorId,
+          actorId: student.id,
+          type: 'topic_claim_received',
+          title: 'New topic claim',
+          message: `${student.name} requested "${result.topic.title}".`,
+          entityType: 'topic_request',
+          entityId: result.created.id,
+          topicTitle: result.topic.title,
+          createdAt: now
+        });
+
+        return jsonResponse({ request: result.created }, { status: 201 });
+      } catch (error) {
+        if (isSqliteConstraintError(error)) {
+          return jsonResponse({ error: 'You already have a pending request or this topic is no longer available.' }, { status: 409 });
+        }
+        throw error;
+      }
     },
     {
       body: t.Object({
@@ -1427,55 +1882,91 @@ new Elysia()
       if (!student.specializationId) {
         return jsonResponse({ error: 'Student specialisation could not be found.' }, { status: 400 });
       }
-      if (await studentHasPendingRequest(student.id)) {
-        return jsonResponse({ error: 'You already have a pending request.' }, { status: 409 });
-      }
-      if (await studentHasActiveAssignment(student.id)) {
-        return jsonResponse({ error: 'You already have an active assignment.' }, { status: 409 });
-      }
 
       const professorId = body.professorId.trim();
-      const professor = await db.select().from(users).where(eq(users.id, professorId)).get();
-      if (!professor || professor.role !== 'professor') {
-        return jsonResponse({ error: 'Professor not found.' }, { status: 404 });
-      }
-      if (!(await hasProfessorSpecialization(professorId, student.specializationId))) {
-        return jsonResponse({ error: 'Professor is not assigned to your specialisation.' }, { status: 403 });
-      }
-
       const now = nowDate();
       const titleResult = validateRequiredText(body.title, 'Title', textLimits.topicTitle);
       if ('response' in titleResult) return titleResult.response;
       const descriptionResult = validateRequiredText(body.description, 'Description', textLimits.topicDescription);
       if ('response' in descriptionResult) return descriptionResult.response;
-      const [created] = await db
-        .insert(topicRequests)
-        .values({
-          studentId: student.id,
-          professorId,
-          type: 'custom_proposal',
-          customTitle: titleResult.value,
-          customDescription: descriptionResult.value,
-          status: 'pending',
-          expiresAt: addMs(now, requestLifetimeMs),
-          createdAt: now,
-          updatedAt: now
-        })
-        .returning();
 
-      await createNotification({
-        userId: professorId,
-        actorId: student.id,
-        type: 'custom_proposal_received',
-        title: 'New custom proposal',
-        message: `${student.name} proposed "${titleResult.value}".`,
-        entityType: 'topic_request',
-        entityId: created.id,
-        topicTitle: titleResult.value,
-        createdAt: now
-      });
+      try {
+        const result = db.transaction((tx) => {
+          const pending = tx
+            .select()
+            .from(topicRequests)
+            .where(and(eq(topicRequests.studentId, student.id), eq(topicRequests.status, 'pending')))
+            .get();
+          if (pending) return { response: jsonResponse({ error: 'You already have a pending request.' }, { status: 409 }) };
 
-      return jsonResponse({ request: created }, { status: 201 });
+          const activeAssignment = tx
+            .select()
+            .from(topicAssignments)
+            .where(and(eq(topicAssignments.studentId, student.id), eq(topicAssignments.status, 'active')))
+            .get();
+          if (activeAssignment) {
+            return { response: jsonResponse({ error: 'You already have an active assignment.' }, { status: 409 }) };
+          }
+
+          const professor = tx.select().from(users).where(eq(users.id, professorId)).get();
+          if (!professor || professor.role !== 'professor') {
+            return { response: jsonResponse({ error: 'Professor not found.' }, { status: 404 }) };
+          }
+
+          const professorAssignment = tx
+            .select()
+            .from(professorSpecializations)
+            .where(
+              and(
+                eq(professorSpecializations.professorId, professorId),
+                eq(professorSpecializations.specializationId, student.specializationId)
+              )
+            )
+            .get();
+          if (!professorAssignment) {
+            return { response: jsonResponse({ error: 'Professor is not assigned to your specialisation.' }, { status: 403 }) };
+          }
+
+          const created = tx
+            .insert(topicRequests)
+            .values({
+              studentId: student.id,
+              professorId,
+              type: 'custom_proposal',
+              customTitle: titleResult.value,
+              customDescription: descriptionResult.value,
+              status: 'pending',
+              expiresAt: addMs(now, requestLifetimeMs),
+              createdAt: now,
+              updatedAt: now
+            })
+            .returning()
+            .get();
+
+          return { created };
+        });
+
+        if ('response' in result) return result.response;
+
+        await createNotification({
+          userId: professorId,
+          actorId: student.id,
+          type: 'custom_proposal_received',
+          title: 'New custom proposal',
+          message: `${student.name} proposed "${titleResult.value}".`,
+          entityType: 'topic_request',
+          entityId: result.created.id,
+          topicTitle: titleResult.value,
+          createdAt: now
+        });
+
+        return jsonResponse({ request: result.created }, { status: 201 });
+      } catch (error) {
+        if (isSqliteConstraintError(error)) {
+          return jsonResponse({ error: 'You already have a pending request.' }, { status: 409 });
+        }
+        throw error;
+      }
     },
     {
       body: t.Object({
@@ -1490,31 +1981,50 @@ new Elysia()
     if ('response' in authResult) return authResult.response;
 
     const assignmentId = Number(params.id);
-    const assignment = await db.select().from(topicAssignments).where(eq(topicAssignments.id, assignmentId)).get();
-    if (!assignment || assignment.studentId !== authResult.user.id) {
-      return jsonResponse({ error: 'Assignment not found.' }, { status: 404 });
-    }
-    if (assignment.status !== 'active') {
-      return jsonResponse({ error: 'Only active assignments can be abandoned.' }, { status: 400 });
-    }
-
-    const topic = await db.select().from(topics).where(eq(topics.id, assignment.topicId)).get();
     const now = nowDate();
-    await db.update(topicAssignments).set({ status: 'abandoned', updatedAt: now }).where(eq(topicAssignments.id, assignment.id));
+    const result = db.transaction((tx) => {
+      const assignment = tx.select().from(topicAssignments).where(eq(topicAssignments.id, assignmentId)).get();
+      if (!assignment || assignment.studentId !== authResult.user.id) {
+        return { response: jsonResponse({ error: 'Assignment not found.' }, { status: 404 }) };
+      }
+      if (assignment.status !== 'active') {
+        return { response: jsonResponse({ error: 'Only active assignments can be abandoned.' }, { status: 400 }) };
+      }
 
-    if (topic?.origin === 'professor') {
-      await db.update(topics).set({ status: 'available', updatedAt: now }).where(eq(topics.id, topic.id));
-    }
+      const topic = tx.select().from(topics).where(eq(topics.id, assignment.topicId)).get();
+      const abandonedAssignment = tx
+        .update(topicAssignments)
+        .set({ status: 'abandoned', updatedAt: now })
+        .where(and(eq(topicAssignments.id, assignment.id), eq(topicAssignments.status, 'active')))
+        .returning()
+        .get();
+      if (!abandonedAssignment) {
+        return { response: jsonResponse({ error: 'Only active assignments can be abandoned.' }, { status: 400 }) };
+      }
+
+      if (topic?.origin === 'professor') {
+        tx.update(topics).set({ status: 'available', updatedAt: now }).where(eq(topics.id, topic.id)).run();
+      }
+
+      tx.update(topicChangeRequests)
+        .set({ status: 'cancelled', updatedAt: now })
+        .where(and(eq(topicChangeRequests.assignmentId, assignment.id), eq(topicChangeRequests.status, 'pending')))
+        .run();
+
+      return { assignment };
+    });
+
+    if ('response' in result) return result.response;
 
     await createNotification({
-      userId: assignment.professorId,
+      userId: result.assignment.professorId,
       actorId: authResult.user.id,
       type: 'student_assignment_dropped',
       title: 'Assignment dropped',
-      message: `${authResult.user.name} dropped "${assignment.title}".`,
+      message: `${authResult.user.name} dropped "${result.assignment.title}".`,
       entityType: 'assignment',
-      entityId: assignment.id,
-      topicTitle: assignment.title,
+      entityId: result.assignment.id,
+      topicTitle: result.assignment.title,
       createdAt: now
     });
 
@@ -1528,53 +2038,68 @@ new Elysia()
 
       await expirePendingChangeRequests();
       const assignmentId = Number(params.id);
-      const assignment = await db.select().from(topicAssignments).where(eq(topicAssignments.id, assignmentId)).get();
-      if (!assignment || assignment.studentId !== authResult.user.id || assignment.status !== 'active') {
-        return jsonResponse({ error: 'Assignment not found.' }, { status: 404 });
-      }
-
-      const existing = await db
-        .select()
-        .from(topicChangeRequests)
-        .where(and(eq(topicChangeRequests.assignmentId, assignment.id), eq(topicChangeRequests.status, 'pending')))
-        .get();
-      if (existing) {
-        return jsonResponse({ error: 'This assignment already has a pending change request.' }, { status: 409 });
-      }
-
       const now = nowDate();
       const requestedTitleResult = validateRequiredText(body.title, 'Title', textLimits.topicTitle);
       if ('response' in requestedTitleResult) return requestedTitleResult.response;
       const requestedDescriptionResult = validateRequiredText(body.description, 'Description', textLimits.topicDescription);
       if ('response' in requestedDescriptionResult) return requestedDescriptionResult.response;
-      const [created] = await db
-        .insert(topicChangeRequests)
-        .values({
-          assignmentId: assignment.id,
-          studentId: authResult.user.id,
-          professorId: assignment.professorId,
-          requestedTitle: requestedTitleResult.value,
-          requestedDescription: requestedDescriptionResult.value,
-          status: 'pending',
-          expiresAt: addMs(now, changeRequestLifetimeMs),
-          createdAt: now,
-          updatedAt: now
-        })
-        .returning();
 
-      await createNotification({
-        userId: assignment.professorId,
-        actorId: authResult.user.id,
-        type: 'edit_request_received',
-        title: 'New edit request',
-        message: `${authResult.user.name} requested changes to "${assignment.title}".`,
-        entityType: 'topic_change_request',
-        entityId: created.id,
-        topicTitle: assignment.title,
-        createdAt: now
-      });
+      try {
+        const result = db.transaction((tx) => {
+          const assignment = tx.select().from(topicAssignments).where(eq(topicAssignments.id, assignmentId)).get();
+          if (!assignment || assignment.studentId !== authResult.user.id || assignment.status !== 'active') {
+            return { response: jsonResponse({ error: 'Assignment not found.' }, { status: 404 }) };
+          }
 
-      return jsonResponse({ changeRequest: created }, { status: 201 });
+          const existing = tx
+            .select()
+            .from(topicChangeRequests)
+            .where(and(eq(topicChangeRequests.assignmentId, assignment.id), eq(topicChangeRequests.status, 'pending')))
+            .get();
+          if (existing) {
+            return { response: jsonResponse({ error: 'This assignment already has a pending change request.' }, { status: 409 }) };
+          }
+
+          const created = tx
+            .insert(topicChangeRequests)
+            .values({
+              assignmentId: assignment.id,
+              studentId: authResult.user.id,
+              professorId: assignment.professorId,
+              requestedTitle: requestedTitleResult.value,
+              requestedDescription: requestedDescriptionResult.value,
+              status: 'pending',
+              expiresAt: addMs(now, changeRequestLifetimeMs),
+              createdAt: now,
+              updatedAt: now
+            })
+            .returning()
+            .get();
+
+          return { created, assignment };
+        });
+
+        if ('response' in result) return result.response;
+
+        await createNotification({
+          userId: result.assignment.professorId,
+          actorId: authResult.user.id,
+          type: 'edit_request_received',
+          title: 'New edit request',
+          message: `${authResult.user.name} requested changes to "${result.assignment.title}".`,
+          entityType: 'topic_change_request',
+          entityId: result.created.id,
+          topicTitle: result.assignment.title,
+          createdAt: now
+        });
+
+        return jsonResponse({ changeRequest: result.created }, { status: 201 });
+      } catch (error) {
+        if (isSqliteConstraintError(error)) {
+          return jsonResponse({ error: 'This assignment already has a pending change request.' }, { status: 409 });
+        }
+        throw error;
+      }
     },
     {
       body: t.Object({

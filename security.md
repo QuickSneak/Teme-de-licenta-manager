@@ -2,7 +2,7 @@
 
 This document records security findings from the current implementation review and the runtime checks performed against the local Bun/Elysia server.
 
-Status note: Phase 1 remediation has been implemented for the protected-page authorization and static source exposure findings. Phase 2 remediation has been implemented for local SQLite tracking and production auth secret handling. The original findings remain below for audit context.
+Status note: Phase 1 remediation has been implemented for the protected-page authorization and static source exposure findings. Phase 2 remediation has been implemented for local SQLite tracking and production auth secret handling. Phase 3 remediation has been implemented for stored-XSS hardening and text length limits. Phase 4 remediation has been implemented for same-origin checks and baseline security headers. Phase 5 remediation has been implemented for SQLite foreign keys, lifecycle indexes, and transactional lifecycle mutations. Phase 6 remediation has been implemented for app-level rate limiting. The original findings remain below for audit context.
 
 ## Runtime-Confirmed Findings
 
@@ -127,53 +127,74 @@ Fail fast when `BETTER_AUTH_SECRET` is missing outside local development. Use a 
 
 Severity: Medium-High
 
-Better Auth routes appear to have their own origin/CSRF protections, but app routes such as `/logout`, `/profile`, student request routes, professor accept/reject routes, topic mutations, and notification clearing do not show explicit CSRF or same-origin enforcement.
+Status: Addressed in Phase 4 by adding a centralized same-origin check for app-owned `POST`, `PUT`, `PATCH`, and `DELETE` routes. Better Auth routes under `/api/auth/*` remain delegated to Better Auth.
+
+Original finding: Better Auth routes appear to have their own origin/CSRF protections, but app routes such as `/logout`, `/profile`, student request routes, professor accept/reject routes, topic mutations, and notification clearing do not show explicit CSRF or same-origin enforcement.
 
 Impact:
 
 Because auth is cookie-based, another site may be able to trigger state-changing requests from a logged-in browser unless SameSite and/or origin checks reliably block them.
 
-Recommended fix:
+Implemented behavior:
 
-Add centralized protection for non-GET app routes:
+- App-owned unsafe methods validate `Origin` first, then `Referer` when `Origin` is absent.
+- Trusted origins come from `APP_URL` and `BETTER_AUTH_URL`; local development also allows the current request origin and `http://localhost:3000`.
+- Requests without either header are still allowed so non-browser tools and scripts are not broken.
+- `/api/auth/*` is excluded from the app-level gate so Better Auth can enforce its own policy.
 
-- Validate `Origin` or `Referer` against `APP_URL`.
+Remaining hardening option:
+
+- Add synchronizer CSRF tokens for especially sensitive browser forms/actions if the app later needs stronger protection than same-origin header validation plus SameSite cookies.
 - Keep session cookies `HttpOnly`, `Secure` in HTTPS production, and `SameSite=Lax` or stricter.
-- Consider adding a CSRF token for sensitive forms/actions.
 
 ### 8. Business invariants depend on app checks without transactions
 
 Severity: Medium-High
 
-Rules like "one pending request per student", "one active assignment per student", and "topic can only be claimed once" are checked in application code before writes.
+Status: Addressed in Phase 5 by adding partial unique indexes and wrapping high-risk lifecycle mutations in transactions with conditional updates.
+
+Original finding: Rules like "one pending request per student", "one active assignment per student", and "topic can only be claimed once" were checked in application code before writes.
 
 Impact:
 
 Concurrent requests can race between the check and the write, creating duplicate pending requests, multiple active assignments, or inconsistent topic reservation state.
 
-Recommended fix:
+Implemented behavior:
 
-Use SQLite transactions plus conditional updates. Add unique or partial unique indexes where SQLite supports the invariant, such as one active assignment per student and one pending request per student.
+- `topic_requests_one_pending_student_unique`: one pending thesis request per student.
+- `topic_requests_one_pending_claim_topic_unique`: one pending topic claim per topic.
+- `topic_assignments_one_active_student_unique`: one active assignment per student.
+- `topic_change_requests_one_pending_assignment_unique`: one pending edit request per assignment.
+- Topic claim creation, custom proposal creation, professor accept/reject, edit request accept/reject, assignment abandon, edit request creation, and pending request expiration now use transaction blocks for related reads/writes.
+- Topic reservation, request status, assignment status, and edit request status changes use conditional updates where the previous state still matters.
+
+Remaining hardening option:
+
+- Add broader integration tests around concurrent request attempts once the project has a test runner.
 
 ### 9. SQLite foreign keys are not explicitly enabled
 
 Severity: Medium
 
-The schema defines foreign keys, but the database connection does not explicitly enable `PRAGMA foreign_keys = ON`.
+Status: Addressed in Phase 5 by enabling `PRAGMA foreign_keys = ON` immediately after opening the SQLite connection.
+
+Original finding: The schema defines foreign keys, but the database connection did not explicitly enable `PRAGMA foreign_keys = ON`.
 
 Impact:
 
 SQLite may not enforce referential integrity unless this pragma is enabled for the connection. That can leave orphan rows and weaken authorization assumptions based on relationships.
 
-Recommended fix:
+Implemented behavior:
 
-Enable foreign keys immediately after opening the SQLite connection.
+Foreign keys are enabled for the app's SQLite connection in `src/db/index.ts`.
 
 ### 10. No security response headers are configured
 
 Severity: Medium
 
-The app does not show centralized security headers such as:
+Status: Addressed in Phase 4 by applying baseline security headers to app responses, protected/public HTML, Better Auth responses, redirects, JSON responses, and public static assets.
+
+Original finding: The app did not show centralized security headers such as:
 
 - `Content-Security-Policy`
 - `X-Content-Type-Options: nosniff`
@@ -185,9 +206,15 @@ Impact:
 
 Security headers provide defense in depth against XSS, clickjacking, MIME sniffing, and unwanted browser feature access.
 
-Recommended fix:
+Implemented behavior:
 
-Add a global response hook/middleware for security headers. Start with a conservative CSP compatible with the current plain HTML/JS structure, then tighten it as inline scripts are moved into external files.
+- `Content-Security-Policy`
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy`
+
+The current CSP intentionally allows inline scripts and inline styles because the existing HTML pages still use inline script/style blocks. Tightening `script-src` and `style-src` should happen after those are moved into external files or nonce/hash-based CSP support is added.
 
 ### 11. Input validation is minimal for user-generated text
 
@@ -209,15 +236,26 @@ Define server-side maximum lengths for each field and enforce them consistently.
 
 Severity: Medium
 
-Better Auth may rate-limit some auth endpoints internally, but app-owned endpoints do not show rate limits. Login and registration behavior should also be verified explicitly.
+Status: Addressed in Phase 6 with in-memory app-level rate limits for authentication-adjacent routes and mutation-heavy student actions.
+
+Original finding: Better Auth may rate-limit some auth endpoints internally, but app-owned endpoints do not show rate limits. Login and registration behavior should also be verified explicitly.
 
 Impact:
 
 Brute-force attempts, spam registrations, proposal spam, notification abuse, and repeated mutation calls are easier without rate limits.
 
-Recommended fix:
+Implemented behavior:
 
-Add rate limiting for auth-adjacent actions and expensive or abuse-prone app routes. Use per-IP and, where authenticated, per-user limits.
+- Login: 30 attempts per IP per 15 minutes.
+- Login failures: 5 failed attempts per email per 15 minutes. A successful login clears that email's failed-login bucket.
+- Registration: 5 attempts per IP per 20 minutes and 3 attempts per email per 20 minutes.
+- Password reset request: 10 attempts per IP per 20 minutes and 3 attempts per email per 20 minutes.
+- Verification email resend: 10 attempts per IP per 20 minutes and 3 attempts per email per 20 minutes.
+- Student topic claims and custom proposals: 20 actions per authenticated user per day.
+- Student assignment edit requests: 20 submissions per authenticated user per day.
+- General authenticated non-GET app mutations: 300 actions per authenticated user per hour.
+
+The current limiter is process-local memory. It is appropriate for this local/single-server app stage and easy to tune, but a production deployment with multiple server instances should move these counters into shared storage.
 
 ### 13. Professor self-registration is broad
 
@@ -328,6 +366,8 @@ Low to moderate. Mostly localized frontend changes plus validation behavior.
 
 ### Phase 4: CSRF and security headers
 
+Status: Implemented.
+
 Goal:
 
 Add browser-level defense in depth for authenticated actions.
@@ -344,6 +384,8 @@ Expected risk:
 Moderate. Header and origin policy changes can break legitimate flows if configured too aggressively.
 
 ### Phase 5: Database integrity and race-condition fixes
+
+Status: Implemented.
 
 Goal:
 
@@ -362,6 +404,8 @@ Moderate to high. Requires migration work and careful testing of thesis lifecycl
 
 ### Phase 6: Abuse controls and account governance
 
+Status: Implemented for abuse controls. Professor registration and activation policy is intentionally unchanged for now.
+
 Goal:
 
 Reduce misuse once core access controls are solid.
@@ -369,8 +413,8 @@ Reduce misuse once core access controls are solid.
 Work:
 
 - Add rate limits for login, registration, reset email, proposal submission, and mutation-heavy routes.
-- Revisit professor registration policy.
-- Consider admin/secretary approval for professor activation.
+- Revisit professor registration policy later when the secretary faculty/professor assignment page is implemented.
+- Consider admin/secretary approval for professor activation later if product policy requires it.
 - Add audit logging for sensitive actions.
 
 Expected risk:

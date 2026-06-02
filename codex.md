@@ -11,6 +11,11 @@
 ## Security Baseline
 * `sqlite.db` is local runtime state and is ignored by git. It should not be committed because it can contain password hashes, sessions, verification records, reset tokens, and user data.
 * `BETTER_AUTH_SECRET` may fall back to a dev-only value outside production. In `NODE_ENV=production`, startup fails unless the secret is a real non-placeholder value with at least 32 characters.
+* App-owned `POST`, `PUT`, `PATCH`, and `DELETE` routes reject mismatched `Origin`/`Referer` headers. Trusted origins come from `APP_URL` and `BETTER_AUTH_URL`; local development also allows the current request origin and `http://localhost:3000`.
+* Baseline security headers are applied to HTML, JSON/API responses, Better Auth responses, redirects, and static assets. The CSP currently permits inline scripts/styles because the HTML pages still use inline scripts/styles.
+* SQLite foreign keys are enabled at connection startup. Lifecycle invariants are backed by partial unique indexes for one pending request per student, one pending claim per topic, one active assignment per student, and one pending edit request per assignment.
+* High-risk lifecycle mutations use transactions with conditional status updates so related topic/request/assignment changes commit together.
+* App-level rate limiting is process-local memory in `src/index.ts`. Current limits: login `30/IP/15min` and `5 failed/email/15min`; registration `5/IP/20min` and `3/email/20min`; password reset `10/IP/20min` and `3/email/20min`; verification resend `10/IP/20min` and `3/email/20min`; student topic/custom proposal actions `20/user/day`; student edit requests `20/user/day`; general authenticated mutations `300/user/hour`.
 * User-controlled frontend rendering should use DOM node creation plus `textContent`. Do not interpolate names, topic titles, descriptions, summaries, or statuses into `innerHTML`.
 * Server-side text limits are enforced in `src/index.ts`: names up to 120 chars, bios up to 1000 chars, topic/proposal/edit titles up to 180 chars, and descriptions up to 4000 chars.
 

@@ -1,0 +1,4 @@
+CREATE UNIQUE INDEX `topic_assignments_one_active_student_unique` ON `topic_assignments` (`student_id`) WHERE status = 'active';--> statement-breakpoint
+CREATE UNIQUE INDEX `topic_change_requests_one_pending_assignment_unique` ON `topic_change_requests` (`assignment_id`) WHERE status = 'pending';--> statement-breakpoint
+CREATE UNIQUE INDEX `topic_requests_one_pending_student_unique` ON `topic_requests` (`student_id`) WHERE status = 'pending';--> statement-breakpoint
+CREATE UNIQUE INDEX `topic_requests_one_pending_claim_topic_unique` ON `topic_requests` (`topic_id`) WHERE status = 'pending' AND type = 'topic_claim' AND topic_id IS NOT NULL;

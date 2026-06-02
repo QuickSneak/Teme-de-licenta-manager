@@ -6,9 +6,10 @@ Local Bun/Elysia application for UAB thesis and master project management.
 
 1. Copy `.env.example` to `.env.local`.
 2. Set `BETTER_AUTH_SECRET` to a random value. Production must use a real secret with at least 32 characters.
-3. Configure SMTP values if you need verification or password reset emails.
-4. Run migrations/seeding as needed for your local database.
-5. Start the app with:
+3. Set `APP_URL` and `BETTER_AUTH_URL` to the origin users actually visit. These values are used by auth links and same-origin checks.
+4. Configure SMTP values if you need verification or password reset emails.
+5. Run migrations/seeding as needed for your local database. The migration set includes partial unique indexes for thesis lifecycle integrity.
+6. Start the app with:
 
 ```bash
 bun run dev
