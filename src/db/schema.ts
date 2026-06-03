@@ -12,20 +12,28 @@ export const specializations = sqliteTable('specializations', {
   facultyId: integer('faculty_id').notNull().references(() => faculties.id)
 });
 
-export const users = sqliteTable('users', {
-  id: text('id').primaryKey(),
-  email: text('email').notNull().unique(),
-  name: text('name').notNull(),
-  bio: text('bio').notNull().default(''),
-  role: text('role').notNull(),
-  facultyId: integer('faculty_id').references(() => faculties.id),
-  specializationId: integer('specialization_id').references(() => specializations.id),
-  isExtended: integer('is_extended', { mode: 'boolean' }).default(false),
-  emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
-  image: text('image'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
-});
+export const users = sqliteTable(
+  'users',
+  {
+    id: text('id').primaryKey(),
+    email: text('email').notNull().unique(),
+    name: text('name').notNull(),
+    bio: text('bio').notNull().default(''),
+    role: text('role').notNull(),
+    facultyId: integer('faculty_id').references(() => faculties.id),
+    specializationId: integer('specialization_id').references(() => specializations.id),
+    isExtended: integer('is_extended', { mode: 'boolean' }).default(false),
+    emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
+    image: text('image'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+  },
+  (table) => ({
+    oneSecretaryPerFaculty: uniqueIndex('users_one_secretary_per_faculty_unique')
+      .on(table.facultyId)
+      .where(sql`role = 'secretary' AND faculty_id IS NOT NULL`)
+  })
+);
 
 export const professorSpecializations = sqliteTable(
   'professor_specializations',

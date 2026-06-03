@@ -1,12 +1,15 @@
 import { Elysia, t, type Context } from 'elysia';
 import { staticPlugin } from '@elysiajs/static';
+import { hashPassword } from 'better-auth/crypto';
 import { and, desc, eq, inArray, lt, ne, or } from 'drizzle-orm';
 import { auth } from './auth';
 import { db } from './db';
 import {
+  accounts,
   faculties,
   notifications,
   professorSpecializations,
+  sessions,
   specializations,
   topicAssignments,
   topicChangeRequests,
@@ -698,6 +701,85 @@ function isSqliteConstraintError(error: unknown) {
   return error.message.includes('UNIQUE constraint failed') || error.message.includes('constraint failed');
 }
 
+function validateUabEmail(value: string, label = 'Email') {
+  const email = value.trim().toLowerCase();
+  if (!/^[^\s@]+@uab\.ro$/.test(email)) {
+    return { response: jsonResponse({ error: `${label} must be a valid @uab.ro email.` }, { status: 400 }) };
+  }
+
+  return { value: email };
+}
+
+function validatePassword(value: string) {
+  const password = value.trim();
+  if (password.length < 8) {
+    return { response: jsonResponse({ error: 'Password must be at least 8 characters.' }, { status: 400 }) };
+  }
+  if (password.length > 128) {
+    return { response: jsonResponse({ error: 'Password must be 128 characters or fewer.' }, { status: 400 }) };
+  }
+
+  return { value: password };
+}
+
+function accountId() {
+  return crypto.randomUUID();
+}
+
+function publicSecretaryRow(secretary: AuthUser | null) {
+  if (!secretary) return null;
+
+  return {
+    id: secretary.id,
+    name: secretary.name,
+    email: secretary.email,
+    facultyId: secretary.facultyId,
+    emailVerified: secretary.emailVerified,
+    createdAt: secretary.createdAt,
+    updatedAt: secretary.updatedAt
+  };
+}
+
+async function buildAdminSecretaryResponse() {
+  const facultyRows = await db.select().from(faculties);
+  const secretaryRows = await db.select().from(users).where(eq(users.role, 'secretary'));
+  const secretariesByFaculty = new Map(secretaryRows.map((secretary) => [secretary.facultyId, secretary]));
+
+  return {
+    faculties: facultyRows.map((faculty) => ({
+      id: faculty.id,
+      name: faculty.name,
+      secretary: publicSecretaryRow(secretariesByFaculty.get(faculty.id) ?? null)
+    })),
+    secretaries: secretaryRows.map(publicSecretaryRow)
+  };
+}
+
+async function updateCredentialPassword(userId: string, password: string, now: Date) {
+  const passwordHash = await hashPassword(password);
+  const credential = await db
+    .select()
+    .from(accounts)
+    .where(and(eq(accounts.userId, userId), eq(accounts.providerId, 'credential')))
+    .get();
+
+  if (credential) {
+    await db.update(accounts).set({ password: passwordHash, updatedAt: now }).where(eq(accounts.id, credential.id));
+  } else {
+    await db.insert(accounts).values({
+      id: accountId(),
+      accountId: userId,
+      providerId: 'credential',
+      userId,
+      password: passwordHash,
+      createdAt: now,
+      updatedAt: now
+    });
+  }
+
+  await db.delete(sessions).where(eq(sessions.userId, userId));
+}
+
 new Elysia()
   .onRequest(async ({ request, set }) => {
     applySecurityHeadersToSet(set.headers as Record<string, unknown>);
@@ -726,6 +808,7 @@ new Elysia()
   .get('/', () => pageFile('login.html'))
   .get('/login.html', () => pageFile('login.html'))
   .get('/register.html', () => pageFile('register.html'))
+  .get('/admin.html', () => pageFile('admin.html'))
   .get('/reset-password.html', () => pageFile('reset-password.html'))
   .get('/verify-email.html', () => pageFile('verify-email.html'))
   .get('/dashboard.html', async ({ request }) => protectedPage(request.headers, 'student', 'dashboard.html'))
@@ -749,6 +832,49 @@ new Elysia()
   )
   .use(staticPlugin({ assets: 'public', prefix: '', headers: securityHeaders }))
   .post(
+    '/admin/login',
+    async ({ body, request }) => {
+      const email = body.email.trim().toLowerCase();
+      const client = getClientIdentifier(request);
+      const loginIpLimit = consumeRateLimit(rateLimitKey('login-ip', client), rateLimitPolicies.loginIp);
+      if (loginIpLimit) return loginIpLimit;
+
+      const failedEmailKey = rateLimitKey('login-failed-email', email);
+      const failedEmailLimit = isRateLimited(failedEmailKey, rateLimitPolicies.loginFailedEmail);
+      if (failedEmailLimit) return failedEmailLimit;
+
+      const user = await db.select().from(users).where(eq(users.email, email)).get();
+      if (!user || user.role !== 'admin') {
+        consumeRateLimit(failedEmailKey, rateLimitPolicies.loginFailedEmail);
+        return jsonResponse({ error: 'Invalid admin credentials.' }, { status: 401 });
+      }
+
+      try {
+        const result = await auth.api.signInEmail({
+          body: {
+            email,
+            password: body.password,
+            rememberMe: true
+          },
+          headers: request.headers,
+          returnHeaders: true
+        });
+
+        resetRateLimit(failedEmailKey);
+        return withAuthHeaders({ ok: true, redirect: '/admin.html' }, result.headers);
+      } catch {
+        consumeRateLimit(failedEmailKey, rateLimitPolicies.loginFailedEmail);
+        return jsonResponse({ error: 'Invalid admin credentials.' }, { status: 401 });
+      }
+    },
+    {
+      body: t.Object({
+        email: t.String(),
+        password: t.String()
+      })
+    }
+  )
+  .post(
     '/login',
     async ({ body, request }) => {
       const email = body.email.trim().toLowerCase();
@@ -763,6 +889,10 @@ new Elysia()
 
       if (!isUserRole(role)) {
         return jsonResponse({ error: 'Invalid role.' }, { status: 400 });
+      }
+
+      if (role === 'admin') {
+        return jsonResponse({ error: 'Use the admin access page.' }, { status: 403 });
       }
 
       const user = await db.select().from(users).where(eq(users.email, email)).get();
@@ -909,6 +1039,152 @@ new Elysia()
 
     return buildMeResponse(user);
   })
+  .get('/api/admin/secretaries', async ({ request }) => {
+    const authResult = await requireRole(request.headers, 'admin');
+    if ('response' in authResult) return authResult.response;
+
+    return buildAdminSecretaryResponse();
+  })
+  .post(
+    '/api/admin/secretaries',
+    async ({ body, request }) => {
+      const authResult = await requireRole(request.headers, 'admin');
+      if ('response' in authResult) return authResult.response;
+
+      const nameResult = validateRequiredText(body.name, 'Full name', textLimits.userName);
+      if ('response' in nameResult) return nameResult.response;
+      const emailResult = validateUabEmail(body.email);
+      if ('response' in emailResult) return emailResult.response;
+      const passwordResult = validatePassword(body.password);
+      if ('response' in passwordResult) return passwordResult.response;
+
+      const facultyId = Number(body.facultyId);
+      const faculty = await db.select().from(faculties).where(eq(faculties.id, facultyId)).get();
+      if (!faculty) return jsonResponse({ error: 'Faculty not found.' }, { status: 404 });
+
+      const existingEmail = await db.select().from(users).where(eq(users.email, emailResult.value)).get();
+      if (existingEmail) return jsonResponse({ error: 'An account with this email already exists.' }, { status: 409 });
+
+      const existingSecretary = await db
+        .select()
+        .from(users)
+        .where(and(eq(users.role, 'secretary'), eq(users.facultyId, facultyId)))
+        .get();
+      if (existingSecretary) return jsonResponse({ error: 'This faculty already has a secretary account.' }, { status: 409 });
+
+      const now = nowDate();
+      const id = accountId();
+      const passwordHash = await hashPassword(passwordResult.value);
+
+      try {
+        db.transaction((tx) => {
+          tx.insert(users)
+            .values({
+              id,
+              email: emailResult.value,
+              name: nameResult.value,
+              bio: '',
+              role: 'secretary',
+              facultyId,
+              specializationId: null,
+              isExtended: false,
+              emailVerified: true,
+              createdAt: now,
+              updatedAt: now
+            })
+            .run();
+
+          tx.insert(accounts)
+            .values({
+              id: accountId(),
+              accountId: id,
+              providerId: 'credential',
+              userId: id,
+              password: passwordHash,
+              createdAt: now,
+              updatedAt: now
+            })
+            .run();
+        });
+      } catch (error) {
+        if (isSqliteConstraintError(error)) {
+          return jsonResponse({ error: 'This faculty already has a secretary account or the email is already used.' }, { status: 409 });
+        }
+        throw error;
+      }
+
+      return jsonResponse(await buildAdminSecretaryResponse(), { status: 201 });
+    },
+    {
+      body: t.Object({
+        name: t.String(),
+        email: t.String(),
+        password: t.String(),
+        facultyId: t.Number()
+      })
+    }
+  )
+  .patch(
+    '/api/admin/secretaries/:id',
+    async ({ body, params, request }) => {
+      const authResult = await requireRole(request.headers, 'admin');
+      if ('response' in authResult) return authResult.response;
+
+      const secretary = await db.select().from(users).where(eq(users.id, params.id)).get();
+      if (!secretary || secretary.role !== 'secretary') {
+        return jsonResponse({ error: 'Secretary account not found.' }, { status: 404 });
+      }
+
+      const updates: Partial<typeof users.$inferInsert> = {};
+      let password: string | null = null;
+
+      if (body.name !== undefined) {
+        const nameResult = validateRequiredText(body.name, 'Full name', textLimits.userName);
+        if ('response' in nameResult) return nameResult.response;
+        updates.name = nameResult.value;
+      }
+
+      if (body.email !== undefined) {
+        const emailResult = validateUabEmail(body.email);
+        if ('response' in emailResult) return emailResult.response;
+        if (emailResult.value !== secretary.email) {
+          const existingEmail = await db.select().from(users).where(eq(users.email, emailResult.value)).get();
+          if (existingEmail) return jsonResponse({ error: 'An account with this email already exists.' }, { status: 409 });
+          updates.email = emailResult.value;
+        }
+        updates.emailVerified = true;
+      }
+
+      if (body.password !== undefined && body.password.trim()) {
+        const passwordResult = validatePassword(body.password);
+        if ('response' in passwordResult) return passwordResult.response;
+        password = passwordResult.value;
+      }
+
+      if (!Object.keys(updates).length && !password) {
+        return jsonResponse({ error: 'No changes were provided.' }, { status: 400 });
+      }
+
+      const now = nowDate();
+      if (Object.keys(updates).length) {
+        updates.updatedAt = now;
+        await db.update(users).set(updates).where(eq(users.id, secretary.id));
+      }
+
+      if (password) {
+        await updateCredentialPassword(secretary.id, password, now);
+      }
+
+      return buildAdminSecretaryResponse();
+    },
+    {
+      body: t.Object({
+        name: t.Optional(t.String()),
+        email: t.Optional(t.String()),
+        password: t.Optional(t.String())
+      })
+    }
+  )
   .get('/profile', async ({ request }) => {
     const user = await getCurrentUser(request.headers);
     if (!user) return jsonResponse({ error: 'Not authenticated.' }, { status: 401 });

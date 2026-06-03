@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from './db';
 import { faculties, specializations } from './db/schema';
 
-export type UserRole = 'student' | 'professor' | 'secretary';
+export type UserRole = 'student' | 'professor' | 'secretary' | 'admin';
 
 export type SpecialtyConfig = {
   code: string;
@@ -35,11 +35,12 @@ export const specialtyMappings: Record<string, SpecialtyConfig> = {
 export const dashboardByRole: Record<UserRole, string> = {
   student: '/dashboard.html',
   professor: '/professor-dashboard.html',
-  secretary: '/secretary-dashboard.html'
+  secretary: '/secretary-dashboard.html',
+  admin: '/admin.html'
 };
 
 export function isUserRole(value: string): value is UserRole {
-  return value === 'student' || value === 'professor' || value === 'secretary';
+  return value === 'student' || value === 'professor' || value === 'secretary' || value === 'admin';
 }
 
 export function canRegisterAsFinalYearStudent(startYear: number, durationYears: number, currentDate = new Date()) {

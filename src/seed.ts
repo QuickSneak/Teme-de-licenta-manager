@@ -6,6 +6,7 @@ import { db } from './db';
 import {
   accounts,
   faculties,
+  notifications,
   professorSpecializations,
   sessions,
   specializations,
@@ -70,7 +71,7 @@ async function createUser(input: {
   name: string;
   email: string;
   password: string;
-  role: 'student' | 'professor' | 'secretary';
+  role: 'student' | 'professor' | 'secretary' | 'admin';
   facultyId?: number;
   specializationId?: number;
 }) {
@@ -94,6 +95,7 @@ async function createUser(input: {
 }
 
 async function seed() {
+  await db.delete(notifications);
   await db.delete(topicChangeRequests);
   await db.delete(topicAssignments);
   await db.delete(topicRequests);
@@ -168,6 +170,13 @@ async function seed() {
     password: 'password123',
     role: 'secretary',
     facultyId: marketing.faculty.id
+  });
+
+  await createUser({
+    name: 'System Admin',
+    email: 'admin@uab.ro',
+    password: 'password123',
+    role: 'admin'
   });
 
   console.log('Seeded verified Better Auth demo accounts');

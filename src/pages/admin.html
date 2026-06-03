@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin</title>
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body class="transition-colors duration-200">
+  <main class="page-shell narrow">
+    <section class="page-head">
+      <h1 class="page-title">Admin</h1>
+      <p class="page-subtitle">Create and manage secretary accounts.</p>
+    </section>
+
+    <div class="modal-backdrop open" id="loginModal" aria-modal="true" role="dialog" aria-labelledby="adminAccessTitle">
+      <article class="proposal-modal">
+        <div class="modal-head">
+          <div>
+            <h2 class="modal-title" id="adminAccessTitle">Admin Access</h2>
+            <p class="modal-subtitle">Enter the admin account credentials to continue.</p>
+          </div>
+        </div>
+        <form class="modal-body" id="adminLoginForm">
+          <label class="field">
+            <span class="label">Email</span>
+            <input class="control" id="adminEmail" type="email" autocomplete="username" required autofocus />
+          </label>
+          <label class="field">
+            <span class="label">Password</span>
+            <input class="control" id="adminPassword" type="password" autocomplete="current-password" required />
+          </label>
+          <p class="profile-text" id="loginMessage">Use the admin account created by seed.</p>
+        </form>
+        <div class="modal-actions">
+          <button class="modal-btn approve" type="submit" form="adminLoginForm">Sign In</button>
+        </div>
+      </article>
+    </div>
+
+    <section class="grid gap-5" id="adminPanel" hidden>
+      <section class="summary-strip">
+        <div class="summary-left">
+          <span class="summary-icon">A</span>
+          <div>
+            <p class="summary-label" id="adminName">Admin</p>
+            <p class="profile-text" id="adminEmailLabel"></p>
+          </div>
+        </div>
+        <button class="small-btn danger" id="adminLogoutButton" type="button">Logout</button>
+      </section>
+
+      <section class="proposal-card">
+        <div class="section-head">
+          <div class="section-title-wrap">
+            <span class="section-number">1</span>
+            <h2 class="section-title">Create Secretary</h2>
+          </div>
+        </div>
+        <form class="form-grid" id="createSecretaryForm">
+          <label class="field">
+            <span class="label">Full name</span>
+            <input class="control" id="secretaryName" type="text" maxlength="120" required />
+          </label>
+          <label class="field">
+            <span class="label">Email</span>
+            <input class="control" id="secretaryEmail" type="email" placeholder="secretary@uab.ro" required />
+          </label>
+          <label class="field">
+            <span class="label">Password</span>
+            <input class="control" id="secretaryPassword" type="password" minlength="8" required />
+          </label>
+          <label class="field">
+            <span class="label">Faculty</span>
+            <select class="control" id="secretaryFaculty" required></select>
+          </label>
+          <div class="form-footer field full">
+            <p class="profile-text" id="createMessage">Only faculties without a secretary can be selected.</p>
+            <button class="btn btn-primary" type="submit">Create Account</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div class="panel-title-wrap">
+            <span class="panel-icon">S</span>
+            <h2 class="panel-title">Secretary Accounts</h2>
+          </div>
+        </div>
+        <div class="grid gap-4 p-5 md:p-7" id="secretaryList">
+          <p class="profile-text">Loading secretary accounts...</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/admin.js?v=2"></script>
+</body>
+</html>

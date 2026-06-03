@@ -43,6 +43,13 @@
       "when": 1780405716584,
       "tag": "0005_violet_junta",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1780497600000,
+      "tag": "0006_admin_secretaries",
+      "breakpoints": true
     }
   ]
 }

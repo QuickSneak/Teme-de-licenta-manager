@@ -36,6 +36,8 @@ export const auth = betterAuth({
     resetPasswordTokenExpiresIn: hour,
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, token }) => {
+      if ((user as { role?: string }).role === 'secretary') return;
+
       const url = appURL(`/reset-password.html?token=${encodeURIComponent(token)}`);
       await sendPasswordResetEmail(user.email, url);
     }
