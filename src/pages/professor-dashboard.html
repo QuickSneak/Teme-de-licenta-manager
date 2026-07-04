@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Professor Portal - Dashboard</title>
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+
+<body class="transition-colors duration-200 sidebar-collapsed" data-required-role="professor">
+
+  <div class="browser-layout">
+    <header class="browser-topbar">
+      <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" aria-label="Open faculty menu">Menu</button>
+
+      <div class="portal-brand">
+        <span class="brand-icon">P</span>
+        <span>Professor Portal</span>
+      </div>
+
+      <nav class="main-nav" aria-label="Professor navigation">
+        <a href="professor-dashboard.html" class="nav-link active" aria-current="page">Dashboard</a>
+        <a href="professor_add_thesis.html" class="nav-link">Add Thesis</a>
+        <a href="professor-proposals.html" class="nav-link">Student Proposals</a>
+        <a href="professor-profile.html" class="nav-link">Profile</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn logout-btn" type="button" aria-label="Logout" title="Logout">⎋</button>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span class="theme-option moon">☾</span>
+          <span class="theme-option sun active">☀</span>
+        </button>
+      </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <button class="collapse-sidebar-btn" id="collapseSidebarBtn" type="button" aria-label="Collapse sidebar">&lt;</button>
+      </div>
+
+      <div id="facultySidebar">
+        <p class="profile-text">Loading academic assignments...</p>
+      </div>
+    </aside>
+
+    <main class="browser-content">
+      <section class="mb-5">
+        <h1 class="page-title">Professor Dashboard</h1>
+        <p class="page-subtitle">Review updates, manage theses, and coordinate students.</p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div class="panel-title-wrap">
+            <span class="panel-icon">!</span>
+            <h2 class="panel-title">Recent Notifications</h2>
+          </div>
+          <button class="view-all" type="button" id="clearNotificationsBtn">Clear all</button>
+        </div>
+
+        <div class="list-body" id="notificationsList">
+          <p class="profile-text">Loading notifications...</p>
+        </div>
+      </section>
+
+      <section class="section-toolbar">
+        <h2 class="section-title-main">My Theses</h2>
+        <a class="btn btn-primary dashboard-add-thesis-btn" href="professor_add_thesis.html">+ Add Thesis</a>
+      </section>
+
+      <div id="facultyBlocks">
+        <section class="panel">
+          <p class="profile-text">Loading faculty and specialisation assignments...</p>
+        </section>
+      </div>
+
+      <section class="section-toolbar">
+        <h2 class="section-title-main">My Students</h2>
+      </section>
+
+      <section class="panel" id="studentsPanel">
+        <p class="profile-text">No students are assigned yet.</p>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">S</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+  </div>
+  <div class="modal-backdrop" id="topicModal">
+    <article class="proposal-modal">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title" id="modalTitle">Topic title</h2>
+          <p class="modal-subtitle" id="modalSubtitle">Faculty - Specialisation - Professor</p>
+        </div>
+        <button class="modal-close" type="button" id="modalClose" aria-label="Close modal">x</button>
+      </div>
+      <div class="modal-body">
+        <section class="modal-section">
+          <h3>Description</h3>
+          <p id="modalDescription">Description appears here.</p>
+        </section>
+        <form class="modal-edit-form hidden" id="topicEditForm">
+          <label class="field">
+            <span class="label">Title</span>
+            <input class="control" id="topicTitleInput" type="text" required maxlength="180" />
+          </label>
+          <label class="field">
+            <span class="label">Description</span>
+            <textarea class="textarea large" id="topicDescriptionInput" required></textarea>
+          </label>
+        </form>
+      </div>
+      <div class="modal-actions hidden" id="topicModalActions">
+        <button class="modal-btn reject" type="button" id="topicDeleteBtn">Delete Topic</button>
+        <button class="modal-btn reject hidden" type="button" id="topicCancelEditBtn">Cancel</button>
+        <button class="modal-btn approve" type="button" id="topicEditBtn">Edit Topic</button>
+        <button class="modal-btn approve hidden" type="submit" form="topicEditForm" id="topicSaveBtn">Save Changes</button>
+      </div>
+    </article>
+  </div>
+  <script src="/js/top-actions.js"></script>
+  <script src="/js/page-guard.js"></script>
+  <script>
+    const body = document.body;
+
+    const themeToggle = document.getElementById("themeToggle");
+    const moonOption = document.querySelector(".theme-option.moon");
+    const sunOption = document.querySelector(".theme-option.sun");
+    const modeIcon = document.getElementById("modeIcon");
+    const modeText = document.getElementById("modeText");
+
+    const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+    const collapseSidebarBtn = document.getElementById("collapseSidebarBtn");
+    const facultySidebar = document.getElementById("facultySidebar");
+    const facultyBlocks = document.getElementById("facultyBlocks");
+    const studentsPanel = document.getElementById("studentsPanel");
+    const notificationsList = document.getElementById("notificationsList");
+    const clearNotificationsBtn = document.getElementById("clearNotificationsBtn");
+    const topicModal = document.getElementById("topicModal");
+    const modalClose = document.getElementById("modalClose");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSubtitle = document.getElementById("modalSubtitle");
+    const modalDescription = document.getElementById("modalDescription");
+    const topicModalActions = document.getElementById("topicModalActions");
+    const topicEditForm = document.getElementById("topicEditForm");
+    const topicTitleInput = document.getElementById("topicTitleInput");
+    const topicDescriptionInput = document.getElementById("topicDescriptionInput");
+    const topicEditBtn = document.getElementById("topicEditBtn");
+    const topicSaveBtn = document.getElementById("topicSaveBtn");
+    const topicCancelEditBtn = document.getElementById("topicCancelEditBtn");
+    const topicDeleteBtn = document.getElementById("topicDeleteBtn");
+    let dashboardData = null;
+    let selectedManagedTopic = null;
+
+    function setTheme(theme) {
+      const isDark = theme === "dark";
+
+      body.classList.toggle("dark", isDark);
+      moonOption.classList.toggle("active", isDark);
+      sunOption.classList.toggle("active", !isDark);
+      modeIcon.textContent = isDark ? "M" : "S";
+      modeText.textContent = isDark ? "DARK MODE" : "LIGHT MODE";
+
+      localStorage.setItem("professorInterfaceTheme", theme);
+    }
+
+    function initialsFromName(name) {
+      return name
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((word) => word[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "?";
+    }
+
+    function timeAgo(value) {
+      const diff = Date.now() - new Date(value).getTime();
+      if (diff < 60000) return "just now";
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
+    }
+
+    function notificationIcon(type) {
+      if (type.includes("dropped") || type.includes("rejected")) return { text: "!", color: "red" };
+      if (type.includes("edit")) return { text: "E", color: "blue" };
+      if (type.includes("proposal")) return { text: "P", color: "orange" };
+      return { text: "C", color: "accent" };
+    }
+
+    function renderNotifications(notifications) {
+      notificationsList.innerHTML = "";
+      clearNotificationsBtn.disabled = notifications.length === 0;
+
+      if (!notifications.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No recent notifications yet.";
+        notificationsList.append(empty);
+        return;
+      }
+
+      notifications.forEach((notification) => {
+        const row = document.createElement("article");
+        row.className = "data-row";
+
+        const iconData = notificationIcon(notification.type);
+        const icon = document.createElement("span");
+        icon.className = `mini-icon ${iconData.color}`;
+        icon.textContent = iconData.text;
+
+        const main = document.createElement("div");
+        main.className = "row-main";
+        const title = document.createElement("p");
+        title.className = "row-title";
+        title.textContent = notification.title;
+        const subtitle = document.createElement("p");
+        subtitle.className = "row-subtitle";
+        subtitle.textContent = notification.message;
+        main.append(title, subtitle);
+
+        const time = document.createElement("span");
+        time.className = "proposal-time";
+        time.textContent = timeAgo(notification.createdAt);
+
+        row.append(icon, main, time);
+        notificationsList.append(row);
+      });
+    }
+
+    async function loadNotifications() {
+      const response = await fetch("/api/notifications");
+      if (!response.ok) return;
+      const data = await response.json();
+      renderNotifications(data.notifications || []);
+    }
+
+    function facultyAnchorId(facultyId) {
+      return `faculty-${facultyId}`;
+    }
+
+    function specialisationAnchorId(specialisationId) {
+      return `specialisation-${specialisationId}`;
+    }
+
+    function groupSpecialisationsByFaculty(data) {
+      const facultiesById = new Map();
+
+      (data.faculties || []).forEach((faculty) => {
+        facultiesById.set(faculty.id, {
+          ...faculty,
+          specialisations: []
+        });
+      });
+
+      (data.specializations || []).forEach((specialisation) => {
+        if (!facultiesById.has(specialisation.facultyId)) {
+          facultiesById.set(specialisation.facultyId, {
+            id: specialisation.facultyId,
+            name: specialisation.faculty,
+            specialisations: []
+          });
+        }
+
+        facultiesById.get(specialisation.facultyId).specialisations.push(specialisation);
+      });
+
+      return Array.from(facultiesById.values()).filter((faculty) => faculty.specialisations.length > 0);
+    }
+
+    function setTopicModalEditing(isEditing) {
+      modalDescription.closest(".modal-section").classList.toggle("hidden", isEditing);
+      topicEditForm.classList.toggle("hidden", !isEditing);
+      topicEditBtn.classList.toggle("hidden", isEditing);
+      topicDeleteBtn.classList.toggle("hidden", isEditing);
+      topicSaveBtn.classList.toggle("hidden", !isEditing);
+      topicCancelEditBtn.classList.toggle("hidden", !isEditing);
+    }
+
+    function openTopicModal(item, subtitle, canManage = false) {
+      modalTitle.textContent = item.title;
+      modalSubtitle.textContent = subtitle;
+      modalDescription.textContent = item.description;
+      selectedManagedTopic = canManage ? item : null;
+      topicTitleInput.value = item.title;
+      topicDescriptionInput.value = item.description;
+      topicModalActions.classList.toggle("hidden", !canManage);
+      setTopicModalEditing(false);
+      topicModal.classList.add("open");
+    }
+
+    async function deleteTopic(topic) {
+      if (!topic || !confirm(`Delete "${topic.title}" permanently?`)) return;
+
+      const response = await fetch(`/api/professor/topics/${topic.id}`, { method: "DELETE" });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        alert(data.error || "The topic could not be deleted.");
+        return;
+      }
+
+      closeModal();
+      await loadProfessorAssignments();
+    }
+
+    function createTopicRow(topic, professorName) {
+      const row = document.createElement("article");
+      row.className = "thesis-row";
+
+      const main = document.createElement("div");
+      const title = document.createElement("h3");
+      title.className = "thesis-title";
+      title.textContent = topic.title;
+
+      const desc = document.createElement("p");
+      desc.className = "thesis-desc";
+      desc.textContent = topic.summary;
+      main.append(title, desc);
+
+      const status = document.createElement("span");
+      status.className = `status-pill ${topic.status === "reserved" ? "pending" : topic.status === "inactive" ? "withdrawn" : "available"}`;
+      status.textContent = topic.status;
+
+      const actions = document.createElement("div");
+      actions.className = "row-actions";
+      const view = document.createElement("button");
+      view.className = "small-btn";
+      view.type = "button";
+      const canManage = topic.origin === "professor" && topic.status === "available";
+      view.textContent = canManage ? "View / Edit" : "View";
+      view.addEventListener("click", () => {
+        openTopicModal(topic, `${topic.faculty} - ${topic.specialization} - ${professorName}`, canManage);
+      });
+      actions.append(view);
+
+      if (canManage) {
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "small-btn danger";
+        deleteButton.type = "button";
+        deleteButton.textContent = "Delete";
+        deleteButton.addEventListener("click", () => deleteTopic(topic));
+        actions.append(deleteButton);
+      }
+
+      row.append(main, status, actions);
+      return row;
+    }
+
+    function createEmptyThesisList() {
+      const list = document.createElement("div");
+      list.className = "thesis-list collapsible-content";
+
+      const empty = document.createElement("p");
+      empty.className = "profile-text py-4";
+      empty.textContent = "No theses have been added for this specialisation yet.";
+
+      list.append(empty);
+      return list;
+    }
+
+    function renderProfessorSidebar(faculties) {
+      facultySidebar.innerHTML = "";
+
+      if (!faculties.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No faculty assignments yet.";
+        facultySidebar.append(empty);
+        return;
+      }
+
+      faculties.forEach((faculty) => {
+        const group = document.createElement("section");
+        group.className = "faculty-group";
+
+        const title = document.createElement("h2");
+        title.className = "faculty-title";
+        title.textContent = faculty.name;
+        group.append(title);
+
+        faculty.specialisations.forEach((specialisation) => {
+          const link = document.createElement("a");
+          link.className = "sidebar-link";
+          link.href = `#${specialisationAnchorId(specialisation.id)}`;
+
+          const icon = document.createElement("span");
+          icon.className = "sidebar-link-icon";
+          icon.textContent = initialsFromName(specialisation.name);
+
+          const text = document.createElement("span");
+          text.className = "sidebar-link-text";
+          text.textContent = specialisation.name;
+
+          link.append(icon, text);
+          group.append(link);
+        });
+
+        facultySidebar.append(group);
+      });
+    }
+
+    function renderProfessorFacultyBlocks(faculties, topics, professorName) {
+      facultyBlocks.innerHTML = "";
+
+      if (!faculties.length) {
+        const emptyPanel = document.createElement("section");
+        emptyPanel.className = "panel";
+
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No faculty or specialisation assignments are connected to this professor account yet.";
+
+        emptyPanel.append(empty);
+        facultyBlocks.append(emptyPanel);
+        return;
+      }
+
+      faculties.forEach((faculty, facultyIndex) => {
+        const facultyBlock = document.createElement("section");
+        facultyBlock.className = "faculty-block";
+        facultyBlock.id = facultyAnchorId(faculty.id);
+
+        const facultyButton = document.createElement("button");
+        facultyButton.className = "faculty-block-head collapsible-trigger";
+        facultyButton.type = "button";
+
+        const facultyTitle = document.createElement("span");
+        facultyTitle.className = "faculty-title-left";
+
+        const facultyIcon = document.createElement("span");
+        facultyIcon.textContent = `F${facultyIndex + 1}`;
+
+        const facultyName = document.createElement("span");
+        facultyName.textContent = faculty.name;
+
+        const facultyArrow = document.createElement("span");
+        facultyArrow.className = "collapse-arrow";
+        facultyArrow.textContent = "^";
+
+        facultyTitle.append(facultyIcon, facultyName);
+        facultyButton.append(facultyTitle, facultyArrow);
+
+        const content = document.createElement("div");
+        content.className = "collapsible-content";
+
+        faculty.specialisations.forEach((specialisation) => {
+          const specialisationBlock = document.createElement("section");
+          specialisationBlock.className = "specialisation-block open";
+          specialisationBlock.id = specialisationAnchorId(specialisation.id);
+
+          const specialisationButton = document.createElement("button");
+          specialisationButton.className = "specialisation-head collapsible-trigger";
+          specialisationButton.type = "button";
+
+          const specialisationName = document.createElement("span");
+          specialisationName.className = "specialisation-name";
+
+          const specialisationIcon = document.createElement("span");
+          specialisationIcon.textContent = initialsFromName(specialisation.name);
+
+          const specialisationText = document.createElement("span");
+          specialisationText.textContent = specialisation.name;
+
+          const specialisationArrow = document.createElement("span");
+          specialisationArrow.className = "collapse-arrow";
+          specialisationArrow.textContent = "^";
+
+          specialisationName.append(specialisationIcon, specialisationText);
+          specialisationButton.append(specialisationName, specialisationArrow);
+          const list = document.createElement("div");
+          list.className = "thesis-list collapsible-content";
+          const specialisationTopics = topics.filter((topic) => topic.specializationId === specialisation.id);
+
+          if (!specialisationTopics.length) {
+            const empty = document.createElement("p");
+            empty.className = "profile-text py-4";
+            empty.textContent = "No theses have been added for this specialisation yet.";
+            list.append(empty);
+          } else {
+            specialisationTopics.forEach((topic) => {
+              list.append(createTopicRow(topic, professorName));
+            });
+          }
+
+          specialisationBlock.append(specialisationButton, list);
+          content.append(specialisationBlock);
+        });
+
+        facultyBlock.append(facultyButton, content);
+        facultyBlocks.append(facultyBlock);
+      });
+    }
+
+    function renderStudents(assignments) {
+      studentsPanel.innerHTML = "";
+
+      if (!assignments.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No students are assigned yet.";
+        studentsPanel.append(empty);
+        return;
+      }
+
+      const grid = document.createElement("div");
+      grid.className = "students-grid";
+
+      assignments.forEach((assignment) => {
+        const card = document.createElement("article");
+        card.className = "student-card";
+
+        const head = document.createElement("div");
+        head.className = "student-head";
+        const avatar = document.createElement("span");
+        avatar.className = "avatar";
+        avatar.textContent = initialsFromName(assignment.studentName);
+        const headText = document.createElement("div");
+        const name = document.createElement("h3");
+        name.className = "student-name";
+        name.textContent = assignment.studentName;
+        const topic = document.createElement("p");
+        topic.className = "student-topic";
+        topic.textContent = assignment.title;
+        headText.append(name, topic);
+        head.append(avatar, headText);
+
+        const meta = document.createElement("div");
+        meta.className = "student-meta";
+        meta.textContent = assignment.summary;
+
+        const view = document.createElement("button");
+        view.className = "small-btn";
+        view.type = "button";
+        view.textContent = "View";
+        view.addEventListener("click", () => {
+          openTopicModal(assignment, `${assignment.faculty} - ${assignment.specialization} - ${assignment.studentName}`);
+        });
+
+        card.append(head, meta, view);
+        grid.append(card);
+      });
+
+      studentsPanel.append(grid);
+    }
+
+    function setupDynamicDashboardInteractions() {
+      document.querySelectorAll(".sidebar-link").forEach((link) => {
+        link.addEventListener("click", () => {
+          body.classList.remove("mobile-sidebar-open");
+        });
+      });
+
+      document.querySelectorAll(".faculty-block > .collapsible-trigger").forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+          trigger.closest(".faculty-block")?.classList.toggle("closed");
+        });
+      });
+
+      document.querySelectorAll(".specialisation-block > .collapsible-trigger").forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+          trigger.closest(".specialisation-block")?.classList.toggle("closed");
+        });
+      });
+    }
+
+    async function loadProfessorAssignments() {
+      if (window.authGuard?.ready) {
+        const guardData = await window.authGuard.ready;
+        if (!guardData || guardData.user.role !== "professor") {
+          return;
+        }
+      }
+
+      const response = await fetch("/api/professor/dashboard");
+
+      if (!response.ok) {
+        window.location.href = "/login.html";
+        return;
+      }
+
+      const data = await response.json();
+      dashboardData = data;
+
+      const faculties = groupSpecialisationsByFaculty(data);
+      renderProfessorSidebar(faculties);
+      renderProfessorFacultyBlocks(faculties, data.topics || [], data.professor?.name || "Professor");
+      renderStudents(data.assignments || []);
+      await loadNotifications();
+
+      document.querySelectorAll(".stat-card").forEach((card) => {
+        const label = card.querySelector(".stat-label")?.textContent?.trim();
+        const number = card.querySelector(".stat-number");
+        if (label === "Pending Claims" && number) number.textContent = String(data.stats?.pendingRequests ?? 0);
+        if (label === "Approved Students" && number) number.textContent = String(data.stats?.approvedStudents ?? 0);
+      });
+
+      setupDynamicDashboardInteractions();
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const nextTheme = body.classList.contains("dark") ? "light" : "dark";
+      setTheme(nextTheme);
+    });
+
+    mobileMenuBtn.addEventListener("click", () => {
+      body.classList.toggle("mobile-sidebar-open");
+    });
+
+    document.addEventListener("click", (event) => {
+      const clickedInsideSidebar = event.target.closest(".sidebar");
+      const clickedMenuButton = event.target.closest("#mobileMenuBtn");
+
+      if (!clickedInsideSidebar && !clickedMenuButton && window.innerWidth <= 900) {
+        body.classList.remove("mobile-sidebar-open");
+      }
+    });
+
+    document.querySelectorAll(".small-btn, .message-btn, .btn-primary").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        const href = button.getAttribute("href");
+
+        if (href === "#") {
+          event.preventDefault();
+        }
+
+        console.log("Professor action:", button.textContent.trim());
+      });
+    });
+
+    if (collapseSidebarBtn) {
+      collapseSidebarBtn.addEventListener("click", () => {
+        if (window.innerWidth <= 900) {
+          body.classList.remove("mobile-sidebar-open");
+          return;
+        }
+
+        body.classList.toggle("sidebar-collapsed");
+      });
+    }
+
+    function closeModal() {
+      topicModal.classList.remove("open");
+      selectedManagedTopic = null;
+      setTopicModalEditing(false);
+    }
+
+    topicEditBtn.addEventListener("click", () => setTopicModalEditing(true));
+    topicCancelEditBtn.addEventListener("click", () => setTopicModalEditing(false));
+    topicDeleteBtn.addEventListener("click", () => deleteTopic(selectedManagedTopic));
+
+    topicEditForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!selectedManagedTopic) return;
+
+      const response = await fetch(`/api/professor/topics/${selectedManagedTopic.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          title: topicTitleInput.value,
+          description: topicDescriptionInput.value
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        alert(data.error || "The topic could not be updated.");
+        return;
+      }
+
+      closeModal();
+      await loadProfessorAssignments();
+    });
+
+    clearNotificationsBtn.addEventListener("click", async () => {
+      const response = await fetch("/api/notifications/clear", { method: "POST" });
+      if (!response.ok) return;
+      renderNotifications([]);
+    });
+
+    modalClose.addEventListener("click", closeModal);
+
+    const savedTheme = localStorage.getItem("professorInterfaceTheme") || "light";
+    setTheme(savedTheme);
+    loadProfessorAssignments();
+  </script>
+</body>
+</html>

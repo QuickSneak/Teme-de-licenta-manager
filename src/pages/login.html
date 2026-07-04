@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Academic Thesis Portal - Login</title>
+  <link rel="stylesheet" href="css/auth.css" />
+</head>
+
+<body class="min-h-screen overflow-x-hidden font-sans text-[var(--text)] transition-colors duration-200">
+  <div class="relative grid min-h-screen grid-rows-[auto_1fr_auto] overflow-hidden px-3.5 py-6 sm:px-5 md:px-10 md:py-8">
+    <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+      <div class="absolute -left-32 bottom-20 h-[520px] w-[520px] rounded-full border-2 border-[var(--accent-soft)] opacity-70"></div>
+      <div class="absolute -right-44 bottom-5 h-[620px] w-[620px] rounded-full border-2 border-[var(--accent-soft)] opacity-70"></div>
+
+      <span class="spark absolute left-[13%] top-[23%] font-black text-[var(--accent)] opacity-80">✦</span>
+      <span class="spark spark-delay-1 absolute right-[17%] top-[24%] font-black text-[var(--accent)] opacity-80">✦</span>
+      <span class="spark spark-delay-2 absolute left-[55%] top-[17%] font-black text-[var(--accent)] opacity-80">✦</span>
+      <span class="spark spark-delay-3 absolute bottom-[32%] right-[8%] font-black text-[var(--accent)] opacity-80">✦</span>
+
+      <svg class="absolute -left-36 bottom-28 w-[520px] max-w-[80vw] text-[var(--accent)] opacity-10 transition-opacity duration-200 md:-left-16 md:max-w-[52vw] md:opacity-[0.18]" viewBox="0 0 520 420" fill="none">
+        <path d="M65 360H455" stroke="currentColor" stroke-width="4" opacity="0.9"/>
+        <path d="M105 166H415" stroke="currentColor" stroke-width="4"/>
+        <path d="M130 166V336M210 166V336M290 166V336M370 166V336" stroke="currentColor" stroke-width="4"/>
+        <path d="M82 145L260 52L438 145H82Z" stroke="currentColor" stroke-width="5"/>
+        <path d="M145 336H395" stroke="currentColor" stroke-width="5"/>
+        <path d="M235 336V260C235 235 255 219 260 219C265 219 285 235 285 260V336" stroke="currentColor" stroke-width="4"/>
+        <circle cx="260" cy="132" r="25" stroke="currentColor" stroke-width="4"/>
+        <path d="M260 116V132L272 140" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        <path d="M78 190C45 208 25 246 25 293C25 334 48 367 81 378" stroke="currentColor" stroke-width="3" opacity="0.6"/>
+        <path d="M442 190C475 208 495 246 495 293C495 334 472 367 439 378" stroke="currentColor" stroke-width="3" opacity="0.6"/>
+      </svg>
+
+      <svg class="absolute -right-40 bottom-28 w-[420px] max-w-[74vw] text-[var(--accent)] opacity-10 transition-opacity duration-200 md:-right-9 md:max-w-[44vw] md:opacity-[0.18]" viewBox="0 0 420 420" fill="none">
+        <path d="M90 290H320C340 290 350 304 350 320C350 336 340 350 320 350H90C70 350 60 336 60 320C60 304 70 290 90 290Z" stroke="currentColor" stroke-width="5"/>
+        <path d="M82 250H300C320 250 330 264 330 280C330 296 320 310 300 310H82C62 310 52 296 52 280C52 264 62 250 82 250Z" stroke="currentColor" stroke-width="5"/>
+        <path d="M110 210H338C358 210 368 224 368 240C368 256 358 270 338 270H110C90 270 80 256 80 240C80 224 90 210 110 210Z" stroke="currentColor" stroke-width="5"/>
+        <path d="M250 110L350 150L250 190L150 150L250 110Z" stroke="currentColor" stroke-width="5"/>
+        <path d="M180 163V210C205 232 295 232 320 210V163" stroke="currentColor" stroke-width="5"/>
+        <path d="M350 150V202" stroke="currentColor" stroke-width="4"/>
+        <path d="M350 202L338 226H362L350 202Z" stroke="currentColor" stroke-width="4"/>
+        <path d="M84 320H322M92 280H302M114 240H338" stroke="currentColor" stroke-width="3" opacity="0.6"/>
+      </svg>
+    </div>
+
+    <header class="relative z-10 flex items-start justify-between gap-3.5 md:items-center md:gap-6">
+      <a href="login.html" class="flex items-center gap-2.5 md:gap-4">
+        <span class="grid h-12 w-12 place-items-center rounded-[14px] border border-[color-mix(in_srgb,var(--accent)_40%,transparent)] bg-[var(--accent-soft)] text-2xl font-black text-[var(--accent)] shadow-[0_18px_36px_var(--accent-glow)] sm:h-14 sm:w-14 sm:rounded-[18px] sm:text-[1.7rem] md:h-[70px] md:w-[70px] md:rounded-[20px] md:text-[2rem]">🎓</span>
+
+        <span>
+          <h1 class="mb-1 text-[1.15rem] font-black leading-none text-[var(--text)] sm:text-2xl md:text-[clamp(1.4rem,3vw,2rem)]">
+            Academic Thesis Portal
+          </h1>
+          <p class="text-[0.64rem] font-black uppercase tracking-[0.09em] text-[var(--muted)] sm:text-xs md:text-sm md:tracking-[0.16em]">
+            University of Excellence
+          </p>
+        </span>
+      </a>
+
+      <button class="theme-toggle flex h-[46px] min-w-[88px] items-center justify-between gap-1.5 rounded-full border border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_84%,transparent)] p-1 shadow-[0_10px_26px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:min-w-[100px] md:h-[52px] md:min-w-28" id="themeToggle" type="button" aria-label="Toggle theme">
+        <span class="theme-option moon grid h-9 w-9 place-items-center rounded-full text-xl text-[var(--muted)] transition-all duration-200 md:h-[42px] md:w-[42px]">☾</span>
+        <span class="theme-option sun active grid h-9 w-9 place-items-center rounded-full text-xl text-[var(--muted)] transition-all duration-200 md:h-[42px] md:w-[42px]">☀</span>
+      </button>
+    </header>
+
+    <main class="relative z-10 grid place-items-center py-7 sm:py-11">
+      <section class="w-full max-w-[520px] rounded-3xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] px-5 py-7 shadow-[var(--shadow)] backdrop-blur-2xl sm:px-9 sm:py-10">
+        <div class="mb-7 text-center">
+          <h2 class="mb-2.5 text-[clamp(2rem,4vw,2.55rem)] font-black leading-none text-[var(--text)]">
+            Welcome Back
+          </h2>
+          <p class="text-base font-bold text-[var(--muted)] sm:text-[1.02rem]">
+            Sign in to access your thesis management portal.
+          </p>
+        </div>
+
+        <div class="role-switch mb-6 grid grid-cols-2 overflow-hidden rounded-[14px] border border-[var(--border)] bg-[var(--surface-muted)]" aria-label="Choose account type">
+          <button class="role-btn active relative flex min-h-14 items-center justify-center gap-2.5 border-r border-[var(--border)] font-black text-[var(--muted)] transition-all duration-200 sm:min-h-[60px]" type="button" data-role="student">
+            <span class="text-[1.35rem] leading-none">👤</span>
+            <span>Student</span>
+          </button>
+
+          <button class="role-btn relative flex min-h-14 items-center justify-center gap-2.5 font-black text-[var(--muted)] transition-all duration-200 sm:min-h-[60px]" type="button" data-role="professor">
+            <span class="text-[1.35rem] leading-none">♙</span>
+            <span>Professor</span>
+          </button>
+
+          <button class="role-btn secretary-role relative col-span-2 flex min-h-14 w-1/2 justify-self-center border-t border-[var(--border)] items-center justify-center gap-2.5 font-black text-[var(--muted)] transition-all duration-200 sm:min-h-[60px]" type="button" data-role="secretary">
+            <span class="text-[1.35rem] leading-none">✎</span>
+            <span>Secretary</span>
+          </button>
+        </div>
+
+        <form class="grid gap-5" id="loginForm">
+          <div class="grid gap-2">
+            <label class="text-[0.96rem] font-black text-[var(--text)]" for="email">Email / Teams Account</label>
+
+            <div class="input-wrap grid min-h-[58px] grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[14px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 transition-all duration-200">
+              <span class="grid place-items-center text-xl text-[var(--accent)]">✉</span>
+              <input
+                class="w-full min-w-0 border-0 bg-transparent font-bold text-[var(--text)] outline-none placeholder:text-[color-mix(in_srgb,var(--muted)_78%,transparent)]"
+                id="email"
+                type="text"
+                placeholder="name@university.edu or username@teams.microsoft.com"
+                autocomplete="email"
+              />
+            </div>
+          </div>
+
+          <div class="grid gap-2">
+            <label class="text-[0.96rem] font-black text-[var(--text)]" for="password">Password</label>
+
+            <div class="input-wrap grid min-h-[58px] grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[14px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 transition-all duration-200">
+              <span class="grid place-items-center text-xl text-[var(--accent)]">🔒</span>
+              <input
+                class="w-full min-w-0 border-0 bg-transparent font-bold text-[var(--text)] outline-none placeholder:text-[color-mix(in_srgb,var(--muted)_78%,transparent)]"
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+              />
+
+              <button class="grid h-[34px] w-[34px] place-items-center rounded-full text-[var(--accent)] transition-all duration-200 hover:bg-[var(--accent-soft)]" id="showPasswordBtn" type="button" aria-label="Show password">
+                ◉
+              </button>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-start justify-between gap-3 -mt-0.5 sm:flex-row sm:items-center sm:gap-4">
+            <label class="inline-flex cursor-pointer select-none items-center gap-2.5 font-extrabold text-[var(--text)]">
+              <input class="peer hidden" id="rememberMe" type="checkbox" checked />
+              <span class="grid h-[22px] w-[22px] place-items-center rounded-md border-2 border-[var(--accent)] text-sm font-black text-transparent transition-all duration-200 peer-checked:bg-[var(--accent)]">✓</span>
+              <span>Remember me</span>
+            </label>
+
+            <a class="font-black text-[var(--accent)] transition-opacity duration-200 hover:opacity-75" href="reset-password.html">Forgot password?</a>
+          </div>
+
+          <button class="primary-btn mt-1 flex min-h-[58px] items-center justify-center gap-3.5 rounded-[14px] border border-[var(--accent)] bg-[var(--accent)] text-[1.05rem] font-black text-[#111827] shadow-[0_16px_34px_var(--accent-glow)] transition-all duration-200 hover:-translate-y-0.5 hover:brightness-105 sm:min-h-[62px]" type="submit">
+            <span>↪</span>
+            <span>Sign In</span>
+          </button>
+
+          <div class="my-1 h-px bg-[var(--border)]"></div>
+
+          <p class="flex items-center justify-center gap-2.5 pt-2 text-center font-extrabold leading-relaxed text-[var(--muted)]">
+            <a href="register.html">Create a student or professor account</a>
+          </p>
+          
+        </form>
+      </section>
+    </main>
+
+    <div class="relative z-10 justify-self-center flex min-h-[50px] min-w-40 items-center justify-center gap-3 rounded-[14px] border border-[var(--accent)] bg-[color-mix(in_srgb,var(--surface)_62%,transparent)] px-7 text-base font-black tracking-[0.04em] text-[var(--accent)] shadow-[0_16px_34px_var(--accent-glow)] backdrop-blur-xl md:min-h-[54px] md:min-w-[180px] md:text-lg" id="modePill">
+      <span id="modeIcon">☀</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+
+    <div class="toast fixed bottom-3 right-3 z-[100] w-[calc(100%-24px)] translate-y-5 rounded-[18px] border border-l-[5px] border-[var(--border)] border-l-[var(--accent)] bg-[var(--surface)] px-5 py-4 opacity-0 shadow-[var(--shadow)] transition-all duration-200 sm:bottom-6 sm:right-6 sm:w-[min(420px,calc(100%-48px))]" id="toast">
+      <p class="mb-1 font-black">Prototype login</p>
+      <p class="font-semibold leading-relaxed text-[var(--muted)]" id="toastText">
+        Login action captured. Nobody was authenticated, because this is still a front-end prototype pretending to be useful.
+      </p>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+</body>
+</html>

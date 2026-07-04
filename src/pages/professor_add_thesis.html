@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Professor Portal - Add Thesis</title>
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+
+<body class="transition-colors duration-200" data-required-role="professor">
+
+  <div class="app-shell">
+    <header class="demo-topbar">
+      <div class="portal-brand">
+        <span class="brand-icon">P</span>
+        <span>Professor Portal</span>
+      </div>
+
+      <nav class="main-nav" aria-label="Professor navigation">
+        <a href="professor-dashboard.html" class="nav-link">Dashboard</a>
+        <a href="professor_add_thesis.html" class="nav-link active" aria-current="page">Add Thesis</a>
+        <a href="professor-proposals.html" class="nav-link">Student Proposals</a>
+        <a href="professor-profile.html" class="nav-link">Profile</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn logout-btn" type="button" aria-label="Logout" title="Logout">⎋</button>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span class="theme-option moon">☾</span>
+          <span class="theme-option sun active">☀</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-head">
+        <h1 class="page-title">Add Thesis</h1>
+        <p class="page-subtitle">Create a thesis topic for students to review and claim.</p>
+      </section>
+
+      <section class="proposal-card">
+        <form id="thesisForm" novalidate>
+          <div class="form-grid">
+            <div class="field" data-field="title">
+              <label class="label" for="title">Title</label>
+              <input class="control" id="title" name="title" type="text" placeholder="Example: Enter thesis title" />
+              <p class="error-text">Please enter a thesis title.</p>
+            </div>
+
+            <div class="field" data-field="faculty">
+              <label class="label">Faculty</label>
+              <div class="select-like" data-select="faculty" tabindex="0">
+                <span class="select-value">Select faculty</span>
+                <span class="select-arrow">v</span>
+
+                <div class="dropdown">
+                  <button type="button" disabled>Loading faculties...</button>
+                </div>
+              </div>
+              <p class="error-text">Please select a faculty.</p>
+            </div>
+
+            <div class="field" data-field="specialisation">
+              <label class="label">Specialisation</label>
+              <div class="select-like" data-select="specialisation" tabindex="0">
+                <span class="select-value">Select specialisation</span>
+                <span class="select-arrow">v</span>
+
+                <div class="dropdown">
+                  <button type="button" disabled>Select a faculty first</button>
+                </div>
+              </div>
+              <p class="error-text">Please select a specialisation.</p>
+            </div>
+
+            <div class="field full" data-field="description">
+              <label class="label" for="description">Description</label>
+              <textarea class="textarea large" id="description" name="description" placeholder="Example: Describe the thesis expectations, scope, and objectives..."></textarea>
+              <p class="error-text">Please add a description.</p>
+            </div>
+          </div>
+
+          <div class="form-footer">
+            <p class="submit-note">
+              <span class="note-icon">i</span>
+              <span>After submission, this topic will appear in <strong>My Theses</strong>.</span>
+            </p>
+
+            <div class="form-actions">
+              <button class="btn btn-secondary" type="button" id="cancelBtn">Cancel</button>
+              <button class="btn btn-primary" type="submit">Add Thesis</button>
+            </div>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">S</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+
+    <div class="toast" id="toast">
+      <p class="toast-title" id="toastTitle">Thesis added</p>
+      <p class="toast-text">
+        <span id="toastText">Your thesis topic was saved.</span>
+      </p>
+    </div>
+  </div>
+  <script src="/js/top-actions.js"></script>
+  <script src="/js/page-guard.js"></script>
+  <script>
+    const body = document.body;
+
+    const themeToggle = document.getElementById("themeToggle");
+    const moonOption = document.querySelector(".theme-option.moon");
+    const sunOption = document.querySelector(".theme-option.sun");
+    const modeIcon = document.getElementById("modeIcon");
+    const modeText = document.getElementById("modeText");
+
+    const selects = document.querySelectorAll(".select-like");
+    const facultySelect = document.querySelector('[data-select="faculty"]');
+    const specialisationSelect = document.querySelector('[data-select="specialisation"]');
+    const thesisForm = document.getElementById("thesisForm");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const toast = document.getElementById("toast");
+    let assignedFaculties = [];
+
+    function setTheme(theme) {
+      const isDark = theme === "dark";
+
+      body.classList.toggle("dark", isDark);
+      moonOption.classList.toggle("active", isDark);
+      sunOption.classList.toggle("active", !isDark);
+      modeIcon.textContent = isDark ? "M" : "S";
+      modeText.textContent = isDark ? "DARK MODE" : "LIGHT MODE";
+
+      localStorage.setItem("professorInterfaceTheme", theme);
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const nextTheme = body.classList.contains("dark") ? "light" : "dark";
+      setTheme(nextTheme);
+    });
+
+    function groupSpecialisationsByFaculty(data) {
+      const facultiesById = new Map();
+
+      (data.faculties || []).forEach((faculty) => {
+        facultiesById.set(faculty.id, {
+          ...faculty,
+          specialisations: []
+        });
+      });
+
+      (data.specializations || []).forEach((specialisation) => {
+        if (!facultiesById.has(specialisation.facultyId)) {
+          facultiesById.set(specialisation.facultyId, {
+            id: specialisation.facultyId,
+            name: specialisation.faculty,
+            specialisations: []
+          });
+        }
+
+        facultiesById.get(specialisation.facultyId).specialisations.push(specialisation);
+      });
+
+      return Array.from(facultiesById.values()).filter((faculty) => faculty.specialisations.length > 0);
+    }
+
+    function getSelectValue(select) {
+      return select.querySelector(".select-value");
+    }
+
+    function getSelectDropdown(select) {
+      return select.querySelector(".dropdown");
+    }
+
+    function resetSelect(select, placeholder) {
+      const value = getSelectValue(select);
+      value.textContent = placeholder;
+      delete value.dataset.selected;
+      delete value.dataset.selectedId;
+    }
+
+    function setEmptyDropdown(select, message) {
+      const dropdown = getSelectDropdown(select);
+      dropdown.innerHTML = "";
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.disabled = true;
+      button.textContent = message;
+      dropdown.append(button);
+    }
+
+    function createOption(option) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.value = option.name;
+      button.dataset.id = option.id;
+      button.textContent = option.name;
+      return button;
+    }
+
+    function selectOption(select, option) {
+      const value = getSelectValue(select);
+      value.textContent = option.dataset.value;
+      value.dataset.selected = option.dataset.value;
+      value.dataset.selectedId = option.dataset.id;
+      select.classList.remove("open");
+
+      const field = select.closest(".field");
+      if (field) {
+        field.classList.remove("error");
+      }
+    }
+
+    function renderFacultyOptions() {
+      const dropdown = getSelectDropdown(facultySelect);
+      dropdown.innerHTML = "";
+
+      if (!assignedFaculties.length) {
+        setEmptyDropdown(facultySelect, "No faculty assignments available");
+        setEmptyDropdown(specialisationSelect, "No specialisations available");
+        return;
+      }
+
+      assignedFaculties.forEach((faculty) => {
+        const option = createOption(faculty);
+        option.addEventListener("click", (event) => {
+          event.stopPropagation();
+          selectOption(facultySelect, option);
+          resetSelect(specialisationSelect, "Select specialisation");
+          renderSpecialisationOptions(faculty.id);
+        });
+
+        dropdown.append(option);
+      });
+    }
+
+    function renderSpecialisationOptions(facultyId) {
+      const dropdown = getSelectDropdown(specialisationSelect);
+      const faculty = assignedFaculties.find((item) => String(item.id) === String(facultyId));
+      dropdown.innerHTML = "";
+
+      if (!faculty) {
+        setEmptyDropdown(specialisationSelect, "Select a faculty first");
+        return;
+      }
+
+      if (!faculty.specialisations.length) {
+        setEmptyDropdown(specialisationSelect, "No specialisations available");
+        return;
+      }
+
+      faculty.specialisations.forEach((specialisation) => {
+        const option = createOption(specialisation);
+        option.addEventListener("click", (event) => {
+          event.stopPropagation();
+          selectOption(specialisationSelect, option);
+        });
+
+        dropdown.append(option);
+      });
+    }
+
+    selects.forEach((select) => {
+      select.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        selects.forEach((otherSelect) => {
+          if (otherSelect !== select) {
+            otherSelect.classList.remove("open");
+          }
+        });
+
+        select.classList.toggle("open");
+      });
+    });
+
+    document.addEventListener("click", () => {
+      selects.forEach((select) => select.classList.remove("open"));
+    });
+
+    function showToast(title, text) {
+      document.getElementById("toastTitle").textContent = title;
+      document.getElementById("toastText").textContent = text;
+      toast.classList.add("show");
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 3400);
+    }
+
+    function validateField(fieldName, isValid) {
+      const field = document.querySelector(`[data-field="${fieldName}"]`);
+
+      if (!field) return;
+
+      field.classList.toggle("error", !isValid);
+    }
+
+    thesisForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const title = document.getElementById("title").value.trim();
+      const description = document.getElementById("description").value.trim();
+
+      const faculty = document
+        .querySelector('[data-select="faculty"] .select-value')
+        .dataset.selected;
+      const facultyId = document
+        .querySelector('[data-select="faculty"] .select-value')
+        .dataset.selectedId;
+
+      const specialisation = document
+        .querySelector('[data-select="specialisation"] .select-value')
+        .dataset.selected;
+      const specialisationId = document
+        .querySelector('[data-select="specialisation"] .select-value')
+        .dataset.selectedId;
+
+      const isTitleValid = title.length > 0;
+      const isFacultyValid = Boolean(faculty);
+      const isSpecialisationValid = Boolean(specialisation);
+      const isDescriptionValid = description.length > 0;
+
+      validateField("title", isTitleValid);
+      validateField("faculty", isFacultyValid);
+      validateField("specialisation", isSpecialisationValid);
+      validateField("description", isDescriptionValid);
+
+      const isFormValid =
+        isTitleValid &&
+        isFacultyValid &&
+        isSpecialisationValid &&
+        isDescriptionValid;
+
+      if (!isFormValid) {
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/professor/topics", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            title,
+            description,
+            specializationId: Number(specialisationId)
+          })
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          showToast("Thesis was not added", data.error || "Please check the form and try again.");
+          return;
+        }
+
+        thesisForm.reset();
+        resetSelect(facultySelect, "Select faculty");
+        resetSelect(specialisationSelect, "Select specialisation");
+        renderSpecialisationOptions(null);
+        showToast("Thesis added", "Your thesis topic is now visible on your dashboard.");
+      } catch (error) {
+        showToast("Thesis was not added", "The server could not be reached.");
+      }
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      thesisForm.reset();
+
+      document.querySelectorAll(".field.error").forEach((field) => {
+        field.classList.remove("error");
+      });
+
+      document.querySelectorAll(".select-value").forEach((value) => {
+        delete value.dataset.selected;
+        delete value.dataset.selectedId;
+      });
+
+      document.querySelector('[data-select="faculty"] .select-value').textContent =
+        "Select faculty";
+
+      document.querySelector('[data-select="specialisation"] .select-value').textContent =
+        "Select specialisation";
+
+      renderSpecialisationOptions(null);
+    });
+
+    async function loadProfessorAssignments() {
+      if (window.authGuard?.ready) {
+        const guardData = await window.authGuard.ready;
+        if (!guardData || guardData.user.role !== "professor") {
+          return;
+        }
+      }
+
+      const response = await fetch("/profile");
+
+      if (!response.ok) {
+        window.location.href = "/login.html";
+        return;
+      }
+
+      const data = await response.json();
+      if (data.user.role !== "professor") {
+        window.location.href = "/login.html";
+        return;
+      }
+
+      assignedFaculties = groupSpecialisationsByFaculty(data);
+      resetSelect(facultySelect, "Select faculty");
+      resetSelect(specialisationSelect, "Select specialisation");
+      renderFacultyOptions();
+      renderSpecialisationOptions(null);
+    }
+
+    const savedTheme = localStorage.getItem("professorInterfaceTheme") || "light";
+    setTheme(savedTheme);
+    loadProfessorAssignments();
+  </script>
+</body>
+</html>

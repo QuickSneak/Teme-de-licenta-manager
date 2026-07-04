@@ -14,17 +14,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   const logoutButton = document.getElementById('logoutButton');
   if (logoutButton) logoutButton.addEventListener('click', logout);
 
-  const response = await fetch('/me');
-  if (!response.ok) {
-    window.location.href = '/login.html';
-    return;
-  }
-
-  const data = await response.json();
   const expectedRole = expectedRoleByPath[window.location.pathname];
+  const data = window.authGuard?.ready
+    ? await window.authGuard.ready
+    : await (async () => {
+        const response = await fetch('/me');
+        if (!response.ok) {
+          window.location.href = '/login.html';
+          return null;
+        }
 
-  if (expectedRole && data.user.role !== expectedRole) {
-    window.location.href = data.redirect || '/login.html';
+        const me = await response.json();
+        if (expectedRole && me.user.role !== expectedRole) {
+          window.location.href = me.redirect || '/login.html';
+          return null;
+        }
+
+        return me;
+      })();
+
+  if (!data) {
     return;
   }
 

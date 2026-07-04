@@ -16,12 +16,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const darkChoice = document.getElementById('darkChoice');
   const lightChoice = document.getElementById('lightChoice');
   const editButtons = document.querySelectorAll('[data-edit-section]');
-  const editableControls = [document.getElementById('fullName'), document.getElementById('bio')].filter(Boolean);
+  const editableControls = [
+    document.getElementById('fullName'),
+    document.getElementById('bio'),
+    document.getElementById('officeLocation'),
+    document.getElementById('workingHours')
+  ].filter(Boolean);
   const cancelBtn = document.getElementById('cancelBtn');
   const saveBtn = document.getElementById('saveBtn');
   const toast = document.getElementById('toast');
   const toastText = document.getElementById('toastText');
   const profileCard = document.getElementById('profileCard');
+  const photoInput = document.getElementById('photoInput');
+  const changePhotoBtn = document.getElementById('changePhotoBtn');
+  const cameraBtn = document.getElementById('cameraBtn');
+  let selectedImage = null;
   const originalValues = {};
 
   function setTheme(theme) {
@@ -58,7 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function enableEditing(section) {
     profileCard?.classList.add('editing');
-    const controls = Array.from(section.querySelectorAll('#fullName, #bio'));
+    const controls = Array.from(section.querySelectorAll('#fullName, #bio, #officeLocation, #workingHours'));
 
     controls.forEach((control) => {
       control.disabled = false;
@@ -145,16 +154,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  function renderProfileImage(image) {
+    const imageNode = document.getElementById('profileImage');
+    const initials = document.getElementById('profileInitials');
+    if (!imageNode) return;
+
+    if (image) {
+      imageNode.src = image;
+      imageNode.hidden = false;
+      if (initials) initials.hidden = true;
+    } else {
+      imageNode.removeAttribute('src');
+      imageNode.hidden = true;
+      if (initials) initials.hidden = false;
+    }
+  }
+
   function populateProfile(data) {
     setControlValue('fullName', data.user.name);
     setControlValue('email', data.user.email);
     setControlValue('teams', data.user.email);
     setControlValue('bio', data.user.bio);
+    setControlValue('role', data.user.role === 'secretary' ? 'Secretary' : data.user.role);
+    setControlValue('officeLocation', data.user.officeLocation || '');
+    setControlValue('workingHours', data.user.workingHours || '');
+    selectedImage = data.user.image || '';
 
     const initials = document.getElementById('profileInitials');
     if (initials) initials.textContent = initialsFromName(data.user.name);
+    renderProfileImage(selectedImage);
 
-    if (data.user.role === 'student') {
+    if (data.user.role === 'student' || data.user.role === 'secretary') {
       setControlValue('faculty', data.faculty?.name || '');
       setControlValue('specialisation', data.specialization?.name || '');
     } else if (data.user.role === 'professor') {
@@ -205,16 +235,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   saveBtn?.addEventListener('click', async () => {
     const name = document.getElementById('fullName')?.value.trim() || '';
     const bio = document.getElementById('bio')?.value.trim() || '';
+    const officeLocation = document.getElementById('officeLocation')?.value.trim();
+    const workingHours = document.getElementById('workingHours')?.value.trim();
 
     if (!name) {
       showToast('Full name is required.', true);
       return;
     }
 
+    const payload = { name, bio };
+    if (officeLocation !== undefined) payload.officeLocation = officeLocation;
+    if (workingHours !== undefined) payload.workingHours = workingHours;
+    if (selectedImage !== null) payload.image = selectedImage;
+
     const response = await fetch('/profile', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, bio })
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json().catch(() => ({}));
@@ -231,6 +268,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     button.addEventListener('click', () => {
       showToast('Office hours editing is not connected yet.');
     });
+  });
+
+  function openPhotoPicker() {
+    photoInput?.click();
+  }
+
+  changePhotoBtn?.addEventListener('click', openPhotoPicker);
+  cameraBtn?.addEventListener('click', openPhotoPicker);
+  photoInput?.addEventListener('change', () => {
+    const file = photoInput.files?.[0];
+    if (!file) return;
+    if (!['image/png', 'image/jpeg'].includes(file.type)) {
+      showToast('Use a PNG or JPEG image.', true);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      selectedImage = String(reader.result || '');
+      renderProfileImage(selectedImage);
+      showToast('Profile photo selected. Save changes to keep it.');
+    });
+    reader.readAsDataURL(file);
   });
 
   setTheme(localStorage.getItem(themeKey) || 'light');

@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const faculties = sqliteTable('faculties', {
@@ -11,20 +12,32 @@ export const specializations = sqliteTable('specializations', {
   facultyId: integer('faculty_id').notNull().references(() => faculties.id)
 });
 
-export const users = sqliteTable('users', {
-  id: text('id').primaryKey(),
-  email: text('email').notNull().unique(),
-  name: text('name').notNull(),
-  bio: text('bio').notNull().default(''),
-  role: text('role').notNull(),
-  facultyId: integer('faculty_id').references(() => faculties.id),
-  specializationId: integer('specialization_id').references(() => specializations.id),
-  isExtended: integer('is_extended', { mode: 'boolean' }).default(false),
-  emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
-  image: text('image'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
-});
+export const users = sqliteTable(
+  'users',
+  {
+    id: text('id').primaryKey(),
+    email: text('email').notNull().unique(),
+    name: text('name').notNull(),
+    bio: text('bio').notNull().default(''),
+    role: text('role').notNull(),
+    academicTitle: text('academic_title'),
+    officeLocation: text('office_location'),
+    workingHours: text('working_hours'),
+    isHidden: integer('is_hidden', { mode: 'boolean' }).notNull().default(false),
+    facultyId: integer('faculty_id').references(() => faculties.id),
+    specializationId: integer('specialization_id').references(() => specializations.id),
+    isExtended: integer('is_extended', { mode: 'boolean' }).default(false),
+    emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
+    image: text('image'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+  },
+  (table) => ({
+    oneSecretaryPerFaculty: uniqueIndex('users_one_secretary_per_faculty_unique')
+      .on(table.facultyId)
+      .where(sql`role = 'secretary' AND faculty_id IS NOT NULL`)
+  })
+);
 
 export const professorSpecializations = sqliteTable(
   'professor_specializations',
@@ -43,6 +56,121 @@ export const professorSpecializations = sqliteTable(
     )
   })
 );
+
+export const topics = sqliteTable('topics', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  professorId: text('professor_id')
+    .notNull()
+    .references(() => users.id),
+  specializationId: integer('specialization_id')
+    .notNull()
+    .references(() => specializations.id),
+  origin: text('origin').notNull(),
+  status: text('status').notNull().default('available'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+});
+
+export const topicRequests = sqliteTable(
+  'topic_requests',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    studentId: text('student_id')
+      .notNull()
+      .references(() => users.id),
+    professorId: text('professor_id')
+      .notNull()
+      .references(() => users.id),
+    topicId: integer('topic_id').references(() => topics.id),
+    type: text('type').notNull(),
+    customTitle: text('custom_title'),
+    customDescription: text('custom_description'),
+    status: text('status').notNull().default('pending'),
+    studentHidden: integer('student_hidden', { mode: 'boolean' }).notNull().default(false),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+  },
+  (table) => ({
+    onePendingPerStudent: uniqueIndex('topic_requests_one_pending_student_unique')
+      .on(table.studentId)
+      .where(sql`status = 'pending'`),
+    onePendingClaimPerTopic: uniqueIndex('topic_requests_one_pending_claim_topic_unique')
+      .on(table.topicId)
+      .where(sql`status = 'pending' AND type = 'topic_claim' AND topic_id IS NOT NULL`)
+  })
+);
+
+export const topicAssignments = sqliteTable(
+  'topic_assignments',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    studentId: text('student_id')
+      .notNull()
+      .references(() => users.id),
+    professorId: text('professor_id')
+      .notNull()
+      .references(() => users.id),
+    topicId: integer('topic_id')
+      .notNull()
+      .references(() => topics.id),
+    title: text('title').notNull(),
+    description: text('description').notNull(),
+    status: text('status').notNull().default('active'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+  },
+  (table) => ({
+    oneActivePerStudent: uniqueIndex('topic_assignments_one_active_student_unique')
+      .on(table.studentId)
+      .where(sql`status = 'active'`)
+  })
+);
+
+export const topicChangeRequests = sqliteTable(
+  'topic_change_requests',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    assignmentId: integer('assignment_id')
+      .notNull()
+      .references(() => topicAssignments.id),
+    studentId: text('student_id')
+      .notNull()
+      .references(() => users.id),
+    professorId: text('professor_id')
+      .notNull()
+      .references(() => users.id),
+    requestedTitle: text('requested_title').notNull(),
+    requestedDescription: text('requested_description').notNull(),
+    status: text('status').notNull().default('pending'),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+  },
+  (table) => ({
+    onePendingPerAssignment: uniqueIndex('topic_change_requests_one_pending_assignment_unique')
+      .on(table.assignmentId)
+      .where(sql`status = 'pending'`)
+  })
+);
+
+export const notifications = sqliteTable('notifications', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id),
+  actorId: text('actor_id').references(() => users.id),
+  type: text('type').notNull(),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  entityType: text('entity_type'),
+  entityId: integer('entity_id'),
+  topicTitle: text('topic_title'),
+  isCleared: integer('is_cleared', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+});
 
 export const sessions = sqliteTable('sessions', {
   id: text('id').primaryKey(),

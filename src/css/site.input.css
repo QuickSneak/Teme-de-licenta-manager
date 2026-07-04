@@ -200,6 +200,14 @@ a {
     @apply grid gap-3 border-t border-[var(--border)] py-4 first:border-t-0 md:grid-cols-[auto_1fr_auto_auto] md:items-center md:gap-4;
   }
 
+  .claim-row {
+    @apply relative pl-6 md:grid-cols-[auto_1fr_auto_auto_auto];
+  }
+
+  .claim-dismiss-btn {
+    @apply absolute left-0 top-3 grid h-6 w-6 place-items-center rounded-full border border-[var(--border)] bg-[var(--surface-muted)] text-sm font-black leading-none text-[var(--muted)] transition hover:border-[var(--danger)] hover:bg-[var(--danger-soft)] hover:text-[var(--danger)];
+  }
+
   .row-main {
     @apply min-w-0;
   }
@@ -504,6 +512,10 @@ a {
     @apply bg-red-500/15 text-red-600;
   }
 
+  .status.reserved {
+    @apply bg-orange-500/15 text-orange-600;
+  }
+
   .spots {
     @apply text-sm font-bold;
   }
@@ -522,6 +534,10 @@ a {
 
   .small-btn.danger {
     @apply border-red-500 text-red-500 hover:bg-red-500 hover:text-white hover:shadow-[0_10px_22px_rgba(239,68,68,0.2)];
+  }
+
+  .small-btn:disabled {
+    @apply cursor-not-allowed border-[var(--border)] bg-[var(--surface-muted)] text-[var(--muted)] opacity-70 hover:translate-y-0 hover:bg-[var(--surface-muted)] hover:text-[var(--muted)] hover:shadow-none;
   }
 
   .section-toolbar {
@@ -781,6 +797,10 @@ a {
     @apply border border-[var(--accent)] bg-[var(--accent)] text-white shadow-[0_12px_28px_var(--accent-glow)] hover:brightness-105;
   }
 
+  .dashboard-add-thesis-btn {
+    @apply inline-flex min-w-[210px] items-center justify-center whitespace-nowrap text-center leading-none;
+  }
+
   .profile-card {
     @apply panel-card overflow-hidden;
   }
@@ -925,8 +945,100 @@ a {
     @apply grid h-20 w-20 place-items-center rounded-3xl bg-blue-600 text-4xl font-black text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)];
   }
 
+  .profile-image {
+    @apply h-full w-full rounded-full object-cover;
+  }
+
   .theme-preferences {
     @apply grid gap-3 sm:grid-cols-2;
+  }
+
+  .secretary-shell {
+    @apply w-[min(1220px,calc(100%-24px))] md:w-[min(1220px,calc(100%-48px))];
+  }
+
+  .secretary-head {
+    @apply grid gap-4 text-left md:grid-cols-[1fr_auto] md:items-start;
+  }
+
+  .secretary-filters {
+    @apply mb-6 grid gap-4 rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)] md:grid-cols-3;
+  }
+
+  .secretary-filters.compact {
+    @apply m-0 rounded-none border-0 border-b border-[var(--border)] shadow-none lg:grid-cols-5;
+  }
+
+  .secretary-list {
+    @apply grid gap-4;
+  }
+
+  .secretary-prof-card {
+    @apply panel-card grid gap-4 p-5 transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:shadow-[0_16px_32px_var(--accent-glow)];
+  }
+
+  .secretary-prof-head {
+    @apply grid grid-cols-[auto_1fr_auto] items-center gap-4;
+  }
+
+  .secretary-prof-details {
+    @apply grid overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] md:grid-cols-3;
+  }
+
+  .secretary-detail {
+    @apply grid gap-1 border-b border-[var(--border)] p-4 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0;
+  }
+
+  .secretary-detail strong {
+    @apply text-sm font-black text-[var(--text)];
+  }
+
+  .secretary-detail span {
+    @apply text-sm font-bold leading-relaxed text-[var(--muted)];
+  }
+
+  .secretary-modal {
+    @apply w-[min(760px,100%)];
+  }
+
+  .checkbox-grid {
+    @apply grid gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 sm:grid-cols-2;
+  }
+
+  .checkbox-line {
+    @apply flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 font-bold text-[var(--text)];
+  }
+
+  .checkbox-line input {
+    @apply h-4 w-4 accent-[var(--accent)];
+  }
+
+  .secretary-table-wrap {
+    @apply overflow-x-auto p-5;
+  }
+
+  .secretary-table {
+    @apply w-full min-w-[820px] border-collapse text-sm;
+  }
+
+  .secretary-table th {
+    @apply border-b border-[var(--border)] px-3 py-3 text-left font-black text-[var(--muted)];
+  }
+
+  .secretary-table td {
+    @apply border-b border-[var(--border)] px-3 py-4 font-bold text-[var(--text)];
+  }
+
+  .secretary-table tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .secretary-table tbody tr {
+    @apply transition hover:bg-[var(--surface-muted)];
+  }
+
+  .empty-row {
+    @apply py-8 text-center font-black text-[var(--muted)];
   }
 
   .error-text {
@@ -1123,7 +1235,7 @@ a {
   }
 
   .history-link {
-    @apply font-black text-[var(--accent)];
+    @apply font-black text-[var(--accent)] transition hover:opacity-75;
   }
 
   .modal-backdrop {
@@ -1135,11 +1247,13 @@ a {
   }
 
   .proposal-modal {
-    @apply w-[min(720px,100%)] overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] shadow-[0_30px_90px_rgba(0,0,0,0.36)];
+    @apply grid w-[min(720px,100%)] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] shadow-[0_30px_90px_rgba(0,0,0,0.36)];
+    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
   }
 
   .modal-head {
-    @apply flex items-start justify-between gap-4 border-b border-[var(--border)] px-5 py-5 md:px-7;
+    @apply flex shrink-0 items-start justify-between gap-4 border-b border-[var(--border)] px-5 py-5 md:px-7;
   }
 
   .modal-title {
@@ -1155,7 +1269,11 @@ a {
   }
 
   .modal-body {
-    @apply grid gap-4 px-5 py-5 md:px-7;
+    @apply grid min-h-0 gap-4 overflow-y-auto px-5 py-5 md:px-7;
+  }
+
+  .modal-edit-form {
+    @apply grid gap-4;
   }
 
   .modal-section {
@@ -1168,10 +1286,15 @@ a {
 
   .modal-section p {
     @apply font-semibold leading-relaxed text-[var(--muted)];
+    overflow-wrap: anywhere;
+  }
+
+  .modal-section strong {
+    @apply text-[var(--text)];
   }
 
   .modal-actions {
-    @apply flex flex-col gap-3 border-t border-[var(--border)] bg-[var(--surface-muted)] px-5 py-5 sm:flex-row sm:justify-end md:px-7;
+    @apply flex shrink-0 flex-col gap-3 border-t border-[var(--border)] bg-[var(--surface-muted)] px-5 py-5 sm:flex-row sm:justify-end md:px-7;
   }
 
   .modal-btn {

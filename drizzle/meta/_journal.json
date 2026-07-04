@@ -15,6 +15,48 @@
       "when": 1779822000000,
       "tag": "0001_profile_professor_specializations",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1780016872745,
+      "tag": "0002_thesis_topic_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1780261710900,
+      "tag": "0003_blushing_korg",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1780346398716,
+      "tag": "0004_peaceful_polaris",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1780405716584,
+      "tag": "0005_violet_junta",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1780497600000,
+      "tag": "0006_admin_secretaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1782777600000,
+      "tag": "0007_secretary_professor_profile_fields",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Professor Portal - Student Proposals</title>
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body data-required-role="professor">
+
+  <div class="app-shell">
+    <header class="demo-topbar">
+      <div class="portal-brand">
+        <span class="brand-icon">P</span>
+        <span>Professor Portal</span>
+      </div>
+
+      <nav class="main-nav" aria-label="Professor navigation">
+        <a href="professor-dashboard.html" class="nav-link">Dashboard</a>
+        <a href="professor_add_thesis.html" class="nav-link">Add Thesis</a>
+        <a href="professor-proposals.html" class="nav-link active">Student Proposals</a>
+        <a href="professor-profile.html" class="nav-link">Profile</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn logout-btn" type="button" aria-label="Logout" title="Logout">⎋</button>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
+          <span class="theme-option moon">☾</span>
+          <span class="theme-option sun active">☀</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-shell proposals-shell">
+      <section class="page-head">
+        <h1 class="page-title">Student Proposals</h1>
+        <p class="page-subtitle">Review thesis requests submitted by students.</p>
+      </section>
+
+      <section class="summary-strip">
+        <div class="summary-left">
+          <span class="summary-icon">12</span>
+          <span class="summary-label">Pending Example Proposals</span>
+          <span class="summary-number">3 shown</span>
+        </div>
+        <div class="summary-right">
+          <span id="lastRefresh">Loading proposals...</span>
+          <button class="refresh-btn" type="button" aria-label="Refresh proposals">R</button>
+        </div>
+      </section>
+
+      <div class="section-toolbar">
+        <h2 class="section-title-main">Active Proposals</h2>
+      </div>
+
+      <section class="proposal-review-list" id="activeProposals">
+        <p class="profile-text">Loading student proposals...</p>
+      </section>
+
+      <div class="section-toolbar">
+        <h2 class="section-title-main">History</h2>
+      </div>
+
+      <section class="history-grid">
+        <article class="history-card">
+          <div class="history-head approved">
+            <span>+</span>
+            <span>Approved Requests</span>
+          </div>
+          <div class="history-list" id="approvedHistory">
+            <p class="profile-text py-4">Loading approved requests...</p>
+          </div>
+          <div class="history-footer">
+            <button class="history-link" type="button" id="approvedHistoryToggle">View all approved requests</button>
+          </div>
+        </article>
+
+        <article class="history-card">
+          <div class="history-head rejected">
+            <span>x</span>
+            <span>Rejected Requests</span>
+          </div>
+          <div class="history-list" id="rejectedHistory">
+            <p class="profile-text py-4">Loading rejected requests...</p>
+          </div>
+          <div class="history-footer">
+            <button class="history-link" type="button" id="rejectedHistoryToggle">View all rejected requests</button>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">S</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="proposalModal">
+    <article class="proposal-modal">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title" id="modalTitle">Proposal title</h2>
+          <p class="modal-subtitle" id="modalSubtitle">Student - Faculty - Specialisation</p>
+        </div>
+        <button class="modal-close" type="button" id="modalClose" aria-label="Close modal">x</button>
+      </div>
+
+      <div class="modal-body">
+        <section class="modal-section">
+          <h3>Student</h3>
+          <p id="modalType">Solo</p>
+        </section>
+        <section class="modal-section">
+          <h3>Full Proposal</h3>
+          <p id="modalDescription">Proposal description appears here.</p>
+        </section>
+        <section class="modal-section hidden" id="modalCurrentSection">
+          <h3>Current Version</h3>
+          <p><strong id="modalCurrentTitle">Current title</strong></p>
+          <p id="modalCurrentDescription">Current description appears here.</p>
+        </section>
+        <section class="modal-section hidden" id="modalRequestedSection">
+          <h3>Requested Version</h3>
+          <p><strong id="modalRequestedTitle">Requested title</strong></p>
+          <p id="modalRequestedDescription">Requested description appears here.</p>
+        </section>
+        <section class="modal-section">
+          <h3>Time Remaining</h3>
+          <p id="modalTime">Time remaining appears here.</p>
+        </section>
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-btn reject" type="button">Reject Proposal</button>
+        <button class="modal-btn approve" type="button">Approve Proposal</button>
+      </div>
+    </article>
+  </div>
+  <script src="/js/top-actions.js"></script>
+  <script src="/js/page-guard.js"></script>
+  <script>
+    const body = document.body;
+    const themeToggle = document.getElementById("themeToggle");
+    const moonOption = document.querySelector(".theme-option.moon");
+    const sunOption = document.querySelector(".theme-option.sun");
+    const modeIcon = document.getElementById("modeIcon");
+    const modeText = document.getElementById("modeText");
+
+    const proposalModal = document.getElementById("proposalModal");
+    const modalClose = document.getElementById("modalClose");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSubtitle = document.getElementById("modalSubtitle");
+    const modalType = document.getElementById("modalType");
+    const modalDescription = document.getElementById("modalDescription");
+    const modalCurrentSection = document.getElementById("modalCurrentSection");
+    const modalRequestedSection = document.getElementById("modalRequestedSection");
+    const modalCurrentTitle = document.getElementById("modalCurrentTitle");
+    const modalCurrentDescription = document.getElementById("modalCurrentDescription");
+    const modalRequestedTitle = document.getElementById("modalRequestedTitle");
+    const modalRequestedDescription = document.getElementById("modalRequestedDescription");
+    const modalTime = document.getElementById("modalTime");
+    const activeProposals = document.getElementById("activeProposals");
+    const approvedHistory = document.getElementById("approvedHistory");
+    const rejectedHistory = document.getElementById("rejectedHistory");
+    const approvedHistoryToggle = document.getElementById("approvedHistoryToggle");
+    const rejectedHistoryToggle = document.getElementById("rejectedHistoryToggle");
+    const lastRefresh = document.getElementById("lastRefresh");
+    const approveButton = document.querySelector(".modal-btn.approve");
+    const rejectButton = document.querySelector(".modal-btn.reject");
+    let selectedRequest = null;
+    let historyState = {
+      approved: [],
+      rejected: [],
+      approvedExpanded: false,
+      rejectedExpanded: false
+    };
+
+    function initialsFromName(name) {
+      return name
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((word) => word[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "?";
+    }
+
+    function timeRemaining(expiresAt) {
+      const diff = new Date(expiresAt).getTime() - Date.now();
+      if (diff <= 0) return "Expired";
+      const hours = Math.floor(diff / 3600000);
+      const minutes = Math.floor((diff % 3600000) / 60000);
+      if (hours >= 24) return `${Math.floor(hours / 24)}d ${hours % 24}h left`;
+      if (hours > 0) return `${hours}h ${minutes}m left`;
+      return `${minutes}m left`;
+    }
+
+    function timeAgo(value) {
+      const diff = Date.now() - new Date(value).getTime();
+      if (diff < 60000) return "just now";
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
+    }
+
+    function setTheme(theme) {
+      const isDark = theme === "dark";
+      body.classList.toggle("dark", isDark);
+      moonOption.classList.toggle("active", isDark);
+      sunOption.classList.toggle("active", !isDark);
+      modeIcon.textContent = isDark ? "M" : "S";
+      modeText.textContent = isDark ? "DARK MODE" : "LIGHT MODE";
+      localStorage.setItem("professorInterfaceTheme", theme);
+    }
+
+    themeToggle.addEventListener("click", () => {
+      setTheme(body.classList.contains("dark") ? "light" : "dark");
+    });
+
+    function openRequestModal(item) {
+      selectedRequest = item;
+      const isChangeRequest = item.kind === "change_request";
+      modalTitle.textContent = item.title;
+      modalSubtitle.textContent = `${item.faculty || "Faculty"} - ${item.specialization || "Specialisation"}`;
+      modalType.textContent = item.studentName;
+      modalDescription.closest(".modal-section").classList.toggle("hidden", isChangeRequest);
+      modalCurrentSection.classList.toggle("hidden", !isChangeRequest);
+      modalRequestedSection.classList.toggle("hidden", !isChangeRequest);
+      modalDescription.textContent = item.description;
+      modalCurrentTitle.textContent = item.currentTitle || "";
+      modalCurrentDescription.textContent = item.currentDescription || "";
+      modalRequestedTitle.textContent = item.requestedTitle || "";
+      modalRequestedDescription.textContent = item.requestedDescription || "";
+      modalTime.textContent = timeRemaining(item.expiresAt);
+      rejectButton.textContent = isChangeRequest ? "Reject Edit" : "Reject Proposal";
+      approveButton.textContent = isChangeRequest ? "Approve Edit" : "Approve Proposal";
+      proposalModal.classList.add("open");
+    }
+
+    function requestTypeLabel(item) {
+      if (item.kind === "change_request") return "Edit request";
+      if (item.type === "topic_claim") return "Topic claim";
+      return "Custom proposal";
+    }
+
+    function renderRequests(requests) {
+      activeProposals.innerHTML = "";
+      document.querySelector(".summary-number").textContent = `${requests.length} shown`;
+      document.querySelector(".summary-label").textContent = "Pending Student Proposals";
+      document.querySelector(".summary-icon").textContent = String(requests.length);
+      lastRefresh.textContent = `Last refresh: ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+
+      if (!requests.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No active proposals are waiting for review.";
+        activeProposals.append(empty);
+        return;
+      }
+
+      requests.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "proposal-review-card";
+
+        const student = document.createElement("div");
+        student.className = "student-side";
+        const avatar = document.createElement("span");
+        avatar.className = "avatar";
+        avatar.textContent = initialsFromName(item.studentName);
+        const studentText = document.createElement("div");
+        const name = document.createElement("h3");
+        name.className = "student-name";
+        name.textContent = item.studentName;
+        const type = document.createElement("span");
+        type.className = "student-type";
+        type.textContent = requestTypeLabel(item);
+        studentText.append(name, type);
+        student.append(avatar, studentText);
+
+        const main = document.createElement("div");
+        main.className = "proposal-main";
+        const title = document.createElement("h3");
+        title.className = "proposal-title";
+        title.textContent = item.title;
+        const meta = document.createElement("p");
+        meta.className = "proposal-meta";
+        meta.textContent = `${item.faculty || "Faculty"} - ${item.specialization || "Specialisation"}`;
+        const desc = document.createElement("p");
+        desc.className = "proposal-desc";
+        desc.textContent = item.summary;
+        main.append(title, meta, desc);
+
+        const actions = document.createElement("div");
+        actions.className = "proposal-actions";
+        const time = document.createElement("span");
+        time.className = "proposal-time";
+        time.textContent = timeRemaining(item.expiresAt);
+        const pill = document.createElement("span");
+        pill.className = "new-pill";
+        pill.textContent = item.status;
+        const view = document.createElement("button");
+        view.className = "small-btn view-proposal-btn";
+        view.type = "button";
+        view.textContent = "View";
+        view.addEventListener("click", () => openRequestModal(item));
+        actions.append(time, pill, view);
+
+        card.append(student, main, actions);
+        activeProposals.append(card);
+      });
+    }
+
+    function renderHistoryList(container, items, status, expanded) {
+      container.innerHTML = "";
+      const visibleItems = expanded ? items : items.slice(0, 3);
+
+      if (!items.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text py-4";
+        empty.textContent = status === "approved" ? "No approved requests yet." : "No rejected requests yet.";
+        container.append(empty);
+        return;
+      }
+
+      visibleItems.forEach((item) => {
+        const row = document.createElement("article");
+        row.className = "history-row";
+
+        const avatar = document.createElement("span");
+        avatar.className = `history-avatar ${status}`;
+        avatar.textContent = initialsFromName(item.studentName);
+
+        const main = document.createElement("div");
+        const name = document.createElement("p");
+        name.className = "history-name";
+        name.textContent = item.studentName;
+        const title = document.createElement("p");
+        title.className = "history-title";
+        title.textContent = item.title;
+        const meta = document.createElement("p");
+        meta.className = "history-meta";
+        const unit = item.specialization || item.faculty || item.requestType;
+        meta.textContent = `${item.requestType}${unit && unit !== item.requestType ? ` - ${unit}` : ""} - ${timeAgo(item.updatedAt)}`;
+        main.append(name, title, meta);
+
+        row.append(avatar, main);
+        container.append(row);
+      });
+    }
+
+    function renderHistory() {
+      renderHistoryList(approvedHistory, historyState.approved, "approved", historyState.approvedExpanded);
+      renderHistoryList(rejectedHistory, historyState.rejected, "rejected", historyState.rejectedExpanded);
+
+      approvedHistoryToggle.hidden = historyState.approved.length <= 3;
+      rejectedHistoryToggle.hidden = historyState.rejected.length <= 3;
+      approvedHistoryToggle.textContent = historyState.approvedExpanded ? "Show latest approved requests" : "View all approved requests";
+      rejectedHistoryToggle.textContent = historyState.rejectedExpanded ? "Show latest rejected requests" : "View all rejected requests";
+    }
+
+    function normalizeChangeRequest(item) {
+      return {
+        ...item,
+        kind: "change_request",
+        type: "change_request",
+        title: item.currentTitle,
+        description: "Review the requested update against the current confirmed assignment.",
+        summary: "Review the requested update against the current confirmed assignment."
+      };
+    }
+
+    function normalizeTopicRequest(item) {
+      return { ...item, kind: item.type };
+    }
+
+    async function loadRequests() {
+      const [requestsResponse, changeRequestsResponse] = await Promise.all([
+        fetch("/api/professor/requests"),
+        fetch("/api/professor/change-requests")
+      ]);
+
+      if (!requestsResponse.ok || !changeRequestsResponse.ok) {
+        if (
+          requestsResponse.status === 401 ||
+          requestsResponse.status === 403 ||
+          changeRequestsResponse.status === 401 ||
+          changeRequestsResponse.status === 403
+        ) {
+          window.location.href = "/login.html";
+        }
+        return;
+      }
+      const requestsData = await requestsResponse.json();
+      const changeRequestsData = await changeRequestsResponse.json();
+      const requests = [
+        ...(requestsData.requests || []).map(normalizeTopicRequest),
+        ...(changeRequestsData.changeRequests || []).map(normalizeChangeRequest)
+      ].sort((a, b) => new Date(a.expiresAt).getTime() - new Date(b.expiresAt).getTime());
+      renderRequests(requests);
+    }
+
+    async function loadHistory() {
+      const response = await fetch("/api/professor/request-history");
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) window.location.href = "/login.html";
+        return;
+      }
+
+      const data = await response.json();
+      historyState.approved = data.approved || [];
+      historyState.rejected = data.rejected || [];
+      renderHistory();
+    }
+
+    async function decideRequest(action) {
+      if (!selectedRequest) return;
+      const basePath = selectedRequest.kind === "change_request" ? "change-requests" : "requests";
+      const response = await fetch(`/api/professor/${basePath}/${selectedRequest.id}/${action}`, { method: "POST" });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        alert(data.error || "The request could not be updated.");
+        return;
+      }
+      closeModal();
+      await loadRequests();
+      await loadHistory();
+    }
+
+    function closeModal() {
+      proposalModal.classList.remove("open");
+      selectedRequest = null;
+    }
+
+    modalClose.addEventListener("click", closeModal);
+
+    document.querySelector(".refresh-btn").addEventListener("click", async () => {
+      await loadRequests();
+      await loadHistory();
+    });
+    approvedHistoryToggle.addEventListener("click", () => {
+      historyState.approvedExpanded = !historyState.approvedExpanded;
+      renderHistory();
+    });
+    rejectedHistoryToggle.addEventListener("click", () => {
+      historyState.rejectedExpanded = !historyState.rejectedExpanded;
+      renderHistory();
+    });
+
+    approveButton.addEventListener("click", () => decideRequest("accept"));
+    rejectButton.addEventListener("click", () => decideRequest("reject"));
+
+    setTheme(localStorage.getItem("professorInterfaceTheme") || "light");
+    loadRequests();
+    loadHistory();
+  </script>
+</body>
+</html>

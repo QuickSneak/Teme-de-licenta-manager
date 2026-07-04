@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 
-<body class="transition-colors duration-200">
+<body class="transition-colors duration-200" data-required-role="student">
 
   <div class="app-shell">
     <header class="demo-topbar">
@@ -62,22 +62,6 @@
               <p class="error-text">Please enter a thesis title.</p>
             </div>
 
-            <div class="field" data-field="specialisation">
-              <label class="label">Specialisation</label>
-              <div class="select-like" data-select="specialisation" tabindex="0">
-                <span class="select-value">Select specialisation</span>
-                <span class="select-arrow">⌄</span>
-
-                <div class="dropdown">
-                  <button type="button" data-value="Example Informatica">Example Informatica</button>
-                  <button type="button" data-value="Example Cybersecurity Track">Example Cybersecurity Track</button>
-                  <button type="button" data-value="Example Data Science">Example Data Science</button>
-                  <button type="button" data-value="Example Artificial Intelligence">Example Artificial Intelligence</button>
-                  <button type="button" data-value="Example Software Engineering">Example Software Engineering</button>
-                </div>
-              </div>
-              <p class="error-text">Please select a specialisation.</p>
-            </div>
 
             <div class="field" data-field="professor">
               <label class="label">Coordinator / Professor</label>
@@ -86,44 +70,16 @@
                 <span class="select-arrow">⌄</span>
 
                 <div class="dropdown">
-                  <button type="button" data-value="Prof. Example Ionescu">Prof. Example Ionescu</button>
-                  <button type="button" data-value="Prof. Example Popescu">Prof. Example Popescu</button>
-                  <button type="button" data-value="Prof. Example Mihai">Prof. Example Mihai</button>
-                  <button type="button" data-value="Prof. Example Marin">Prof. Example Marin</button>
-                  <button type="button" data-value="Prof. Example Stan">Prof. Example Stan</button>
-                  <button type="button" data-value="Prof. Example Dumitru">Prof. Example Dumitru</button>
+                  <button type="button" disabled>Loading professors...</button>
                 </div>
               </div>
               <p class="error-text">Please select a professor.</p>
             </div>
 
-            <div class="field">
-              <label class="label">Keywords</label>
-              <div class="keywords-box" tabindex="0">
-                <div class="keyword-tags" id="keywordTags">
-                  <span class="tag">AI <button type="button" class="tag-remove" aria-label="Remove AI">×</button></span>
-                  <span class="tag">Web <button type="button" class="tag-remove" aria-label="Remove Web">×</button></span>
-                  <span class="tag">Security <button type="button" class="tag-remove" aria-label="Remove Security">×</button></span>
-                </div>
-                <span class="select-arrow">⌄</span>
-              </div>
-            </div>
-
-            <div class="field full" data-field="brief">
-              <label class="label" for="brief">Brief description</label>
-              <textarea class="textarea" id="brief" name="brief" placeholder="Example: Provide a short summary of your proposed thesis..."></textarea>
-              <p class="error-text">Please add a brief description.</p>
-            </div>
-
-            <div class="field full" data-field="fullProposal">
-              <label class="label" for="fullProposal">Full proposal</label>
-              <textarea class="textarea large" id="fullProposal" name="fullProposal" placeholder="Example: Describe your proposed thesis in detail..."></textarea>
-              <p class="error-text">Please describe your full proposal.</p>
-            </div>
-
-            <div class="field full">
-              <label class="label" for="notes">Notes (optional)</label>
-              <textarea class="textarea" id="notes" name="notes" placeholder="Example: Any additional information (optional)..."></textarea>
+            <div class="field full" data-field="description">
+              <label class="label" for="description">Description</label>
+              <textarea class="textarea large" id="description" name="description" placeholder="Example: Describe your proposed thesis..."></textarea>
+              <p class="error-text">Please add a description.</p>
             </div>
           </div>
 
@@ -148,13 +104,14 @@
     </div>
 
     <div class="toast" id="toast">
-      <p class="toast-title">Example proposal submitted</p>
+      <p class="toast-title" id="toastTitle">Proposal submitted</p>
       <p class="toast-text">
-        Your custom thesis proposal was saved for professor review. This is demo feedback for testing only.
+        <span id="toastText">Your custom thesis proposal was saved for professor review.</span>
       </p>
     </div>
   </div>
   <script src="/js/top-actions.js"></script>
+  <script src="/js/page-guard.js"></script>
   <script>
     const body = document.body;
 
@@ -168,6 +125,7 @@
     const proposalForm = document.getElementById("proposalForm");
     const cancelBtn = document.getElementById("cancelBtn");
     const toast = document.getElementById("toast");
+    const professorSelect = document.querySelector('[data-select="professor"]');
 
     function setTheme(theme) {
       const isDark = theme === "dark";
@@ -188,10 +146,29 @@
       setTheme(nextTheme);
     });
 
-    selects.forEach((select) => {
+    function bindSelect(select) {
       const value = select.querySelector(".select-value");
       const options = select.querySelectorAll(".dropdown button");
 
+      options.forEach((option) => {
+        if (option.disabled) return;
+        option.addEventListener("click", (event) => {
+          event.stopPropagation();
+
+          value.textContent = option.dataset.value;
+          value.dataset.selected = option.dataset.value;
+          value.dataset.selectedId = option.dataset.id;
+          select.classList.remove("open");
+
+          const field = select.closest(".field");
+          if (field) {
+            field.classList.remove("error");
+          }
+        });
+      });
+    }
+
+    selects.forEach((select) => {
       select.addEventListener("click", (event) => {
         event.stopPropagation();
 
@@ -204,20 +181,7 @@
         select.classList.toggle("open");
       });
 
-      options.forEach((option) => {
-        option.addEventListener("click", (event) => {
-          event.stopPropagation();
-
-          value.textContent = option.dataset.value;
-          value.dataset.selected = option.dataset.value;
-          select.classList.remove("open");
-
-          const field = select.closest(".field");
-          if (field) {
-            field.classList.remove("error");
-          }
-        });
-      });
+      bindSelect(select);
     });
 
     document.addEventListener("click", () => {
@@ -230,7 +194,9 @@
       });
     });
 
-    function showToast() {
+    function showToast(title, text) {
+      document.getElementById("toastTitle").textContent = title;
+      document.getElementById("toastText").textContent = text;
       toast.classList.add("show");
 
       setTimeout(() => {
@@ -246,57 +212,59 @@
       field.classList.toggle("error", !isValid);
     }
 
-    proposalForm.addEventListener("submit", (event) => {
+    proposalForm.addEventListener("submit", async (event) => {
       event.preventDefault();
 
       const title = document.getElementById("title").value.trim();
-      const brief = document.getElementById("brief").value.trim();
-      const fullProposal = document.getElementById("fullProposal").value.trim();
-
-      const specialisation = document
-        .querySelector('[data-select="specialisation"] .select-value')
-        .dataset.selected;
+      const description = document.getElementById("description").value.trim();
 
       const professor = document
         .querySelector('[data-select="professor"] .select-value')
         .dataset.selected;
+      const professorId = document
+        .querySelector('[data-select="professor"] .select-value')
+        .dataset.selectedId;
 
       const isTitleValid = title.length > 0;
-      const isSpecialisationValid = Boolean(specialisation);
       const isProfessorValid = Boolean(professor);
-      const isBriefValid = brief.length > 0;
-      const isFullProposalValid = fullProposal.length > 0;
+      const isDescriptionValid = description.length > 0;
 
       validateField("title", isTitleValid);
-      validateField("specialisation", isSpecialisationValid);
       validateField("professor", isProfessorValid);
-      validateField("brief", isBriefValid);
-      validateField("fullProposal", isFullProposalValid);
+      validateField("description", isDescriptionValid);
 
       const isFormValid =
         isTitleValid &&
-        isSpecialisationValid &&
         isProfessorValid &&
-        isBriefValid &&
-        isFullProposalValid;
+        isDescriptionValid;
 
       if (!isFormValid) {
         return;
       }
 
-      showToast();
+      try {
+        const response = await fetch("/api/student/custom-proposals", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ professorId, title, description })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          showToast("Proposal was not submitted", data.error || "Please check the form and try again.");
+          return;
+        }
 
-      console.log({
-        title,
-        specialisation,
-        professor,
-        keywords: Array.from(document.querySelectorAll(".tag")).map((tag) =>
-          tag.textContent.replace("×", "").trim()
-        ),
-        brief,
-        fullProposal,
-        notes: document.getElementById("notes").value.trim()
-      });
+        proposalForm.reset();
+        document.querySelectorAll(".select-value").forEach((value) => {
+          delete value.dataset.selected;
+          delete value.dataset.selectedId;
+        });
+        document.querySelector('[data-select="professor"] .select-value').textContent =
+          "Search or select professor";
+        showToast("Proposal submitted", "Your custom proposal is now waiting for professor review.");
+      } catch (error) {
+        showToast("Proposal was not submitted", "The server could not be reached.");
+      }
     });
 
     cancelBtn.addEventListener("click", () => {
@@ -308,17 +276,49 @@
 
       document.querySelectorAll(".select-value").forEach((value) => {
         delete value.dataset.selected;
+        delete value.dataset.selectedId;
       });
-
-      document.querySelector('[data-select="specialisation"] .select-value').textContent =
-        "Select specialisation";
 
       document.querySelector('[data-select="professor"] .select-value').textContent =
         "Search or select professor";
     });
 
+    async function loadProfessors() {
+      const response = await fetch("/api/student/professors");
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) window.location.href = "/login.html";
+        return;
+      }
+
+      const data = await response.json();
+      const dropdown = professorSelect.querySelector(".dropdown");
+      dropdown.innerHTML = "";
+      const professors = data.professorOptions || data.professors || [];
+
+      if (!professors.length) {
+        const empty = document.createElement("button");
+        empty.type = "button";
+        empty.disabled = true;
+        empty.textContent = "No professors available";
+        dropdown.append(empty);
+        return;
+      }
+
+      professors.forEach((professor) => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.dataset.value = professor.name;
+        option.dataset.id = professor.id;
+        option.textContent = professor.name;
+        dropdown.append(option);
+      });
+
+      bindSelect(professorSelect);
+    }
+
     const savedTheme = localStorage.getItem("studentInterfaceTheme") || "light";
     setTheme(savedTheme);
+    loadProfessors();
   </script>
 </body>
 </html>

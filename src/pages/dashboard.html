@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Interface - Dashboard</title>
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+
+<body class="transition-colors duration-200" data-required-role="student">
+
+  <div class="app-shell">
+    <header class="demo-topbar">
+      <div class="topbar-brand">Student Portal</div>
+
+      <nav class="main-nav" aria-label="Student navigation">
+        <a href="professors.html" class="nav-link">Professors</a>
+        <a href="propose.html" class="nav-link">Propose</a>
+        <a href="dashboard.html" class="nav-link active" aria-current="page">Dashboard</a>
+        <a href="profile.html" class="nav-link">Profile</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn logout-btn" type="button" aria-label="Logout" title="Logout">⎋</button>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span class="theme-option moon">☾</span>
+          <span class="theme-option sun active">☀</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-shell dashboard-shell">
+      <section class="mb-5">
+        <h1 class="page-title">Student Dashboard</h1>
+        <p class="page-subtitle">Catch important updates, track claims, and follow proposal progress.</p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div class="panel-title-wrap">
+            <span class="panel-icon">!</span>
+            <h2 class="panel-title">Recent Notifications</h2>
+          </div>
+          <button class="view-all" type="button" id="clearNotificationsBtn">Clear all</button>
+        </div>
+
+        <div class="notification-list" id="notificationsList">
+          <p class="profile-text">Loading notifications...</p>
+        </div>
+      </section>
+
+      <section class="grid gap-4">
+        <section class="panel">
+          <div class="panel-head">
+            <span class="panel-icon">C</span>
+            <h2 class="panel-title">My Claims</h2>
+          </div>
+
+          <div class="list-body" id="claimsList">
+            <p class="profile-text">Loading claims...</p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <span class="panel-icon">P</span>
+            <h2 class="panel-title">My Confirmed Topic</h2>
+          </div>
+          <div class="list-body" id="assignmentPanel">
+            <p class="profile-text">Loading confirmed topic...</p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <span class="panel-icon">D</span>
+            <h2 class="panel-title">Deadlines</h2>
+          </div>
+
+          <div class="list-body">
+            <article class="data-row">
+              <span class="mini-icon gray">D1</span>
+              <div class="row-main">
+                <p class="row-title">Example final thesis selection deadline</p>
+              </div>
+              <span class="deadline-value">5 days left</span>
+              <a href="#" class="view-btn">View &rsaquo;</a>
+            </article>
+
+            <article class="data-row">
+              <span class="mini-icon gray">D2</span>
+              <div class="row-main">
+                <p class="row-title">Example student response deadline</p>
+              </div>
+              <span class="deadline-value">Tomorrow</span>
+              <a href="#" class="view-btn">View &rsaquo;</a>
+            </article>
+
+            <article class="data-row">
+              <span class="mini-icon gray">D3</span>
+              <div class="row-main">
+                <p class="row-title">Example thesis submission deadline</p>
+              </div>
+              <span class="deadline-value">14 June</span>
+              <a href="#" class="view-btn">View &rsaquo;</a>
+            </article>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div class="mode-label">
+      <span id="modeIcon">S</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+  </div>
+  <div class="modal-backdrop" id="topicModal">
+    <article class="proposal-modal">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title" id="modalTitle">Topic title</h2>
+          <p class="modal-subtitle" id="modalSubtitle">Professor</p>
+        </div>
+        <button class="modal-close" type="button" id="modalClose" aria-label="Close modal">x</button>
+      </div>
+      <div class="modal-body">
+        <section class="modal-section">
+          <h3>Description</h3>
+          <p id="modalDescription">Description appears here.</p>
+        </section>
+        <form class="modal-edit-form hidden" id="assignmentEditForm">
+          <label class="field">
+            <span class="label">Requested Title</span>
+            <input class="control" id="assignmentTitleInput" type="text" required maxlength="180" />
+          </label>
+          <label class="field">
+            <span class="label">Requested Description</span>
+            <textarea class="textarea large" id="assignmentDescriptionInput" required></textarea>
+          </label>
+        </form>
+      </div>
+      <div class="modal-actions hidden" id="assignmentModalActions">
+        <button class="modal-btn reject hidden" type="button" id="assignmentCancelEditBtn">Cancel</button>
+        <button class="modal-btn approve" type="button" id="assignmentEditBtn">Request Edit</button>
+        <button class="modal-btn approve hidden" type="submit" form="assignmentEditForm" id="assignmentSubmitEditBtn">Submit Request</button>
+      </div>
+    </article>
+  </div>
+  <script src="/js/top-actions.js"></script>
+  <script src="/js/page-guard.js"></script>
+  <script>
+    const body = document.body;
+
+    const themeToggle = document.getElementById("themeToggle");
+    const moonOption = document.querySelector(".theme-option.moon");
+    const sunOption = document.querySelector(".theme-option.sun");
+    const modeIcon = document.getElementById("modeIcon");
+    const modeText = document.getElementById("modeText");
+    const claimsList = document.getElementById("claimsList");
+    const assignmentPanel = document.getElementById("assignmentPanel");
+    const notificationsList = document.getElementById("notificationsList");
+    const clearNotificationsBtn = document.getElementById("clearNotificationsBtn");
+    const topicModal = document.getElementById("topicModal");
+    const modalClose = document.getElementById("modalClose");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSubtitle = document.getElementById("modalSubtitle");
+    const modalDescription = document.getElementById("modalDescription");
+    const assignmentModalActions = document.getElementById("assignmentModalActions");
+    const assignmentEditForm = document.getElementById("assignmentEditForm");
+    const assignmentTitleInput = document.getElementById("assignmentTitleInput");
+    const assignmentDescriptionInput = document.getElementById("assignmentDescriptionInput");
+    const assignmentEditBtn = document.getElementById("assignmentEditBtn");
+    const assignmentSubmitEditBtn = document.getElementById("assignmentSubmitEditBtn");
+    const assignmentCancelEditBtn = document.getElementById("assignmentCancelEditBtn");
+    let selectedAssignment = null;
+
+    function setTheme(theme) {
+      const isDark = theme === "dark";
+
+      body.classList.toggle("dark", isDark);
+      moonOption.classList.toggle("active", isDark);
+      sunOption.classList.toggle("active", !isDark);
+      modeIcon.textContent = isDark ? "M" : "S";
+      modeText.textContent = isDark ? "DARK MODE" : "LIGHT MODE";
+
+      localStorage.setItem("studentInterfaceTheme", theme);
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const nextTheme = body.classList.contains("dark") ? "light" : "dark";
+      setTheme(nextTheme);
+    });
+
+    function statusClass(status) {
+      if (status === "accepted") return "approved";
+      if (status === "rejected") return "rejected";
+      if (status === "expired" || status === "cancelled") return "withdrawn";
+      return "pending";
+    }
+
+    function statusLabel(status) {
+      if (status === "accepted") return "approved";
+      return status;
+    }
+
+    function timeAgo(value) {
+      const diff = Date.now() - new Date(value).getTime();
+      if (diff < 60000) return "just now";
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
+    }
+
+    function claimTimeLabel(request) {
+      if (request.status === "accepted" || request.status === "rejected" || request.status === "cancelled") {
+        return `Updated ${timeAgo(request.updatedAt)}`;
+      }
+
+      return `Submitted ${timeAgo(request.createdAt)}`;
+    }
+
+    function notificationIcon(type) {
+      if (type.includes("accepted")) return { text: "OK", color: "green" };
+      if (type.includes("rejected")) return { text: "X", color: "red" };
+      if (type.includes("edit")) return { text: "E", color: "blue" };
+      return { text: "T", color: "orange" };
+    }
+
+    function renderNotifications(notifications) {
+      notificationsList.innerHTML = "";
+      clearNotificationsBtn.disabled = notifications.length === 0;
+
+      if (!notifications.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No recent notifications yet.";
+        notificationsList.append(empty);
+        return;
+      }
+
+      notifications.forEach((notification) => {
+        const row = document.createElement("article");
+        row.className = "notification-row";
+
+        const iconData = notificationIcon(notification.type);
+        const icon = document.createElement("span");
+        icon.className = `mini-icon ${iconData.color}`;
+        icon.textContent = iconData.text;
+
+        const main = document.createElement("div");
+        main.className = "row-main";
+        const title = document.createElement("p");
+        title.className = "row-title";
+        title.textContent = notification.title;
+        const subtitle = document.createElement("p");
+        subtitle.className = "row-subtitle";
+        subtitle.textContent = notification.message;
+        main.append(title, subtitle);
+
+        const time = document.createElement("p");
+        time.className = "row-time";
+        time.textContent = timeAgo(notification.createdAt);
+
+        row.append(icon, main, time);
+        notificationsList.append(row);
+      });
+    }
+
+    async function loadNotifications() {
+      const response = await fetch("/api/notifications");
+      if (!response.ok) return [];
+      const data = await response.json();
+      const notifications = data.notifications || [];
+      renderNotifications(notifications);
+      return notifications;
+    }
+
+    function setAssignmentModalEditing(isEditing) {
+      modalDescription.closest(".modal-section").classList.toggle("hidden", isEditing);
+      assignmentEditForm.classList.toggle("hidden", !isEditing);
+      assignmentEditBtn.classList.toggle("hidden", isEditing);
+      assignmentSubmitEditBtn.classList.toggle("hidden", !isEditing);
+      assignmentCancelEditBtn.classList.toggle("hidden", !isEditing);
+    }
+
+    function openTopicModal(item, subtitle, canRequestEdit = false) {
+      modalTitle.textContent = item.title;
+      modalSubtitle.textContent = subtitle;
+      modalDescription.textContent = item.description;
+      selectedAssignment = canRequestEdit ? item : null;
+      assignmentTitleInput.value = item.title;
+      assignmentDescriptionInput.value = item.description;
+      assignmentModalActions.classList.toggle("hidden", !canRequestEdit);
+      setAssignmentModalEditing(false);
+      topicModal.classList.add("open");
+    }
+
+    function renderClaims(requests) {
+      claimsList.innerHTML = "";
+
+      if (!requests.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No claims or proposals have been submitted yet.";
+        claimsList.append(empty);
+        return;
+      }
+
+      requests.forEach((request) => {
+        const row = document.createElement("article");
+        row.className = "data-row claim-row";
+        const canDismiss = ["accepted", "rejected", "expired", "cancelled"].includes(request.status);
+
+        const icon = document.createElement("span");
+        icon.className = `mini-icon ${request.status === "accepted" ? "green" : request.status === "rejected" ? "red" : "orange"}`;
+        icon.textContent = request.type === "topic_claim" ? "C" : "P";
+
+        const main = document.createElement("div");
+        main.className = "row-main";
+        const title = document.createElement("p");
+        title.className = "row-title";
+        title.textContent = request.title;
+        const subtitle = document.createElement("p");
+        subtitle.className = "row-subtitle";
+        subtitle.textContent = `${request.professorName} - ${request.summary}`;
+        main.append(title, subtitle);
+
+        const status = document.createElement("span");
+        status.className = `status-pill ${statusClass(request.status)}`;
+        status.textContent = statusLabel(request.status);
+
+        const time = document.createElement("span");
+        time.className = "row-time";
+        time.textContent = claimTimeLabel(request);
+
+        const view = document.createElement("button");
+        view.className = "view-btn";
+        view.type = "button";
+        view.textContent = "View";
+        view.addEventListener("click", () => {
+          openTopicModal(request, `${request.professorName} - ${request.status}`);
+        });
+
+        if (canDismiss) {
+          const dismiss = document.createElement("button");
+          dismiss.className = "claim-dismiss-btn";
+          dismiss.type = "button";
+          dismiss.setAttribute("aria-label", "Remove claim from dashboard");
+          dismiss.textContent = "x";
+          dismiss.addEventListener("click", async () => {
+            if (!confirm("Remove this claim from your dashboard? This will not cancel or change the request.")) return;
+
+            const response = await fetch(`/api/student/requests/${request.id}/dismiss`, { method: "POST" });
+            if (!response.ok) {
+              const data = await response.json().catch(() => ({}));
+              alert(data.error || "The claim could not be removed.");
+              return;
+            }
+
+            await loadDashboard();
+          });
+          row.append(dismiss);
+        }
+
+        row.append(icon, main, time, status, view);
+        claimsList.append(row);
+      });
+    }
+
+    function renderAssignment(assignment) {
+      assignmentPanel.innerHTML = "";
+
+      if (!assignment) {
+        const empty = document.createElement("p");
+        empty.className = "profile-text";
+        empty.textContent = "No topic has been confirmed yet.";
+        assignmentPanel.append(empty);
+        return;
+      }
+
+      const row = document.createElement("article");
+      row.className = "data-row";
+
+      const icon = document.createElement("span");
+      icon.className = "mini-icon green";
+      icon.textContent = "OK";
+
+      const main = document.createElement("div");
+      main.className = "row-main";
+      const title = document.createElement("p");
+      title.className = "row-title";
+      title.textContent = assignment.title;
+      const subtitle = document.createElement("p");
+      subtitle.className = "row-subtitle";
+      const pendingChange = Boolean(assignment.pendingChangeRequest);
+      subtitle.textContent = `${assignment.professorName} - ${assignment.faculty} - ${assignment.specialization}${pendingChange ? " - edit request pending" : ""}`;
+      main.append(title, subtitle);
+
+      const view = document.createElement("button");
+      view.className = "view-btn";
+      view.type = "button";
+      view.textContent = "View";
+      view.addEventListener("click", () => openTopicModal(assignment, `${assignment.professorName} - active`, !pendingChange));
+
+      const edit = document.createElement("button");
+      edit.className = "small-btn";
+      edit.type = "button";
+      edit.textContent = pendingChange ? "Edit Pending" : "Request Edit";
+      edit.disabled = pendingChange;
+      edit.addEventListener("click", () => {
+        if (!pendingChange) openTopicModal(assignment, `${assignment.professorName} - active`, true);
+      });
+
+      const drop = document.createElement("button");
+      drop.className = "small-btn danger";
+      drop.type = "button";
+      drop.textContent = "Drop";
+      drop.addEventListener("click", async () => {
+        if (!confirm("Drop your confirmed topic?")) return;
+        const response = await fetch(`/api/student/assignments/${assignment.id}/abandon`, { method: "POST" });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          alert(data.error || "The assignment could not be dropped.");
+          return;
+        }
+        await loadDashboard();
+      });
+
+      const actions = document.createElement("div");
+      actions.className = "row-actions";
+      actions.append(view, edit, drop);
+      row.append(icon, main, actions);
+      assignmentPanel.append(row);
+    }
+
+    async function loadDashboard() {
+      const [requestsResponse, assignmentResponse, notifications] = await Promise.all([
+        fetch("/api/student/requests"),
+        fetch("/api/student/assignment"),
+        loadNotifications()
+      ]);
+
+      if (!requestsResponse.ok || !assignmentResponse.ok) {
+        if (requestsResponse.status === 401 || assignmentResponse.status === 401) {
+          window.location.href = "/login.html";
+        }
+        return;
+      }
+
+      const requestsData = await requestsResponse.json();
+      const assignmentData = await assignmentResponse.json();
+      renderClaims(requestsData.requests || []);
+      renderAssignment(assignmentData.assignment);
+
+      const requests = requestsData.requests || [];
+      const pending = requests.filter((item) => item.status === "pending").length;
+      const approved = requests.filter((item) => item.status === "accepted").length;
+      document.querySelectorAll(".stat-card").forEach((card) => {
+        const label = card.querySelector(".stat-label")?.textContent?.trim();
+        const number = card.querySelector(".stat-number");
+        if (label === "Pending Claims" && number) number.textContent = String(pending);
+        if (label === "Approved" && number) number.textContent = String(approved);
+        if (label === "Withdrawn" && number) number.textContent = String(requests.filter((item) => item.status === "cancelled" || item.status === "expired").length);
+        if (label === "Notifications" && number) number.textContent = String(notifications.length);
+      });
+    }
+
+    function closeModal() {
+      topicModal.classList.remove("open");
+      selectedAssignment = null;
+      setAssignmentModalEditing(false);
+    }
+
+    assignmentEditBtn.addEventListener("click", () => setAssignmentModalEditing(true));
+    assignmentCancelEditBtn.addEventListener("click", () => setAssignmentModalEditing(false));
+
+    assignmentEditForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!selectedAssignment) return;
+
+      const response = await fetch(`/api/student/assignments/${selectedAssignment.id}/change-requests`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          title: assignmentTitleInput.value,
+          description: assignmentDescriptionInput.value
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        alert(data.error || "The edit request could not be submitted.");
+        return;
+      }
+
+      closeModal();
+      await loadDashboard();
+    });
+
+    clearNotificationsBtn.addEventListener("click", async () => {
+      const response = await fetch("/api/notifications/clear", { method: "POST" });
+      if (!response.ok) return;
+      renderNotifications([]);
+      document.querySelectorAll(".stat-card").forEach((card) => {
+        const label = card.querySelector(".stat-label")?.textContent?.trim();
+        const number = card.querySelector(".stat-number");
+        if (label === "Notifications" && number) number.textContent = "0";
+      });
+    });
+
+    modalClose.addEventListener("click", closeModal);
+
+    const savedTheme = localStorage.getItem("studentInterfaceTheme") || "light";
+    setTheme(savedTheme);
+    loadDashboard();
+  </script>
+</body>
+</html>

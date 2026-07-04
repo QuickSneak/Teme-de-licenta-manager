@@ -1,8 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    './src/login.html',
-    './src/js/auth.js'
+    './src/pages/login.html',
+    './src/pages/register.html',
+    './public/js/register.js',
+    './public/js/auth.js'
   ],
   theme: {
     extend: {}

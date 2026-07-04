@@ -1,0 +1,1 @@
+ALTER TABLE `topic_requests` ADD `student_hidden` integer DEFAULT false NOT NULL;

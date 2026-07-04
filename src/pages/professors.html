@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Interface - Browse by Professor</title>
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+
+<body class="transition-colors duration-200 sidebar-collapsed" data-required-role="student">
+
+  <div class="browser-layout">
+    <header class="browser-topbar">
+      <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" aria-label="Open professors menu">Menu</button>
+      <div class="browser-brand">Student Portal</div>
+
+      <nav class="main-nav" aria-label="Student navigation">
+        <a href="professors.html" class="nav-link active" aria-current="page">Professors</a>
+        <a href="propose.html" class="nav-link">Propose</a>
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="profile.html" class="nav-link">Profile</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn logout-btn" type="button" aria-label="Logout" title="Logout">⎋</button>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span class="theme-option moon">☾</span>
+          <span class="theme-option sun active">☀</span>
+        </button>
+      </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-inner">
+        <div>
+          <div class="sidebar-head">
+            <h2 class="sidebar-title">Professors</h2>
+            <button class="collapse-btn" id="collapseBtn" aria-label="Collapse sidebar">&lt;</button>
+          </div>
+
+          <nav class="prof-list" id="professorList" aria-label="Professor list">
+            <p class="profile-text">Loading professors...</p>
+          </nav>
+        </div>
+
+        <div class="tip-card">
+          <strong>Tip:</strong> Click a professor to explore their available thesis topics.
+        </div>
+      </div>
+    </aside>
+
+    <main class="browser-content">
+      <section class="mb-6">
+        <h1 class="page-title">Browse by Professor</h1>
+        <p class="page-subtitle">Open a professor to view available thesis topics.</p>
+      </section>
+
+      <section class="professors-stack" id="professorsStack">
+        <section class="panel">
+          <p class="profile-text">Loading thesis topics...</p>
+        </section>
+      </section>
+    </main>
+
+    <div class="mode-label" id="modeLabel">
+      <span id="modeIcon">S</span>
+      <span id="modeText">LIGHT MODE</span>
+    </div>
+  </div>
+  <div class="modal-backdrop" id="topicModal">
+    <article class="proposal-modal">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title" id="modalTitle">Topic title</h2>
+          <p class="modal-subtitle" id="modalSubtitle">Professor</p>
+        </div>
+        <button class="modal-close" type="button" id="modalClose" aria-label="Close modal">x</button>
+      </div>
+      <div class="modal-body">
+        <section class="modal-section">
+          <h3>Description</h3>
+          <p id="modalDescription">Description appears here.</p>
+        </section>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn approve" type="button" id="claimButton">Send Request</button>
+      </div>
+    </article>
+  </div>
+  <script src="/js/top-actions.js"></script>
+  <script src="/js/page-guard.js"></script>
+  <script>
+    const body = document.body;
+
+    const themeToggle = document.getElementById("themeToggle");
+    const moonOption = document.querySelector(".theme-option.moon");
+    const sunOption = document.querySelector(".theme-option.sun");
+    const modeIcon = document.getElementById("modeIcon");
+    const modeText = document.getElementById("modeText");
+
+    const collapseBtn = document.getElementById("collapseBtn");
+    const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+    const professorList = document.getElementById("professorList");
+    const professorsStack = document.getElementById("professorsStack");
+    const topicModal = document.getElementById("topicModal");
+    const modalClose = document.getElementById("modalClose");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSubtitle = document.getElementById("modalSubtitle");
+    const modalDescription = document.getElementById("modalDescription");
+    const claimButton = document.getElementById("claimButton");
+    let currentTopic = null;
+    let canRequest = false;
+
+    function initialsFromName(name) {
+      return name
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((word) => word[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "?";
+    }
+
+    function setTheme(theme) {
+      const isDark = theme === "dark";
+
+      body.classList.toggle("dark", isDark);
+      moonOption.classList.toggle("active", isDark);
+      sunOption.classList.toggle("active", !isDark);
+      modeIcon.textContent = isDark ? "M" : "S";
+      modeText.textContent = isDark ? "DARK MODE" : "LIGHT MODE";
+
+      localStorage.setItem("studentInterfaceTheme", theme);
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const nextTheme = body.classList.contains("dark") ? "light" : "dark";
+      setTheme(nextTheme);
+    });
+
+    collapseBtn.addEventListener("click", () => {
+      if (window.innerWidth <= 820) {
+        body.classList.remove("mobile-sidebar-open");
+        return;
+      }
+
+      body.classList.toggle("sidebar-collapsed");
+    });
+
+    mobileMenuBtn.addEventListener("click", () => {
+      body.classList.toggle("mobile-sidebar-open");
+    });
+
+    function setupProfessorInteractions() {
+      document.querySelectorAll(".professor-header").forEach((header) => {
+        header.addEventListener("click", () => {
+          const card = header.closest(".professor-card");
+
+          document.querySelectorAll(".professor-card").forEach((item) => {
+            if (item !== card) item.classList.remove("open");
+          });
+
+          card.classList.toggle("open");
+          const professorId = card.dataset.professorCard;
+
+          document.querySelectorAll(".prof-link").forEach((link) => {
+            link.classList.toggle("active", link.dataset.professor === professorId);
+          });
+        });
+      });
+
+      document.querySelectorAll(".prof-link").forEach((link) => {
+        link.addEventListener("click", (event) => {
+        event.preventDefault();
+
+        const professorId = link.dataset.professor;
+        const targetCard = document.querySelector(`[data-professor-card="${professorId}"]`);
+
+        professorLinks.forEach((item) => item.classList.remove("active"));
+        link.classList.add("active");
+
+        professorCards.forEach((card) => card.classList.remove("open"));
+
+        if (targetCard) {
+          targetCard.classList.add("open");
+          targetCard.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+          });
+        }
+
+        body.classList.remove("mobile-sidebar-open");
+      });
+      });
+    }
+
+    function openTopicModal(topic, professor) {
+      currentTopic = topic;
+      modalTitle.textContent = topic.title;
+      modalSubtitle.textContent = `${professor.name} - ${topic.status}`;
+      modalDescription.textContent = topic.description;
+      const canClaim = canRequest && topic.status === "available";
+      claimButton.hidden = !canClaim;
+      claimButton.textContent = canClaim ? "Send Request" : "Unavailable";
+      topicModal.classList.add("open");
+    }
+
+    function renderProfessors(professors) {
+      professorList.innerHTML = "";
+      professorsStack.innerHTML = "";
+
+      if (!professors.length) {
+        const emptyList = document.createElement("p");
+        emptyList.className = "profile-text";
+        emptyList.textContent = "No professors have available topics for your specialisation.";
+        professorList.append(emptyList);
+
+        const emptyPanel = document.createElement("section");
+        emptyPanel.className = "panel";
+        const emptyText = document.createElement("p");
+        emptyText.className = "profile-text";
+        emptyText.textContent = "No thesis topics are currently available.";
+        emptyPanel.append(emptyText);
+        professorsStack.append(emptyPanel);
+        return;
+      }
+
+      professors.forEach((professor, index) => {
+        const link = document.createElement("a");
+        link.href = "#";
+        link.className = `prof-link ${index === 0 ? "active" : ""}`;
+        link.dataset.professor = professor.id;
+        const linkName = document.createElement("span");
+        linkName.textContent = professor.name;
+        const linkArrow = document.createElement("span");
+        linkArrow.textContent = ">";
+        link.append(linkName, linkArrow);
+        professorList.append(link);
+
+        const card = document.createElement("article");
+        card.className = `professor-card ${index === 0 ? "open" : ""}`;
+        card.dataset.professorCard = professor.id;
+
+        const availableCount = professor.topics.filter((topic) => topic.status === "available").length;
+        const header = document.createElement("button");
+        header.className = "professor-header";
+        header.type = "button";
+        const avatar = document.createElement("span");
+        avatar.className = "avatar";
+        avatar.textContent = initialsFromName(professor.name);
+        const headerText = document.createElement("span");
+        const professorName = document.createElement("span");
+        professorName.className = "professor-name";
+        professorName.textContent = professor.name;
+        const professorMeta = document.createElement("span");
+        professorMeta.className = "professor-meta";
+        professorMeta.textContent = `${professor.topics.length} theses | ${availableCount} available`;
+        headerText.append(professorName, professorMeta);
+        const chevron = document.createElement("span");
+        chevron.className = "chevron";
+        chevron.textContent = "v";
+        header.append(avatar, headerText, chevron);
+
+        const topicsWrap = document.createElement("div");
+        topicsWrap.className = "topics";
+        professor.topics.forEach((topic) => {
+          const topicCard = document.createElement("article");
+          topicCard.className = "topic-card";
+          const statusClass = topic.status === "available" ? "available" : "reserved";
+          const title = document.createElement("h3");
+          title.textContent = topic.title;
+          const summary = document.createElement("p");
+          summary.textContent = topic.summary;
+          const footer = document.createElement("div");
+          footer.className = "topic-footer";
+          const status = document.createElement("span");
+          status.className = `status ${statusClass}`;
+          status.textContent = topic.status;
+          footer.append(status);
+          topicCard.append(title, summary, footer);
+          const details = document.createElement("button");
+          details.className = "details-btn";
+          details.type = "button";
+          details.textContent = "View details";
+          details.addEventListener("click", () => openTopicModal(topic, professor));
+          topicCard.append(details);
+          topicsWrap.append(topicCard);
+        });
+
+        card.append(header, topicsWrap);
+        professorsStack.append(card);
+      });
+
+      setupProfessorInteractions();
+    }
+
+    async function loadProfessors() {
+      const response = await fetch("/api/student/professors");
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) window.location.href = "/login.html";
+        return;
+      }
+      const data = await response.json();
+      canRequest = Boolean(data.canRequest);
+      renderProfessors(data.professors || []);
+    }
+
+    document.addEventListener("click", (event) => {
+      const clickedInsideSidebar = event.target.closest(".sidebar");
+      const clickedMenuButton = event.target.closest("#mobileMenuBtn");
+
+      if (!clickedInsideSidebar && !clickedMenuButton && window.innerWidth <= 820) {
+        body.classList.remove("mobile-sidebar-open");
+      }
+    });
+
+    function closeModal() {
+      topicModal.classList.remove("open");
+      currentTopic = null;
+    }
+
+    modalClose.addEventListener("click", closeModal);
+
+    claimButton.addEventListener("click", async () => {
+      if (!currentTopic) return;
+      const response = await fetch("/api/student/topic-requests", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ topicId: currentTopic.id })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        alert(data.error || "The request could not be sent.");
+        return;
+      }
+      closeModal();
+      await loadProfessors();
+    });
+
+    const savedTheme = localStorage.getItem("studentInterfaceTheme") || "light";
+    setTheme(savedTheme);
+    loadProfessors();
+  </script>
+</body>
+</html>

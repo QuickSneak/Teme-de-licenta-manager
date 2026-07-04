@@ -17,6 +17,7 @@
 
       <nav class="main-nav" aria-label="Professor navigation">
         <a href="professor-dashboard.html" class="nav-link">Dashboard</a>
+        <a href="professor_add_thesis.html" class="nav-link">Add Thesis</a>
         <a href="professor-proposals.html" class="nav-link">Student Proposals</a>
         <a href="professor-profile.html" class="nav-link active">Profile</a>
       </nav>
@@ -49,11 +50,12 @@
 
               <div class="photo-area">
                 <div class="profile-photo">
+                  <img class="profile-image" id="profileImage" alt="" hidden />
                   <span id="profileInitials">--</span>
-                  <button class="camera-btn" type="button" aria-label="Change profile photo">C</button>
+                  <button class="camera-btn" type="button" id="cameraBtn" aria-label="Change profile photo">C</button>
                 </div>
-                <button class="change-photo-btn" type="button">Change photo</button>
-                <p class="photo-note">Photo upload is not connected yet.</p>
+                <button class="change-photo-btn" id="changePhotoBtn" type="button">Change photo</button>
+                <input id="photoInput" type="file" accept="image/png, image/jpeg" hidden />
               </div>
             </div>
 

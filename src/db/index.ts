@@ -2,4 +2,6 @@ import { drizzle } from 'drizzle-orm/bun-sqlite';
 import { Database } from 'bun:sqlite';
 
 const sqlite = new Database('sqlite.db');
+sqlite.exec('PRAGMA foreign_keys = ON');
+
 export const db = drizzle({ client: sqlite });
